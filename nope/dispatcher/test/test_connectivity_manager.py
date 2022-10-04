@@ -41,7 +41,7 @@ async def test_configuration():
     assert not manager.is_master, "Didnt removed the master flag"
 
     # Kill the manager.
-    # await manager.dispose()
+    await manager.dispose()
 
 
 async def test_communication():
@@ -72,10 +72,10 @@ async def test_communication():
 
     await sleep(0.5)
 
-    #await _second.dispose()
+    await _second.dispose()
 
-    #await sleep(0.5)
-    #await _first.dispose()
+    await sleep(0.5)
+    await _first.dispose()
 
 
 async def test_sync():
@@ -97,16 +97,19 @@ async def test_sync():
 
     assert (end - adapted_time) < 10, "failed to sync the time."
 
+    await _first.dispose()
+
 
 async def test_master_selection():
     _communicator, _first = get_manager(None, "first")
     await _first.ready.wait_for()
+    await sleep(0.1)
 
     _communicator, _second = get_manager(_communicator, "second")
     await _second.ready.wait_for()
 
     # Wait for the first Handshake
-    await sleep(0.1)
+    await sleep(1)
 
     assert _first.is_master, "First should be master"
     assert not _second.is_master, "First should be master"
@@ -133,5 +136,5 @@ async def test_master_selection():
     assert _first.master.id == _first.id, "First should be master again"
     assert _second.master.id == _first.id, "First should be master again"
 
-    #await _first.dispose()
-    #await _second.dispose()
+    await _first.dispose()
+    await _second.dispose()
