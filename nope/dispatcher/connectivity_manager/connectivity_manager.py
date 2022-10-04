@@ -1,5 +1,4 @@
 import asyncio
-import json
 import os
 import platform
 import re
@@ -10,7 +9,7 @@ from socket import gethostname
 import psutil
 
 from ...helpers import get_timestamp, ensure_dotted_dict, generate_id, DottedDict, create_interval_in_event_loop, \
-    offload_function_to_event_loop, min_of_array
+    offload_function_to_event_loop, min_of_array, format_exception
 from ...logger import define_nope_logger
 from ...merging import DictBasedMergeData
 from ...observables import NopeObservable
@@ -60,8 +59,6 @@ class NopeConnectivityManager:
 
         self._logger = define_nope_logger(options.logger, 'core.connectivity-manager')
 
-        
-
         self.ready = NopeObservable()
         self.ready.set_content(False)
         self._external_dispatchers = dict()
@@ -84,7 +81,7 @@ class NopeConnectivityManager:
         # Helper for the Memory.
         virtual_memory = psutil.virtual_memory()
 
-        return {
+        return ensure_dotted_dict({
             'id': self.id,
             'env': 'python',
             'version': '0.9.6',
@@ -109,7 +106,7 @@ class NopeConnectivityManager:
             'timestamp': self.now,
             'connectedSince': self.connected_since,
             'status': ENopeDispatcherStatus.HEALTHY.value
-        }
+        })
 
     @property
     def up_time(self):
@@ -121,7 +118,7 @@ class NopeConnectivityManager:
 
     @property
     def is_master(self):
-        if type(self._is_master) is not bool:
+        if self._is_master is None:
             try:
                 return self.id == self.master.id
             except Exception as e:
@@ -136,7 +133,9 @@ class NopeConnectivityManager:
     def _get_possible_master_candidates(self):
         possible_masters = []
         for info in self.dispatchers.original_data.values():
-            if info.is_master_forced and not info.is_master:
+            # In here we have to use Camel-Case because we are considering
+            # Camel-Case in the entire system.
+            if info.isMasterForced and not info.isMaster:
                 continue
             possible_masters.append(info)
         return possible_masters
@@ -145,18 +144,19 @@ class NopeConnectivityManager:
     def master(self):
         # TODO: Check implementation
 
-        def callback_1(item):
-            return item.is_master
+        def check_if_master(item):
+            return item.isMaster and item.isMasterForced
 
         candidates = self._get_possible_master_candidates()
-        masters = filter(callback_1, candidates)
-        if len(masters) == 0:
+        masters = list(filter(check_if_master, candidates))
+        if len(masters) != 1:
+            if len(masters) > 1 and self._logger:
+                self._logger.warn(
+                    f"Found {len(masters)}. We now will select the one which has been online for the longest time.")
             idx = min_of_array(candidates, 'connectedSince').index
-            if idx != 1:
+            if idx is not None:
                 return candidates[idx]
             raise Exception('No Master has been found !')
-        elif len(masters) > 1:
-            raise Exception('Multiple Masters has been found!' + json.dumps(masters, None, 4))
         return masters[0]
 
     @property
@@ -175,9 +175,10 @@ class NopeConnectivityManager:
         await self._communicator.connected.wait_for()
 
         def on_status_changed(info):
-            self._external_dispatchers.set(info.id, info)
+            self._external_dispatchers[info.id] = ensure_dotted_dict(info)
             if info.id != self.id:
-                self._external_dispatchers.set(self.id, self.info)
+                # TODO: Why is this step required?
+                self._external_dispatchers[self.id] = self.info
                 self.dispatchers.update()
 
         await self._communicator.on('StatusChanged', on_status_changed)
@@ -191,7 +192,7 @@ class NopeConnectivityManager:
         await self._communicator.on('Bonjour', on_bonjour)
 
         def on_aurevoir(msg):
-            self._external_dispatchers.delete(msg.dispatcher_id)
+            self._external_dispatchers.pop(msg.dispatcherId)
             self.dispatchers.update()
 
         await self._communicator.on('Aurevoir', on_aurevoir)
@@ -210,7 +211,8 @@ class NopeConnectivityManager:
             are determined, an update is transmitted via the attribute `dispatchers`
 
         """
-        current_time = self.now()
+        current_time = self.now
+
         changes = False
 
         for status in list(self._external_dispatchers.values()):
@@ -218,23 +220,23 @@ class NopeConnectivityManager:
             diff = current_time - status['timestamp']
 
             # Based on the Difference Determine the Status
-            if diff > self.timeouts['remove']:
+            if diff > self._timeouts['remove']:
                 # remove the Dispatcher. But be quite.
                 # Perhaps more dispatchers will be removed
                 self._remove_dispatcher(status['id'], True)
                 changes = True
-            elif diff > self.timeouts['dead'] and status['status'] != ENopeDispatcherStatus.DEAD:
+            elif diff > self._timeouts['dead'] and status['status'] != ENopeDispatcherStatus.DEAD:
                 status['status'] = ENopeDispatcherStatus.DEAD
                 changes = True
-            elif self.timeouts['warn'] < diff <= self.timeouts['dead'] and status[
+            elif self._timeouts['warn'] < diff <= self._timeouts['dead'] and status[
                 'status'] != ENopeDispatcherStatus.WARNING:
                 status['status'] = ENopeDispatcherStatus.WARNING
                 changes = True
-            elif self.timeouts['slow'] < diff <= self.timeouts['warn'] and status[
+            elif self._timeouts['slow'] < diff <= self._timeouts['warn'] and status[
                 'status'] != ENopeDispatcherStatus.SLOW:
                 status['status'] = ENopeDispatcherStatus.SLOW
                 changes = True
-            elif diff <= self.timeouts['slow'] and status['status'] != ENopeDispatcherStatus.HEALTHY:
+            elif diff <= self._timeouts['slow'] and status['status'] != ENopeDispatcherStatus.HEALTHY:
                 status['status'] = ENopeDispatcherStatus.HEALTHY
                 changes = True
 
@@ -249,7 +251,8 @@ class NopeConnectivityManager:
         if not quite:
             self.dispatchers.update()
         if self._logger and dispatcher_info:
-            self._logger.warn(f'a dispatcher on {dispatcher_info.host.name} went offline. ID of the Dispatcher: "{dispatcher}"')
+            self._logger.warn(
+                f'a dispatcher on {dispatcher_info.host.name} went offline. ID of the Dispatcher: "{dispatcher}"')
 
     async def _async_send_status(self):
         if self._communicator.connected.get_content():
@@ -262,6 +265,9 @@ class NopeConnectivityManager:
                     self._logger.error('Failled to send the status')
                     self._logger.error(e)
 
+                else:
+                    print(format_exception(e))
+
     def sync_time(self, timestamp, delay=0):
         internal_timestamp = get_timestamp()
         self._delta_time = internal_timestamp - (timestamp - delay)
@@ -271,7 +277,7 @@ class NopeConnectivityManager:
 
     async def emit_bonjour(self):
         await self._communicator.emit('Bonjour',
-                                DottedDict({'dispatcher_id': self.id}))
+                                      DottedDict({'dispatcher_id': self.id}))
 
     def reset(self):
         self._external_dispatchers.clear()
