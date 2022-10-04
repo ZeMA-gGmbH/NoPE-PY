@@ -78,7 +78,8 @@ class Bridge:
                 self.logger.debug('subscribe to', event)
 
             self.internal_emitter.on(event, debug_callback)
-            self.internal_emitter.on(event, cb)
+
+        self.internal_emitter.on(event, cb)
 
         # We now store the callback.
         if event not in self.callbacks:
