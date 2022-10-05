@@ -5,7 +5,7 @@ import paho.mqtt.client as mqtt
 from socket import gethostname
 from ...helpers import replace_all, generate_id, format_exception, SPLITCHAR
 from ...logger import get_logger, DEBUG, INFO
-from ...observables import NopeObservable
+from ...observable import NopeObservable
 
 HOSTNAME = gethostname()
 

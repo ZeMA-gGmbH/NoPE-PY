@@ -1,1 +1,1 @@
-from . import communication,dispatcher,eventEmitter,helpers,logger,merging,observables
+from . import communication,dispatcher,eventEmitter,helpers,logger,merging,observable

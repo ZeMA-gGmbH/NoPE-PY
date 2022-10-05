@@ -1,4 +1,4 @@
-from nope.observables import NopeObservable
+from nope.observable import NopeObservable
 from nope.helpers import extract_unique_values
 from nope.merging import MergeData,DictBasedMergeData
 called = 0

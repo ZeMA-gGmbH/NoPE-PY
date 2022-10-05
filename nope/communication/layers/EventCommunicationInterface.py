@@ -1,4 +1,4 @@
-from ...observables import NopeObservable
+from ...observable import NopeObservable
 from ...helpers import Emitter, generate_id
 
 

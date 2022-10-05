@@ -12,7 +12,7 @@ from ...helpers import get_timestamp, ensure_dotted_dict, generate_id, DottedDic
     offload_function_to_event_loop, min_of_array, format_exception
 from ...logger import define_nope_logger
 from ...merging import DictBasedMergeData
-from ...observables import NopeObservable
+from ...observable import NopeObservable
 
 
 class ENopeDispatcherStatus(Enum):

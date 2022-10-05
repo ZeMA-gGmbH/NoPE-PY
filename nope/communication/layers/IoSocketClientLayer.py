@@ -1,7 +1,7 @@
 import socketio
 from .EventCommunicationInterface import EventCommunicationInterface
 from ...logger import define_nope_logger
-from ...observables import NopeObservable
+from ...observable import NopeObservable
 
 
 class SocketIoEmitter:

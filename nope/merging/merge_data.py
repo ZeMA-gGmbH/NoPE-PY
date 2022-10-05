@@ -1,5 +1,5 @@
 from ..eventEmitter import NopeEventEmitter
-from ..observables import NopeObservable
+from ..observable import NopeObservable
 from ..helpers import DottedDict, extract_unique_values, transform_dict, determine_difference
 
 

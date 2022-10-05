@@ -1,6 +1,6 @@
 from ..helpers import Emitter, generate_id, DottedDict
 from ..logger import define_nope_logger
-from ..observables import NopeObservable
+from ..observable import NopeObservable
 import asyncio
 
 
