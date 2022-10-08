@@ -2,7 +2,7 @@
 # @author Martin Karkowski
 # @email m.karkowski@zema.de
 
-from ..eventEmitter import NopeEventEmitter
+from ..event_emitter import NopeEventEmitter
 from ..helpers import DottedDict, ensure_dotted_dict, generate_id
 
 

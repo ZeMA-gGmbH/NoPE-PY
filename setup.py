@@ -29,7 +29,7 @@ if __name__ == "__main__":
                     "nope.communication.layers",
                     "nope.dispatcher",
                     "nope.dispatcher.connectivity_manager",
-                    "nope.eventEmitter",
+                    "nope.event_emitter",
                     "nope.helpers",
                     "nope.observable",
                     "nope.logger",

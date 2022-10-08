@@ -1,5 +1,5 @@
 from ..helpers import compare_pattern_and_path, copy, generate_id, DottedDict, ensure_dotted_dict, rgetattr, contains_wildcards, get_timestamp, is_iterable, rsetattr, flatten_object
-from ..eventEmitter import NopeEventEmitter
+from ..event_emitter import NopeEventEmitter
 from ..merging import DictBasedMergeData
 
 DEFAULT_OBJ = object()

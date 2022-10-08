@@ -1,6 +1,6 @@
 from cmath import exp
 from ..nope_data_pub_sub_system import DataPubSubSystem
-from ...eventEmitter import NopeEventEmitter
+from ...event_emitter import NopeEventEmitter
 
 
 def test_pub_sub_system():

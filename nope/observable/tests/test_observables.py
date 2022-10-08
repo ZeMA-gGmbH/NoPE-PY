@@ -1,4 +1,4 @@
-from ..nopeObservable import NopeObservable
+from ..nope_observable import NopeObservable
 
 def test_once():
     called = 0
