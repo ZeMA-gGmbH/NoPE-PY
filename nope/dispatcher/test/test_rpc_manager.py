@@ -1,7 +1,7 @@
 from asyncio import sleep
 
-from ..rpc_manager import NopeRpcManager
-from ....communication import get_layer
+from nope.dispatcher.rpc_manager.rpc_manager import NopeRpcManager
+from nope.communication import get_layer
 
 
 async def test_rpc_manager():
