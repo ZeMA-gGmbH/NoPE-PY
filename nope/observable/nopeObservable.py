@@ -1,3 +1,7 @@
+#!/usr/bin/env python
+# @author Martin Karkowski
+# @email m.karkowski@zema.de
+
 from ..eventEmitter import NopeEventEmitter
 from ..helpers import DottedDict, ensure_dotted_dict, generate_id
 

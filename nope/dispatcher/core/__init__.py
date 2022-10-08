@@ -2,5 +2,4 @@
 # @author Martin Karkowski
 # @email m.karkowski@zema.de
 
-from . import nopeObservable
-from .nopeObservable import NopeObservable
+from .nope_core import NopeCore
