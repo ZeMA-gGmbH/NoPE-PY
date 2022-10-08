@@ -1,3 +1,7 @@
+#!/usr/bin/env python
+# @author Martin Karkowski
+# @email m.karkowski@zema.de
+
 from copy import deepcopy
 
 from .dotted_dict import DottedDict
@@ -202,7 +206,11 @@ def rsetattr(data, path: str, value, _SPLITCHAR: str = SPLITCHAR):
 
     for idx, attr in enumerate(ptrs[0:-1]):
         # Adapt the Object by going through a loop
-        sub = obj[attr]
+        sub = None
+        try:
+            sub = obj[attr]
+        except KeyError:
+            pass
         if sub == None:
             # _obj is an Array and it doesnt contain the index
             # Extract the Next Element:
@@ -247,10 +255,6 @@ def is_float(value) -> bool:
 
 def is_number(value) -> bool:
     return is_float(value) or is_int(value)
-
-
-def copy(value):
-    return deepcopy(value)
 
 
 def object_to_dict(obj):
@@ -466,10 +470,35 @@ def keep_properties_of_object(obj, properties):
             value = rgetattr(obj, key, default_obj)
             value_to_assign = value
             if value != default_obj:
-                value_to_assign = deepcopy(value)
+                value_to_assign = copy(value)
             else:
                 value_to_assign = properties[key]()
             rsetattr(ret, key, value_to_assign)
 
         return ret
     raise Exception('Function can only create Objects')
+
+WARNED = False
+
+def copy(obj):
+    """ A Helper, which can be used to receive a copy.    
+
+    Args:
+        obj (any): The Object to copy
+
+    Returns:
+        bool, any: A flag, to show whether it succeeded or failed; the copy (or if failed the object) itself.
+    """
+    try:
+        return deepcopy(obj)
+    except:
+        try: 
+            return obj.copy()
+        except:            
+            global WARNED
+            if not WARNED:
+                WARNED = True
+                print("Failed to create a copy using orignal value.")
+
+            return obj
+    

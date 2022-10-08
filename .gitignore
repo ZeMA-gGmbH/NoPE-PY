@@ -90,8 +90,8 @@ config
 # Rope project settings
 .ropeproject
 
-# Vscode
-.vscode
-
 # PyCharm
 .idea
+
+# Pystes
+.pytest_cache

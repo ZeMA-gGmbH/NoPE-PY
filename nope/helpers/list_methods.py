@@ -1,5 +1,10 @@
-from functools import reduce
+#!/usr/bin/env python
+# @author Martin Karkowski
+# @email m.karkowski@zema.de
 
+
+from functools import reduce
+from collections.abc import Iterable
 from .object_methods import rgetattr
 from .dotted_dict import DottedDict
 
@@ -45,3 +50,12 @@ def max_of_array(_list, _path, default_value=-float("inf")):
     values = list(map(lambda item: rgetattr(item, _path, default_value), _list))
     max_value = max(values)
     return DottedDict({'max': max_value, 'index': values.index(max_value)})
+
+
+def is_iterable(_list_like):
+    """ Helper to test if an objec is iterable.
+    """
+
+    if type(_list_like) is str:
+        return False
+    return isinstance(_list_like, Iterable)

@@ -1,4 +1,4 @@
-from .dotted_dict import DottedDict
+from .dotted_dict import ensure_dotted_dict, DottedDict
 from .path import (MULTI_LEVEL_WILDCARD, SINGLE_LEVEL_WILDCARD, SPLITCHAR,
                    contains_wildcards, pattern_is_valid)
 
@@ -43,7 +43,7 @@ def compare_pattern_and_path(path_pattern: str, content_path: str, options={'mat
         dotted_dict: The Result
     """
 
-    options = DottedDict(options)
+    options = ensure_dotted_dict(options)
 
     if contains_wildcards(content_path):
         raise Exception(

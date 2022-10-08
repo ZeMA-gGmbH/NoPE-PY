@@ -31,9 +31,10 @@ if __name__ == "__main__":
                     "nope.dispatcher.connectivity_manager",
                     "nope.eventEmitter",
                     "nope.helpers",
-                    "nope.observables",
+                    "nope.observable",
                     "nope.logger",
-                    "nope.merging"
+                    "nope.merging",
+                    "nope.pub_sub"
                     ],
           classifiers=[
               #   "Development Status :: 4 - Production/Stable",
