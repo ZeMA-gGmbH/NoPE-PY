@@ -1,4 +1,5 @@
 from ..nope_observable import NopeObservable
+from ...helpers import format_exception, offload_function_to_event_loop
 
 def test_once():
     called = 0
@@ -89,4 +90,33 @@ def test_options():
     observable.set_content(2) 
 
     assert called == 1, "Failed to skip the current value"
+
+
+async def test_wait_for():
+    import asyncio
+    import time
+
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+
+    obs = NopeObservable()
+    obs.set_content(True)
+
+    await obs.wait_for()
+
+    obs.set_content(False)
+
+    def change_value():
+        try:
+            time.sleep(0.1)
+            obs.set_content(True)
+        except Exception as e:
+            print(format_exception(e))
+
+    try:
+        offload_function_to_event_loop(change_value)
+
+        await obs.wait_for()
+    except Exception as e:
+        print(format_exception(e))
    

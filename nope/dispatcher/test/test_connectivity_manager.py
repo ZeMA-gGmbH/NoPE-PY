@@ -4,9 +4,9 @@ from ..connectivity_manager import NopeConnectivityManager
 from ...communication import get_layer
 
 
-def get_manager(_communicator=None, _id=None):
+async def get_manager(_communicator=None, _id=None):
     if _communicator is None:
-        _communicator = get_layer("event", "", False)
+        _communicator = await get_layer("event", "", False)
 
     manager = NopeConnectivityManager({
         'communicator': _communicator,
@@ -19,7 +19,7 @@ def get_manager(_communicator=None, _id=None):
 
 
 async def test_configuration():
-    _, manager = get_manager()
+    _, manager = await get_manager()
 
     await manager.ready.wait_for()
 
@@ -45,7 +45,7 @@ async def test_configuration():
 
 
 async def test_communication():
-    _communicator, _first = get_manager(_id="first")
+    _communicator, _first = await get_manager(_id="first")
 
     await _first.ready.wait_for()
 
@@ -66,7 +66,7 @@ async def test_communication():
             sub.unsubscribe()
 
     sub = _first.dispatchers.on_change.subscribe(detect_change)
-    _communicator, _second = get_manager(_communicator, "second")
+    _communicator, _second = await get_manager(_communicator, "second")
 
     await _second.ready.wait_for()
 
@@ -79,7 +79,7 @@ async def test_communication():
 
 
 async def test_sync():
-    _communicator, _first = get_manager()
+    _communicator, _first = await get_manager()
     await _first.ready.wait_for()
 
     # Now we want to simulate an delay.
@@ -101,11 +101,11 @@ async def test_sync():
 
 
 async def test_master_selection():
-    _communicator, _first = get_manager(None, "first")
+    _communicator, _first = await get_manager(None, "first")
     await _first.ready.wait_for()
     await sleep(0.1)
 
-    _communicator, _second = get_manager(_communicator, "second")
+    _communicator, _second = await get_manager(_communicator, "second")
     await _second.ready.wait_for()
 
     # Wait for the first Handshake

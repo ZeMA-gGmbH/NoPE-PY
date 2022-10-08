@@ -1,10 +1,11 @@
 from copy import deepcopy
+from .hashable import hdict, unhash, hashable
 
-DEFAULT_METHODS = dir(dict)
+DEFAULT_METHODS = dir(hdict)
 
 
-class DottedDict(dict):
-    """dot.notation access to dictionary attributes"""
+class DottedDict(hdict):
+    """dot.notation access to dictionary attributes. it is although hashable. but than it can not be edited."""
 
     def __getattr__(self, key):
         if key in DEFAULT_METHODS:
@@ -15,12 +16,12 @@ class DottedDict(dict):
     def __setattr__(self, key, value):
         if key in DEFAULT_METHODS:
             raise Exception("This would overwrite the default behavior")
-        dict.__setitem__(self, key, value)
+        hdict.__setitem__(self, key, value)
 
     def __delattr__(self, key):
         if key in DEFAULT_METHODS:
             raise Exception("This would overwrite the default behavior")
-        dict.__delitem__(self, key)
+        hdict.__delitem__(self, key)
 
     def copy(self):
         # Manually copy the contained Dict.
@@ -32,6 +33,9 @@ class DottedDict(dict):
                 cp[deepcopy(k)] = deepcopy(v)
         # use that to create a copy.
         return DottedDict(cp)
+
+
+#DottedDict = hashable(DottedDict)
 
 
 class NoneDottedDict(DottedDict):
@@ -46,6 +50,13 @@ class NoneDottedDict(DottedDict):
             except KeyError:
                 return None
 
+    def __getitem__(self, item):
+        try:
+            return hdict.__getitem__(self, item)
+        except KeyError:
+            return None
+
+
     def copy(self):
         # Manually copy the contained Dict.
         cp = {}
@@ -57,6 +68,8 @@ class NoneDottedDict(DottedDict):
         # use that to create a copy.
         return NoneDottedDict(cp)
 
+
+#NoneDottedDict = hashable(NoneDottedDict)
 
 def _convert_item(item, use_default_none: bool):
     """ Helper that converts the items to the corresponding type

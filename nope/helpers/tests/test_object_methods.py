@@ -37,23 +37,15 @@ def test_flatten_object():
     assert "deep/nested" in result
     assert result["deep/nested"] == "test"
 
-    result = flatten_object(data, {
-        "max_depth": 1,
-        "only_path_to_simple_value": False,
-    })
+    result = flatten_object(data, max_depth=1,only_path_to_simple_value= False)
     assert "deep" in result
     print(result)
     assert not ("deep/nested" in result)
 
-    result = flatten_object(data, {
-        "max_depth": 1,
-        "only_path_to_simple_value": True,
-    })
+    result = flatten_object(data, max_depth=1,only_path_to_simple_value= True)
     assert len(result) == 0
 
-    result = flatten_object(data, {
-        "prefix": "test",
-    })
+    result = flatten_object(data, prefix="test")
     assert "test/deep/nested" in result
 
 

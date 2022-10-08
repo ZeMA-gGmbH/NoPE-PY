@@ -41,6 +41,35 @@ async def test_wait_for_update():
         print(format_exception(e))
 
 
+async def test_wait_for():
+    import asyncio
+    emitter = NopeEventEmitter()
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+
+    counter = 0
+    def emit_event():
+        try:
+            for i in range(6):
+                sleep(0.01)
+                emitter.emit(counter)
+        except Exception as e:
+            print(format_exception(e))
+
+    try:
+        offload_function_to_event_loop(emit_event)
+
+        def test(value, *args):
+            nonlocal counter
+            counter += 1
+
+            return value == 5
+
+        value = await emitter.wait_for(test)
+    except Exception as e:
+        print(format_exception(e))
+
+
 def test_pausing():
     called = 0
 

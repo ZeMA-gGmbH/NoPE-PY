@@ -11,6 +11,7 @@ class MergeData:
         self.on_change = NopeEventEmitter()
         self.data = NopeObservable()
         self.data.set_content([])
+        self.error = False
         
         self.update(force=True)
 

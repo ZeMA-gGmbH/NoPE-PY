@@ -70,10 +70,8 @@ def rquery_attr(data, query):
     # get the flatten object
     _dict = flatten_object(
         data,
-        DottedDict({
-            'max_depth': max_depth,
-            'only_path_to_simple_value': False
-        })
+        max_depth=max_depth,
+        only_path_to_simple_value=False
     )
 
     # Iterate over the items and use our path matcher to extract the matching items.
@@ -161,9 +159,6 @@ def convert_data(data, props):
         )
     )
 
-    if not common_pattern:
-        raise Exception('No common pattern has been found')
-
     for prop in props:
         ret[prop.get("key")] = rquery_attr(data, prop.get("query"))
 
@@ -174,7 +169,7 @@ def convert_data(data, props):
 
         for idx, item in enumerate(items):
 
-            if common_pattern:
+            if type(common_pattern) is str:
                 result = compare_pattern_and_path(common_pattern, item["path"])
                 if result.path_to_extract_data:
                     if not (result.path_to_extract_data in helper):
@@ -207,28 +202,39 @@ def rsetattr(data, path: str, value, _SPLITCHAR: str = SPLITCHAR):
     for idx, attr in enumerate(ptrs[0:-1]):
         # Adapt the Object by going through a loop
         sub = None
+
+        accessor = int(attr) if is_int(attr) else attr
+
         try:
-            sub = obj[attr]
-        except KeyError:
+            sub = obj[accessor]
+        except:
             pass
+
+        if type(obj) is list:
+            length = len(obj)
+            while length <= accessor:
+                obj.append(None)
+                length = len(obj)
+
         if sub == None:
             # _obj is an Array and it doesnt contain the index
             # Extract the Next Element:
-            next = ptrs[idx + 1]
+            next_accessor = ptrs[idx + 1]
 
-            next_is_int = is_int(next)
+            next_is_int = is_int(next_accessor)
 
             if type(obj) is list:
                 if next_is_int:
-                    obj[attr] = list()
+                    obj[accessor] = [None] * (int(next_accessor) + 1)
                 else:
-                    obj[attr] = DottedDict({})
+                    obj[accessor] = DottedDict({})
             else:
                 if next_is_int:
-                    obj[attr] = list()
+                    obj[accessor] = [None] * (int(next_accessor) + 1)
                 else:
-                    obj[attr] = DottedDict({})
-            sub = obj[attr]
+                    obj[accessor] = DottedDict({})
+
+            sub = obj[accessor]
 
         obj = sub
 
@@ -241,7 +247,14 @@ def is_int(value) -> bool:
     Args:
         value: Value to be checked
     """
-    return type(value) is int
+    if type(value) is int:
+        return True
+
+    try:
+        int(value)
+        return True
+    except:
+        return False
 
 
 def is_float(value) -> bool:
@@ -250,7 +263,14 @@ def is_float(value) -> bool:
     Args:
         value: Value to be checked
     """
-    return type(value) is float
+    if type(value) is float:
+        return True
+
+    try:
+        float(value)
+        return True
+    except:
+        return False
 
 
 def is_number(value) -> bool:
@@ -308,15 +328,7 @@ def allows_subscripton(obj):
     return hasattr(obj, "__getitem__")
 
 
-def flatten_object(data, options=DottedDict({})):
-    _options = DottedDict({
-        'prefix': '',
-        'splitchar': SPLITCHAR,
-        'only_path_to_simple_value': False,
-        'max_depth': None
-    })
-    # Update the Options with the original ones.
-    _options.update(options)
+def flatten_object(data, prefix = "", splitchar = SPLITCHAR, only_path_to_simple_value = False, max_depth = None):
 
     ret = DottedDict()
 
@@ -328,10 +340,10 @@ def flatten_object(data, options=DottedDict({})):
         recursive_for_each(
             data,
             callback,
-            _options.prefix,
-            _options.splitchar,
-            _options.only_path_to_simple_value,
-            _options.max_depth
+            prefix,
+            splitchar,
+            only_path_to_simple_value,
+            max_depth
         )
 
     return ret
@@ -432,7 +444,7 @@ def recursive_for_each(obj, data_callback=None, prefix="", _SPLITCHAR=SPLITCHAR,
             path = str(key) if '' == prefix else prefix + _SPLITCHAR + str(key)
 
             if obj[key] != None:
-                if hasattr(obj[key], "to_json"):
+                if hasattr(obj[key], "to_json") and callable(obj[key].to_json):
                     data = obj[key].to_json()
                     recursive_for_each(
                         data,

@@ -8,8 +8,7 @@ from socket import gethostname
 
 import psutil
 
-from ...helpers import get_timestamp, ensure_dotted_dict, generate_id, DottedDict, create_interval_in_event_loop, \
-    offload_function_to_event_loop, min_of_array, format_exception
+from ...helpers import get_timestamp, ensure_dotted_dict, generate_id, DottedDict, min_of_array, format_exception, EXECUTOR
 from ...logger import define_nope_logger
 from ...merging import DictBasedMergeData
 from ...observable import NopeObservable
@@ -38,7 +37,15 @@ def _get_processor_name():
     return ""
 
 
-PROCESSOR_NAME = _get_processor_name()
+_PROCESSOR_NAME = _get_processor_name()
+
+# We want to load the file containing the current version.
+_VERSION = "1.4.1"
+try:
+    _PATH = os.path.join(os.path.dirname(__file__), "..", "..", "VERSION")
+    _VERSION = open(_PATH).read().strip()
+except:
+    pass
 
 
 class NopeConnectivityManager:
@@ -52,6 +59,8 @@ class NopeConnectivityManager:
         self._delta_time = 0
         self._cancel_check_status_task = None
         self._cancel_send_status_task = None
+
+        self._timeouts = ensure_dotted_dict({})
 
         self._communicator = options.communicator
         self._connected_since = get_timestamp()
@@ -84,19 +93,19 @@ class NopeConnectivityManager:
         return ensure_dotted_dict({
             'id': self.id,
             'env': 'python',
-            'version': '0.9.6',
-            'isMaster': self.is_master,
-            'isMasterForced': type(self._is_master) is bool,
+            'version': _VERSION,
+            'is_master': self.is_master,
+            'is_master_forced': type(self._is_master) is bool,
             'host': {
                 'cores': os.cpu_count(),
                 'cpu': {
-                    'model': PROCESSOR_NAME,
+                    'model': _PROCESSOR_NAME,
                     'speed': psutil.cpu_freq().max,
                     'usage': psutil.cpu_percent(0)
                 },
                 'os': str(platform.system()) + " " + str(platform.release()),
                 'ram': {
-                    'usedPerc': virtual_memory.percent,
+                    'used_perc': virtual_memory.percent,
                     'free': round(virtual_memory.free / 1048576),
                     'total': round(virtual_memory.total / 1048576)
                 },
@@ -104,7 +113,7 @@ class NopeConnectivityManager:
             },
             'pid': os.getpid(),
             'timestamp': self.now,
-            'connectedSince': self.connected_since,
+            'connected_since': self.connected_since,
             'status': ENopeDispatcherStatus.HEALTHY.value
         })
 
@@ -135,17 +144,15 @@ class NopeConnectivityManager:
         for info in self.dispatchers.original_data.values():
             # In here we have to use Camel-Case because we are considering
             # Camel-Case in the entire system.
-            if info.isMasterForced and not info.isMaster:
+            if info.is_master_forced and not info.is_master:
                 continue
             possible_masters.append(info)
         return possible_masters
 
     @property
     def master(self):
-        # TODO: Check implementation
-
         def check_if_master(item):
-            return item.isMaster and item.isMasterForced
+            return item.is_master and item.is_master_forced
 
         candidates = self._get_possible_master_candidates()
         masters = list(filter(check_if_master, candidates))
@@ -153,7 +160,7 @@ class NopeConnectivityManager:
             if len(masters) > 1 and self._logger:
                 self._logger.warn(
                     f"Found {len(masters)}. We now will select the one which has been online for the longest time.")
-            idx = min_of_array(candidates, 'connectedSince').index
+            idx = min_of_array(candidates, 'connected_since').index
             if idx is not None:
                 return candidates[idx]
             raise Exception('No Master has been found !')
@@ -167,7 +174,7 @@ class NopeConnectivityManager:
 
         self.ready.set_content(False)
 
-        def on_connect(connected, rest):
+        def on_connect(connected, _rest):
             if connected:
                 self._connected_since = get_timestamp()
 
@@ -177,11 +184,10 @@ class NopeConnectivityManager:
         def on_status_changed(info):
             self._external_dispatchers[info.id] = ensure_dotted_dict(info)
             if info.id != self.id:
-                # TODO: Why is this step required?
                 self._external_dispatchers[self.id] = self.info
                 self.dispatchers.update()
 
-        await self._communicator.on('StatusChanged', on_status_changed)
+        await self._communicator.on('status_changed', on_status_changed)
 
         def on_bonjour(opts):
             if self.id != opts.dispatcher_id:
@@ -189,13 +195,13 @@ class NopeConnectivityManager:
                     self._logger.debug('Remote Dispatcher "' + opts.dispatcher_id + '" went online')
                     self._async_send_status()
 
-        await self._communicator.on('Bonjour', on_bonjour)
+        await self._communicator.on('bonjour', on_bonjour)
 
         def on_aurevoir(msg):
             self._external_dispatchers.pop(msg.dispatcherId)
             self.dispatchers.update()
 
-        await self._communicator.on('Aurevoir', on_aurevoir)
+        await self._communicator.on('aurevoir', on_aurevoir)
 
         await self._async_send_status()
 
@@ -221,7 +227,7 @@ class NopeConnectivityManager:
 
             # Based on the Difference Determine the Status
             if diff > self._timeouts['remove']:
-                # remove the Dispatcher. But be quite.
+                # remove the Dispatcher. But be quiet.
                 # Perhaps more dispatchers will be removed
                 self._remove_dispatcher(status['id'], True)
                 changes = True
@@ -242,13 +248,13 @@ class NopeConnectivityManager:
 
         if changes:
             # Execute the following function parallel.
-            offload_function_to_event_loop(lambda: self.dispatchers.update())
+            EXECUTOR.call_parallel(lambda: self.dispatchers.update)
 
-    def _remove_dispatcher(self, dispatcher: str, quite=False):
+    def _remove_dispatcher(self, dispatcher: str, quiet=False):
         """ Removes a dispatcher.
         """
         dispatcher_info = self._external_dispatchers.pop(dispatcher, None)
-        if not quite:
+        if not quiet:
             self.dispatchers.update()
         if self._logger and dispatcher_info:
             self._logger.warn(
@@ -259,7 +265,7 @@ class NopeConnectivityManager:
             try:
                 info = self.info
                 self._external_dispatchers[self.id] = info
-                await self._communicator.emit('StatusChanged', info)
+                await self._communicator.emit('status_changed', info)
             except Exception as e:
                 if self._logger:
                     self._logger.error('Failled to send the status')
@@ -276,8 +282,8 @@ class NopeConnectivityManager:
         return self._external_dispatchers[_id]
 
     async def emit_bonjour(self):
-        await self._communicator.emit('Bonjour',
-                                      DottedDict({'dispatcher_id': self.id}))
+        await self._communicator.emit('bonjour',
+                                      ensure_dotted_dict({'dispatcher_id': self.id}))
 
     def reset(self):
         self._external_dispatchers.clear()
@@ -304,7 +310,7 @@ class NopeConnectivityManager:
         if self._timeouts.check_interval > 0:
             # Define a Checker, which will test the status
             # of the external Dispatchers.
-            self._cancel_check_status_task = create_interval_in_event_loop(
+            self._cancel_check_status_task = EXECUTOR.set_interval(
                 self._check_dispachter_health,
                 self._timeouts["check_interval"]
             )
@@ -312,7 +318,7 @@ class NopeConnectivityManager:
         if self._timeouts["send_alive_interval"] > 0:
             # Define a Timer, which will emit Status updates with
             # the desired delay.
-            self._cancel_send_status_task = create_interval_in_event_loop(
+            self._cancel_send_status_task = EXECUTOR.set_interval(
                 self._async_send_status,
                 self._timeouts["send_alive_interval"]
             )
@@ -330,4 +336,4 @@ class NopeConnectivityManager:
         if self._cancel_check_status_task:
             self._cancel_check_status_task()
         if not quite:
-            await self._communicator.emit('Aurevoir', DottedDict({'dispatcherId': self.id}))
+            await self._communicator.emit('aurevoir', DottedDict({'dispatcherId': self.id}))

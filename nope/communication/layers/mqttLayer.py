@@ -130,7 +130,7 @@ class MQTTLayer:
 
         _topic = self._adapt_topic()
 
-        if not (_topic.startswith(HOSTNAME + "/nope/StatusUpdate")):
+        if not (_topic.startswith(HOSTNAME + "/nope/status_changed")):
             self._logger.debug("emitting on " + _topic)
         self.client.publish(_topic, json.dumps(data), qos=self.qos)
 

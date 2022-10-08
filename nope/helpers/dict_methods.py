@@ -1,58 +1,73 @@
 from collections.abc import Iterable
 
-from .dotted_dict import DottedDict
-from .object_methods import convert_data, rgetattr, rquery_attr
-from .path import SPLITCHAR, get_least_common_path_segment
+from .dotted_dict import DottedDict, ensure_dotted_dict
+from .object_methods import convert_data, rgetattr, rquery_attr, is_object_like, flatten_object, rsetattr
+from .path import SPLITCHAR, get_least_common_path_segment, path_to_camel_case, path_to_snake_case
 from .string_methods import camel_to_snake, snake_to_camel
 
 __SENTINENTAL = object()
 
 
-def keys_to_snake(d: dict):
+def keys_to_snake(d: dict, adapt_str_values = False):
     """ helperfunction, which will change the keys to 
         snake case.
     """
     ret = {}
     for key, value in d.items():
-        ret[camel_to_snake(key)] = value
+        if adapt_str_values and type(value) is str:
+            ret[camel_to_snake(key)] = camel_to_snake(value)
+        else:
+            ret[camel_to_snake(key)] = value
 
     return ret
 
 
-def keys_to_snake_nested(d: dict):
-    """ helperfunction, which will change the keys to 
+def keys_to_snake_nested(d: dict, adapt_str_values = False):
+    """ helper function, which will change the keys to
         snake case. this will work with nested dicts as well
     """
-    ret = keys_to_snake(d)
 
-    for key, value in ret.items():
-        if type(value) is dict:
-            ret[key] = keys_to_snake_nested(value)
+    flatten = flatten_object(d, only_path_to_simple_value=True)
+
+    ret = ensure_dotted_dict({})
+
+    for k, v in flatten.items():
+        if adapt_str_values and type(v) is str:
+            rsetattr(ret, path_to_snake_case(k), camel_to_snake(v))
+        else:
+            rsetattr(ret, path_to_snake_case(k), v)
 
     return ret
 
 
-def keys_to_camel(d: dict):
+def keys_to_camel(d: dict, adapt_str_values = False):
     """ helperfunction, which will change the options to 
         camel case.
     """
     ret = {}
     for key, value in d.items():
-        ret[snake_to_camel(key)] = value
+        if adapt_str_values and type(value) is str:
+            ret[snake_to_camel(key)] = snake_to_camel(value)
+        else:
+            ret[snake_to_camel(key)] = value
 
     return ret
 
 
-def keys_to_camel_nested(options: dict):
+def keys_to_camel_nested(d: dict, adapt_str_values = False):
     """ helperfunction, which will change the options to 
         camel case. this will work with nested dicts as well
         (expecting every key contains a dict again.)
     """
-    ret = keys_to_camel(options)
+    flatten = flatten_object(d, only_path_to_simple_value=True)
 
-    for key, value in ret.items():
-        if type(value) is dict:
-            ret[key] = keys_to_camel_nested(value)
+    ret = ensure_dotted_dict({})
+
+    for k, v in flatten.items():
+        if adapt_str_values and type(v) is str:
+            rsetattr(ret, path_to_camel_case(k), snake_to_camel(v))
+        else:
+            rsetattr(ret, path_to_camel_case(k), v)
 
     return ret
 
@@ -147,13 +162,13 @@ def transform_dict(d, path_extracted_value, path_extracted_key):
     props = []
     only_valid_props = True
 
-    if type(path_extracted_key) == 'string':
+    if type(path_extracted_key) is str:
         props.append(DottedDict({'key': 'key', 'query': path_extracted_key}))
         only_valid_props = only_valid_props and (len(path_extracted_key) > 0)
     else:
         only_valid_props = False
 
-    if type(path_extracted_value) == 'string':
+    if type(path_extracted_value) is str:
         props.append(DottedDict(
             {'key': 'value', 'query': path_extracted_value}))
         only_valid_props = only_valid_props and (len(path_extracted_value) > 0)

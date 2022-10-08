@@ -59,3 +59,6 @@ def is_iterable(_list_like):
     if type(_list_like) is str:
         return False
     return isinstance(_list_like, Iterable)
+
+def is_list(obj) -> bool:
+    return type(obj) in (list,)

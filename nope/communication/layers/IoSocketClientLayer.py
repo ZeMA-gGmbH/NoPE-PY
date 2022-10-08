@@ -11,7 +11,7 @@ class SocketIoEmitter:
         self.uri = uri
         self.uri = self.uri if self.uri.startswith('http://') else 'http://' + self.uri
 
-        self.logger = define_nope_logger(logger, "core.mirror.io")
+        self._logger = define_nope_logger(logger, "core.mirror.io")
 
         self._client = socketio.Client()
         self._client.connect(self.uri)

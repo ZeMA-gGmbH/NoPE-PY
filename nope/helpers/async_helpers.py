@@ -1,6 +1,7 @@
 import asyncio
 from .prints import format_exception
-
+from functools import partial
+from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 
 def is_async_function(func) -> bool:
     """ Test whether the function is defined async or not.
@@ -28,54 +29,98 @@ def get_or_create_eventloop():
             asyncio.set_event_loop(loop)
             return asyncio.get_event_loop()
 
+def get_or_create_eventloop():
+    """ Creates or gets the default Eventloop.
 
-def create_interval_in_event_loop(func, interval_ms, *args, **kwargs):
-    """ Helper, which creates an
-
+    Returns:
+        EventLoop: The determine Eventloop
     """
-
-    coroutine = func if is_async_function(func) else sync_function_to_async_function(func)
-
-    async def interval(timeout):
-        while True:
-            await asyncio.sleep(timeout)
-            await coroutine(*args, **kwargs)
-
-    task = asyncio.create_task(interval(interval_ms / 1000.0))
-
-    return lambda: task.cancel()
+    try:
+        return asyncio.get_event_loop()
+    except RuntimeError as ex:
+        if "There is no current event loop in thread" in str(ex):
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            return asyncio.get_event_loop()
 
 
-def create_timeout_in_event_loop(func, timeout_ms, *args, **kwargs):
-    """ Helper, which creates a delayed call of the function.
+class NopeExecutor:
 
-    """
+    def __init__(self, loop: asyncio.AbstractEventLoop = None, executor: ThreadPoolExecutor | ProcessPoolExecutor = None):
+        self._loop: asyncio.AbstractEventLoop = loop
+        self._executor: ThreadPoolExecutor | ProcessPoolExecutor = executor
+        if self._loop is None:
+            self._loop = get_or_create_eventloop()
 
-    coroutine = func if is_async_function(func) else sync_function_to_async_function(func)
+        asyncio.set_event_loop(self._loop)
 
-    async def delay(timeout):
-        await asyncio.sleep(timeout)
-        await coroutine(*args, **kwargs)
+    @property
+    def loop(self) -> asyncio.AbstractEventLoop:
+        return self._loop
 
-    task = asyncio.create_task(delay(timeout_ms / 1000.0))
+    def use_thread_pool(self, max_workers = None):
+        self._executor = ThreadPoolExecutor(max_workers=max_workers)
 
-    return lambda: task.cancel()
+    def use_multi_process_pool(self, max_workers = None):
+        self._executor = ProcessPoolExecutor(max_workers=max_workers)
+
+    def dispose(self, wait=True, cancel_futures=False):
+        if self._executor:
+            self._executor.shutdown(wait=wait, cancel_futures=cancel_futures)
+
+        self.loop.stop()
+        self.loop.close()
+
+    def run(self):
+        try:
+            self.loop.run_forever()
+        except KeyboardInterrupt:
+            self.dispose()
+
+    def set_timeout(self, func, timeout_ms: int, *args, **kwargs):
+        function_to_use = self._wrap_func_if_required(func)
+
+        async def timeout():
+            await asyncio.sleep(timeout_ms / 1000.0)
+            await function_to_use(*args, **kwargs)
+
+        task = asyncio.ensure_future(timeout())
+
+        return task
+
+    def set_interval(self, func, timeout_ms: int, *args, **kwargs):
+        function_to_use = self._wrap_func_if_required(func)
+
+        async def interval():
+            while True:
+                await asyncio.sleep(timeout_ms/1000.0)
+                print("here")
+                await function_to_use(*args, **kwargs)
+
+        task = asyncio.ensure_future(interval())
+
+        return task
+
+    def call_parallel(self, func, *args, **kwargs) -> asyncio.Task | asyncio.Future:
+        function_to_use = self._wrap_func_if_required(func)
+        task = asyncio.ensure_future(function_to_use(*args, **kwargs))
+        return task
+
+    def _wrap_func_if_required(self, func):
+        if not callable(func):
+            raise TypeError("The parameter 'func' is not callable")
+
+        if not asyncio.iscoroutinefunction(func):
+            async def run(*args, **kwargs):
+                pfunc = partial(func, *args, **kwargs)
+                return await self._loop.run_in_executor(self._executor, pfunc)
+            return run
+        else:
+            return func
 
 
-def sync_function_to_async_function(func):
-    """ Helper to convert a synchronous function to an async function (coroutine) in an extra thread.
-    """
-    return lambda *args, **kwargs: asyncio.to_thread(func, *args, **kwargs)
-
-
-def offload_function_to_event_loop(func, *args, **kwargs):
-    """ Helper Function to perform a Method in a separate Thread,
-        Therefore you will receive an async function which will be
-        called in the background.
-    """
-
-    asyncio.ensure_future(sync_function_to_async_function(func)(*args, **kwargs))
-
+EXECUTOR = NopeExecutor()
+EXECUTOR.use_thread_pool()
 
 def Promise(callback):
     """ Creates a NodeJS like Promise
@@ -100,9 +145,7 @@ def Promise(callback):
             return
         future.set_result(value)
 
-    if not is_async_function(callback):
-        offload_function_to_event_loop(callback, resolve, reject)
-    else:
-        asyncio.ensure_future(callback(resolve, reject))
+    # Now we want call the callback in an extra thread.
+    EXECUTOR.call_parallel(callback,resolve, reject)
 
     return future

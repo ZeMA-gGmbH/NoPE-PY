@@ -1,10 +1,28 @@
 from .dotted_dict import DottedDict
-from .string_methods import replace_all
+from .string_methods import replace_all, camel_to_snake, snake_to_camel
 
 SPLITCHAR = '/'
 SINGLE_LEVEL_WILDCARD = '+'
 MULTI_LEVEL_WILDCARD = '#'
 
+
+def path_to_snake_case(path:str, splitchar = SPLITCHAR) -> str:
+    # Join the splitchar with the adapted strings.
+    return splitchar.join(
+        map(
+            lambda item: camel_to_snake(item),
+            path.split(splitchar)
+        )
+    )
+
+def path_to_camel_case(path:str, splitchar = SPLITCHAR) -> str:
+    # Join the splitchar with the adapted strings.
+    return splitchar.join(
+        map(
+            lambda item: snake_to_camel(item),
+            path.split(splitchar)
+        )
+    )
 
 def convert_path(path: str) -> str:
     """ converts the path 
@@ -76,9 +94,13 @@ def _get_least_common_path_segment(path01, path02, opts=DottedDict({})):
     ret = []
     idx = 0
 
-    _max = max(len(p1), len(p2))
+    l1 = len(p1)
+    l2 = len(p2)
+
+    _max = min(l1, l2)
 
     while idx < _max:
+
         if p1[idx] == p2[idx]:
             ret += [p1[idx]]
         elif opts.consider_single_level:

@@ -1,7 +1,13 @@
 from nope.communication import  get_layer
 from nope.dispatcher import NopeConnectivityManager
 from nope.helpers import get_or_create_eventloop
+from nope.merging import DictBasedMergeData
 from asyncio import sleep
+
+
+
+_mapping_of_dispatchers_and_services = dict()
+services = DictBasedMergeData(_mapping_of_dispatchers_and_services, 'services/+', 'services/+/id')
 
 def get_manager(_communicator=None, _id=None):
     if _communicator is None:
@@ -36,6 +42,8 @@ async def main():
 
     await sleep(0.01)
     assert _first.is_master, "First should be master"
+
+    print(_first.master)
 
 
     
