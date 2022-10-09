@@ -3,7 +3,7 @@
 # @email m.karkowski@zema.de
 
 
-def generate_assignment_checker(selector, core):
+def generateAssignmentChecker(selector, core):
     # Generate a function which will return true.
     async def generate_true():
         return True
@@ -22,7 +22,7 @@ def generate_assignment_checker(selector, core):
         return dispatcher_matching
 
     elif selector == 'host':
-        host = core.connectivity_manager.info.host.name
+        host = core.connectivityManager.info.host.name
 
         async def host_matching(_module, used_dispatcher):
             return used_dispatcher.host.name == host

@@ -3,7 +3,7 @@ from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 from functools import partial
 
 
-def get_or_create_eventloop():
+def getOrCreateEventloop():
     """ Creates or gets the default Eventloop.
 
     Returns:
@@ -25,7 +25,7 @@ class NopeExecutor:
         self._loop: asyncio.AbstractEventLoop = loop
         self._executor: ThreadPoolExecutor | ProcessPoolExecutor = executor
         if self._loop is None:
-            self._loop = get_or_create_eventloop()
+            self._loop = getOrCreateEventloop()
 
         asyncio.set_event_loop(self._loop)
 
@@ -33,10 +33,10 @@ class NopeExecutor:
     def loop(self) -> asyncio.AbstractEventLoop:
         return self._loop
 
-    def use_thread_pool(self, max_workers=None):
+    def useThreadPool(self, max_workers=None):
         self._executor = ThreadPoolExecutor(max_workers=max_workers)
 
-    def use_multi_process_pool(self, max_workers=None):
+    def useMultiProcessPool(self, max_workers=None):
         self._executor = ProcessPoolExecutor(max_workers=max_workers)
 
     def dispose(self, wait=True, cancel_futures=False):
@@ -52,8 +52,8 @@ class NopeExecutor:
         except KeyboardInterrupt:
             self.dispose()
 
-    def set_timeout(self, func, timeout_ms: int, *args, **kwargs):
-        function_to_use = self._wrap_func_if_required(func)
+    def setTimeout(self, func, timeout_ms: int, *args, **kwargs):
+        function_to_use = self._wrapFuncIfRequired(func)
 
         async def timeout():
             await asyncio.sleep(timeout_ms / 1000.0)
@@ -63,8 +63,8 @@ class NopeExecutor:
 
         return task
 
-    def set_interval(self, func, timeout_ms: int, *args, **kwargs):
-        function_to_use = self._wrap_func_if_required(func)
+    def setInterval(self, func, timeout_ms: int, *args, **kwargs):
+        function_to_use = self._wrapFuncIfRequired(func)
 
         async def interval():
             while True:
@@ -75,13 +75,13 @@ class NopeExecutor:
 
         return task
 
-    def call_parallel(self, func, *args, **kwargs) -> asyncio.Task | asyncio.Future:
-        function_to_use = self._wrap_func_if_required(func)
+    def callParallel(self, func, *args, **kwargs) -> asyncio.Task | asyncio.Future:
+        function_to_use = self._wrapFuncIfRequired(func)
 
         task = self.loop.create_task(function_to_use(*args, **kwargs))
         return task
 
-    def _wrap_func_if_required(self, func):
+    def _wrapFuncIfRequired(self, func):
         if not callable(func):
             raise TypeError("The parameter 'func' is not callable")
 
@@ -99,7 +99,7 @@ class NopeExecutor:
             return func
 
 EXECUTOR = NopeExecutor()
-EXECUTOR.use_thread_pool()
+EXECUTOR.useThreadPool()
 
 
 def long_sync():
@@ -110,9 +110,9 @@ def long_sync():
 
 
 for i in range(10):
-    EXECUTOR.call_parallel(long_sync)
+    EXECUTOR.callParallel(long_sync)
 
-t = EXECUTOR.set_interval(print, 100, "hello world")
-EXECUTOR.set_timeout(lambda *args: t.cancel(), 500)
+t = EXECUTOR.setInterval(print, 100, "hello world")
+EXECUTOR.setTimeout(lambda *args: t.cancel(), 500)
 
 EXECUTOR.run()

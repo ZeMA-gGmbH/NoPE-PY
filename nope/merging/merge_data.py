@@ -1,64 +1,64 @@
 from ..event_emitter import NopeEventEmitter
-from ..helpers import DottedDict, extract_unique_values, transform_dict, determine_difference
+from ..helpers import DottedDict, extractUniqueValues, transform_dict, determineDifference
 from ..observable import NopeObservable
 
 
 class MergeData:
 
-    def __init__(self, original_data, _extract_data):
-        self.original_data = original_data
-        self._extract_data = _extract_data
-        self.on_change = NopeEventEmitter()
+    def __init__(self, originalData, _extractData):
+        self.originalData = originalData
+        self._extractData = _extractData
+        self.onChange = NopeEventEmitter()
         self.data = NopeObservable()
-        self.data.set_content([])
+        self.data.setContent([])
         self.error = False
 
         self.update(force=True)
 
     def update(self, data=None, force=False):
         if data != None:
-            self.original_data = data
-        after_adding = self._extract_data(self.original_data)
-        diff = determine_difference(self.data.get_content(), after_adding)
+            self.originalData = data
+        after_adding = self._extractData(self.originalData)
+        diff = determineDifference(self.data.getContent(), after_adding)
         if force or ((len(diff.removed) > 0) or len(diff.added) > 0):
-            self.data.set_content(list(after_adding))
-            self.on_change.emit(DottedDict({'added': list(diff.added), 'removed': list(diff.removed)}))
+            self.data.setContent(list(after_adding))
+            self.onChange.emit(DottedDict({'added': list(diff.added), 'removed': list(diff.removed)}))
 
     def dispose(self):
         self.data.dispose()
-        self.on_change.dispose()
+        self.onChange.dispose()
 
 
 class DictBasedMergeData(MergeData):
 
-    def __init__(self, original_data, _path='', _path_key=None):
+    def __init__(self, originalData, _path='', _pathKey=None):
         def callback(m):
-            return extract_unique_values(m, _path, _path_key)
+            return extractUniqueValues(m, _path, _pathKey)
 
         self._path = _path
-        self._path_key = _path_key
-        self.amount_of = dict()
+        self._pathKey = _pathKey
+        self.amountOf = dict()
         self.simplified = dict()
-        self.key_mapping = dict()
-        self.key_mapping_reverse = dict()
+        self.keyMapping = dict()
+        self.keyMappingreverse = dict()
         self.conflicts = dict()
-        self.org_key_to_extracted_value = dict()
+        self.orgKeyToExtractedValue = dict()
         self.extracted_key = []
         self.extracted_value = []
 
-        super().__init__(original_data, callback)
+        super().__init__(originalData, callback)
 
     def update(self, data=None, force=False):
         if data != None:
-            self.original_data = data
-        result = transform_dict(self.original_data, self._path, self._path_key)
+            self.originalData = data
+        result = transform_dict(self.originalData, self._path, self._pathKey)
 
         self.simplified = result.extracted_map
-        self.amount_of = result.amount_of
-        self.key_mapping = result.key_mapping
-        self.key_mapping_reverse = result.key_mapping_reverse
+        self.amountOf = result.amountOf
+        self.keyMapping = result.keyMapping
+        self.keyMappingreverse = result.keyMappingreverse
         self.conflicts = result.conflicts
-        self.org_key_to_extracted_value = result.org_key_to_extracted_value
+        self.orgKeyToExtractedValue = result.orgKeyToExtractedValue
         self.extracted_key = [*self.simplified.keys()]
         self.extracted_value = [*self.simplified.values()]
 

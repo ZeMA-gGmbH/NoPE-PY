@@ -5,7 +5,7 @@
 import json
 import os
 
-from nope.helpers import dynamic_import, format_exception
+from nope.helpers import dynamicImport, formatException
 
 
 def list_packages(path: str):
@@ -18,20 +18,20 @@ def list_packages(path: str):
         for name in files:
             if name == "__init__.py":
                 # Determine the Path to the File.
-                path_to_file = os.path.join(root, name)
+                pathToFile = os.path.join(root, name)
 
                 try:
                     # Dynamically load the File.
-                    module = dynamic_import(
-                        name, path_to_file)
+                    module = dynamicImport(
+                        name, pathToFile)
 
                     # Add the Path:
-                    module.DESCRIPTION["path"] = path_to_file
+                    module.DESCRIPTION["path"] = pathToFile
                     # Add it to the packages
                     packages.append(module.DESCRIPTION)
                 except Exception as e:
-                    print("Failed to load", path_to_file)
-                    print(format_exception(e))
+                    print("Failed to load", pathToFile)
+                    print(formatException(e))
                     pass
 
     return packages

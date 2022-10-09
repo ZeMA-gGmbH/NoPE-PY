@@ -7,9 +7,9 @@ import asyncio
 from ..connectivity_manager import NopeConnectivityManager
 from ...communication import Bridge
 from ...event_emitter import NopeEventEmitter
-from ...helpers import generate_id, ensure_dotted_dict, is_async_function, \
-    format_exception, DottedDict, SPLITCHAR, is_iterable, get_or_create_eventloop, is_list, EXECUTOR
-from ...logger import define_nope_logger
+from ...helpers import generateId, ensureDottedAccess, isAsyncFunction, \
+    formatException, DottedDict, SPLITCHAR, isIterable, getOrCreateEventloop, isList, EXECUTOR
+from ...logger import defineNopeLogger
 from ...merging import DictBasedMergeData
 from ...observable import NopeObservable
 
@@ -22,57 +22,56 @@ class WrappedFunction:
         self._func = func
         self._unregister = unregister
         self.id = _id
-        self.is_async = is_async_function(func)
+        self.isAsync = isAsyncFunction(func)
 
     def __call__(self, *args, **kwarg):
-        return EXECUTOR.call_parallel(self._func, *args, **kwarg)
+        return EXECUTOR.callParallel(self._func, *args, **kwarg)
 
 
 class NopeRpcManager:
 
-    def __init__(self, options, default_selector, _id=None, _connectivity_manager=None, loop=None):
+    def __init__(self, options, defaultSelector, _id=None, _connectivityManager=None):
 
-        options = ensure_dotted_dict(options)
+        options = ensureDottedAccess(options)
 
         self.options = options
-        self._default_selector = default_selector
+        self._defaultSelector = defaultSelector
         self._id = _id
         self._communicator: Bridge = options.communicator
-        self._connectivity_manager: NopeConnectivityManager = _connectivity_manager
-        self._loop = loop if loop is not None else get_or_create_eventloop()
+        self._connectivityManager: NopeConnectivityManager = _connectivityManager
 
-        self._running_internal_requested_tasks = dict()
-        self._registered_services = dict()
+        self._runningInternalRequestedTasks = dict()
+        self._registeredServices = dict()
 
         if self._id is None:
-            self._id = generate_id()
+            self._id = generateId()
 
-        if self._connectivity_manager is None:
-            self._connectivity_manager = NopeConnectivityManager(options, self.id)
+        if self._connectivityManager is None:
+            self._connectivityManager = NopeConnectivityManager(options, self.id)
 
-        self._logger = define_nope_logger(options.logger, 'core.rpc-manager')
+        self._logger = defineNopeLogger(options.logger, 'core.rpc-manager')
         self.ready = NopeObservable()
-        self.ready.set_content(False)
+        self.ready.setContent(False)
 
         self.__warned = False
 
-        self._mapping_of_dispatchers_and_services = dict()
-        self.services = DictBasedMergeData(self._mapping_of_dispatchers_and_services, 'services/+', 'services/+/id')
-        self.on_cancel_task = NopeEventEmitter()
+        self._mappingOfDispatchersAndServices = dict()
+        self.services = DictBasedMergeData(self._mappingOfDispatchersAndServices, 'services/+', 'services/+/id')
+        self.onCancelTask = NopeEventEmitter()
 
         if self._logger:
             self._logger.info(f'manager created id={self.id}')
 
-        self._running_external_requested_tasks = dict()
+        self._runningExternalRequestedTasks = dict()
 
         self.reset()
-        asyncio.ensure_future(self._init())
+        EXECUTOR.callParallel(self._init)
 
     @property
     def id(self):
         return self._id
 
-    def _generate_promise(self, task_id: str):
+    def _generatePromise(self, taskId: str):
         """Function to create a Nope Promise (This is cancelable).
 
 
@@ -80,31 +79,31 @@ class NopeRpcManager:
             Observable: A new Nope Promise.
         """
 
-        future = self._loop.create_future()
-        setattr(future, 'task_id', task_id)
-        future.task_id = task_id
+        future = EXECUTOR.loop.create_future()
+        setattr(future, 'taskId', taskId)
+        future.taskId = taskId
 
         def _cancel():
             pass
 
-        setattr(future, 'cancel_callback', _cancel)
+        setattr(future, 'cancelCallback', _cancel)
 
         return future
 
-    def update_dispatcher(self, msg):
-        self._mapping_of_dispatchers_and_services[msg.dispatcher] = msg
+    def updateDispatcher(self, msg):
+        self._mappingOfDispatchersAndServices[msg.dispatcher] = msg
         self.services.update()
 
-    async def _handle_external_request(self, data, func: WrappedFunction=None):
+    async def _handleExternalRequest(self, data, func: WrappedFunction=None):
         try:
             if not callable(func):
-                if data.function_id not in self._registered_services:
+                if data.functionId not in self._registeredServices:
                     return
-                func = self._registered_services[data.function_id].get("func", None)
+                func = self._registeredServices[data.functionId].get("func", None)
 
             if self._logger:
                 self._logger.debug(
-                    f'Dispatcher "{self.id}" received request: "{data.function_id}" -> task: "{data.task_id}"')
+                    f'Dispatcher "{self.id}" received request: "{data.functionId}" -> task: "{data.taskId}"')
 
             if callable(func):
                 # Now we check, if we have to perform test, whether
@@ -119,7 +118,7 @@ class NopeRpcManager:
 
                 def on_cancel(reason, *args):
                     nonlocal observer
-                    if reason.task_id == data.task_id:
+                    if reason.taskId == data.taskId:
 
                         for cb in cbs:
                             cb(reason)
@@ -127,7 +126,7 @@ class NopeRpcManager:
                         observer.unsubscribe()
                         observer = None
 
-                observer = self.on_cancel_task.subscribe(on_cancel)
+                observer = self.onCancelTask.subscribe(on_cancel)
 
                 # extract the arguments etc.
                 # create an empty list and fill it afterwards
@@ -137,7 +136,7 @@ class NopeRpcManager:
 
                 _result = _DEFAULT_RESULT
 
-                if not func.is_async and not self.__warned and self._logger:
+                if not func.isAsync and not self.__warned and self._logger:
                     self._logger.warn(
                         "!!! You have provided synchronous functions. They may break NoPE. Use them with care !!!")
                     self._logger.warn(
@@ -145,12 +144,12 @@ class NopeRpcManager:
                     # We only want to warn the user once.
                     self.__warned = True
 
-                result_promise = func(*args)
+                resultPromise = func(*args)
 
                 try:
-                    if result_promise is not None and getattr(result_promise, 'cancel_callback', False):
+                    if resultPromise is not None and getattr(resultPromise, 'cancelCallback', False):
                         def _cancel_main(reason):
-                            result_promise.cancel_callback(reason)
+                            resultPromise.cancelCallback(reason)
 
                         cbs.append(_cancel_main)
 
@@ -159,23 +158,23 @@ class NopeRpcManager:
                     # the provided promise.
                     pass
 
-                self._running_external_requested_tasks[data.task_id] = data.requested_by
+                self._runningExternalRequestedTasks[data.taskId] = data.requestedBy
 
                 # Wait for the Result to finish.
-                _result = await result_promise
+                _result = await resultPromise
 
                 
                 # Define the Result message
                 result = {
                     'result': _result if _result is not _DEFAULT_RESULT else None,
-                    'task_id': data.task_id,
+                    'taskId': data.taskId,
                     'type': 'response'
                 }
 
                 if self._logger:
                     self._logger.debug(
-                        'Internally executed requested Function for Task: ' + str(data['task_id']) + " - Function \"" +
-                        data['function_id'] + '\". Sending result on ' + data['result_sink'])
+                        'Internally executed requested Function for Task: ' + str(data['taskId']) + " - Function \"" +
+                        data['functionId'] + '\". Sending result on ' + data['resultSink'])
 
                 # Use the communicator to publish the result.
                 await self._communicator.emit("rpc_response", result)
@@ -183,19 +182,19 @@ class NopeRpcManager:
         except Exception as error:
 
             if self._logger:
-                self._logger.error(f'Dispatcher "{self.id}" failed with request: "{data.task_id}"')
-                self._logger.error(format_exception(error))            
+                self._logger.error(f'Dispatcher "{self.id}" failed with request: "{data.taskId}"')
+                self._logger.error(formatException(error))            
             else:
-                print(format_exception(error))
+                print(formatException(error))
 
-            self._running_external_requested_tasks.pop(data.requested_by,None)
+            self._runningExternalRequestedTasks.pop(data.requestedBy,None)
 
             result = {
                 'error': {
                     'error': str(error),
                     'msg': str(error)
                 },
-                'task_id': data.task_id,
+                'taskId': data.taskId,
                 'type': 'response'
             }
 
@@ -205,18 +204,18 @@ class NopeRpcManager:
     async def _handle_external_response(self, data):
         try:
             # Extract the Task
-            task: DottedDict = self._running_internal_requested_tasks.get(data.task_id, None)
+            task: DottedDict = self._runningInternalRequestedTasks.get(data.taskId, None)
 
             if task:
 
                 # Based on the Result of the Remote => proceed.
                 # Either throw an error or forward the result
-                self._running_internal_requested_tasks.pop(data.task_id)
+                self._runningInternalRequestedTasks.pop(data.taskId)
 
                 if data.error:
                     if self._logger:
                         self._logger.error(
-                            "Failed with task " + data['task_id'])
+                            "Failed with task " + data['taskId'])
                         self._logger.error("Reason: " + data['error']['msg'])
                         self._logger.exception(data['error'])
 
@@ -225,7 +224,7 @@ class NopeRpcManager:
 
                     if "timeout" in task and task.timeout is not None:
                         # Assume, that the timeout has been
-                        # defined with set_timeout
+                        # defined with setTimeout
                         task.timeout.cancel()
 
                     return True
@@ -233,7 +232,7 @@ class NopeRpcManager:
                 else:
                     if self._logger:
                         self._logger.debug('Got sucessfull result for Task: "' + str(
-                            data['task_id']) + '". Forwarding Result to Future.')
+                            data['taskId']) + '". Forwarding Result to Future.')
 
                     task.future.set_result(data.result)
 
@@ -248,102 +247,102 @@ class NopeRpcManager:
         except Exception as error:
             if self._logger:
                 self._logger.error("Error during handling an external response")
-                self._logger.error(format_exception(error))            
+                self._logger.error(formatException(error))            
             else:
-                print(format_exception(error))
+                print(formatException(error))
 
         return False
 
-    def _send_available_services(self):
+    def _sendAvailableServices(self):
         """ Function used to update the Available Services.
         """
 
-        message = ensure_dotted_dict({
+        message = ensureDottedAccess({
             "dispatcher": self.id,
-            "services": list(map(lambda item: item.options, self._registered_services.values()))
+            "services": list(map(lambda item: item.options, self._registeredServices.values()))
         })
 
         if self._logger:
             self._logger.debug("sending available services")
 
-        EXECUTOR.call_parallel(self._communicator.emit,"services_changed", message)
+        EXECUTOR.callParallel(self._communicator.emit,"services_changed", message)
 
     async def _init(self):
-        self.ready.set_content(False)
+        self.ready.setContent(False)
 
-        await self._communicator.connected.wait_for()
-        await self._connectivity_manager.ready.wait_for()
+        await self._communicator.connected.waitFor()
+        await self._connectivityManager.ready.waitFor()
 
-        def on_services_changed(msg):
+        def onServicesChanged(msg):
             try:
-                self.update_dispatcher(msg)
+                self.updateDispatcher(msg)
             except Exception as error:
                 if self._logger:
                     self._logger.error("Failed to add the new services")
-                    self._logger.error(format_exception(error))
+                    self._logger.error(formatException(error))
                 else:
-                    print(format_exception(error))
+                    print(formatException(error))
 
-        await self._communicator.on("services_changed", on_services_changed)
-        await self._communicator.on("rpc_request", lambda data: EXECUTOR.call_parallel(self._handle_external_request,data))
-        await self._communicator.on("rpc_response", lambda data: EXECUTOR.call_parallel(self._handle_external_response,data))
+        await self._communicator.on("services_changed", onServicesChanged)
+        await self._communicator.on("rpc_request", lambda data: EXECUTOR.callParallel(self._handleExternalRequest,data))
+        await self._communicator.on("rpc_response", lambda data: EXECUTOR.callParallel(self._handle_external_response,data))
 
         def on_cancelation(msg):
             if msg.dispatcher == self._id:
-                self.on_cancel_task.emit(msg)
+                self.onCancelTask.emit(msg)
 
         await self._communicator.on("task_cancelation", on_cancelation)
 
         def on_unregister(msg):
-            if msg.identifier in self._registered_services:
-                self.unregister_service(msg.identifier)
+            if msg.identifier in self._registeredServices:
+                self.unregisterService(msg.identifier)
 
         await self._communicator.on("rpc_unregister", on_unregister)
 
-        def on_dispatchers_changed(changes, *args):
+        def onDispatchersChanged(changes, *args):
             if len(changes.added):
                 # If there are dispatchers online,
                 # We will emit our available services.
-                self._send_available_services()
+                self._sendAvailableServices()
             if len(changes.removed):
                 for rm in changes.removed:
-                    self.remove_dispatcher(rm)
+                    self.removeDispatcher(rm)
 
-        self._connectivity_manager.dispatchers.on_change.subscribe(on_dispatchers_changed)
+        self._connectivityManager.dispatchers.onChange.subscribe(onDispatchersChanged)
 
         if self._logger:
             self._logger.info(f"core.rpc-manager {self._id} initialized!")
 
-        self.ready.set_content(True)
+        self.ready.setContent(True)
 
-    def remove_dispatcher(self, dispatcher_id: str):
-        self._mapping_of_dispatchers_and_services.pop(dispatcher_id)
+    def removeDispatcher(self, dispatcherId: str):
+        self._mappingOfDispatchersAndServices.pop(dispatcherId)
         self.services.update()
 
         # Now we need to cancel every Task of the dispatcher,
         # which isnt present any more.
-        self.cancel_running_tasks_of_dispatcher(dispatcher_id, Exception(
+        self.cancelRunningTasksOfDispatcher(dispatcherId, Exception(
             "Dispatcher has been removed! Tasks cannot be executed any more."))
         # Stop executing the requested Tasks.
-        self.cancel_requested_tasks_of_dispatcher(dispatcher_id, Exception(
+        self.cancelRequestedTasksOfDispatcher(dispatcherId, Exception(
             "Dispatcher has been removed! Tasks are not required any more."))
 
-    async def cancel_task(self, task_id: str, reason, quiet=False):
-        if task_id in self._running_internal_requested_tasks:
-            task = self._running_internal_requested_tasks[task_id]
+    async def cancelTask(self, taskId: str, reason, quiet=False):
+        if taskId in self._runningInternalRequestedTasks:
+            task = self._runningInternalRequestedTasks[taskId]
 
             # Delete the task
-            self._running_internal_requested_tasks.pop(task_id)
+            self._runningInternalRequestedTasks.pop(taskId)
 
             # Propagate the Cancellation (internally):
             task.future.set_exception(reason)
 
             # Propagate the Cancellation externally.
             # Therefore use the desired Mode.
-            await self._communicator.emit("task_cancelation", ensure_dotted_dict({
+            await self._communicator.emit("task_cancelation", ensureDottedAccess({
                 "dispatcher": self._id,
                 "reason": str(reason),
-                "task_id": task_id,
+                "taskId": taskId,
                 "quiet": quiet
             }))
 
@@ -351,165 +350,165 @@ class NopeRpcManager:
         # Task hasnt been found => Cancel the Task.
         return False
 
-    async def _chancel_helper(self, tasks_to_cancel: set, reason):
+    async def _cancelHelper(self, tasksToCancel: set, reason):
         """ Helper Function, used to close all tasks with a specific service.
         """
-        if len(tasks_to_cancel) > 0:
-            for task_id in tasks_to_cancel:
-                await self.cancel_task(task_id, reason)
+        if len(tasksToCancel) > 0:
+            for taskId in tasksToCancel:
+                await self.cancelTask(taskId, reason)
 
-    async def cancel_running_tasks_of_service(self, service_name: str, reason):
+    async def cancelRunningTasksOfService(self, serviceName: str, reason):
         """ Helper Function, used to close all tasks with a specific service.
         """
         # Set containing all Tasks, that has to be canceled
-        to_cancel = set()
+        toCancel = set()
 
         # Filter all Tasks that should be canceled.
-        for task_id, task in self._running_internal_requested_tasks.items():
-            if task.service_name == service_name:
-                to_cancel.add(task_id)
+        for taskId, task in self._runningInternalRequestedTasks.items():
+            if task.serviceName == serviceName:
+                toCancel.add(taskId)
 
-        return await self._chancel_helper(to_cancel, reason)
+        return await self._cancelHelper(toCancel, reason)
 
-    async def cancel_requested_tasks_of_dispatcher(self, dispatcher: str, reason):
+    async def cancelRequestedTasksOfDispatcher(self, dispatcher: str, reason):
         """ Helper to cancel all Tasks which have been requested by a Dispatcher.
         """
         # Set containing all Tasks, that has to be canceled
-        to_cancel = set()
+        toCancel = set()
 
-        for task_id, requested_by in self._running_external_requested_tasks.items():
-            if requested_by == dispatcher:
-                to_cancel.add(task_id)
+        for taskId, requestedBy in self._runningExternalRequestedTasks.items():
+            if requestedBy == dispatcher:
+                toCancel.add(taskId)
 
-        return await self._chancel_helper(to_cancel, reason)
+        return await self._cancelHelper(toCancel, reason)
 
 
-    async def cancel_running_tasks_of_dispatcher(self, dispatcher: str, reason):
+    async def cancelRunningTasksOfDispatcher(self, dispatcher: str, reason):
         """ Cancels all Tasks of the given Dispatcher
         """
-        to_cancel = set()
-        for task_id, task in self._running_external_requested_tasks.items():
+        toCancel = set()
+        for taskId, task in self._runningExternalRequestedTasks.items():
             if task.target == dispatcher:
-                to_cancel.add(task_id)
+                toCancel.add(taskId)
 
-        return await self._chancel_helper(to_cancel, reason)
+        return await self._cancelHelper(toCancel, reason)
 
-    def service_exists(self, service_name: str):
+    def serviceExists(self, serviceName: str):
         """ Function to test if a specific Service exists.
         """
-        return service_name in self.services.amount_of and self.services.amount_of[service_name] > 0
+        return serviceName in self.services.amountOf and self.services.amountOf[serviceName] > 0
 
-    def _get_service_name(self, _id: str, _type: str):
+    def _getServiceName(self, _id: str, _type: str):
         if _type in ("request", "response"):
             return _id if _id.startswith(f"{_type}/") else f"{_type}/{_id}"
         raise Exception("For the parameter 'type' the values: 'request' and 'response' are allowed!")
 
-    def unregister_service(self, func):
-        id_of_func: str = ""
+    def unregisterService(self, func):
+        idOfFunc: str = ""
         if type(func) is str:
-            if self.options.force_using_valid_var_names:
-                id_of_func = varify_path(func)
+            if self.options.forceUsingValidVarNames:
+                idOfFunc = varifyPath(func)
             else:
-                id_of_func = func
+                idOfFunc = func
         else:
-            id_of_func = func.id
+            idOfFunc = func.id
 
-        self._send_available_services()
+        self._sendAvailableServices()
 
         if self._logger:
-            self._logger.debug(f'Dispatcher "{self._id}" unregistered: "{id_of_func}"')
-        return self._registered_services.pop(id)
+            self._logger.debug(f'Dispatcher "{self._id}" unregistered: "{idOfFunc}"')
+        return self._registeredServices.pop(id)
 
-    def adapt_service_id(self, service_name: str):
-        if service_name.startswith(f'nope{SPLITCHAR}service{SPLITCHAR}'):
-            return service_name
-        return f'nope{SPLITCHAR}service{SPLITCHAR}{service_name}'
+    def _adaptServiceId(self, serviceName: str):
+        if serviceName.startswith(f'nope{SPLITCHAR}service{SPLITCHAR}'):
+            return serviceName
+        return f'nope{SPLITCHAR}service{SPLITCHAR}{serviceName}'
 
-    def register_service(self, func, options):
-        options = ensure_dotted_dict(options)
+    def registerService(self, func, options):
+        options = ensureDottedAccess(options)
 
         # Define / Use the ID of the Function.
-        id_of_func: str = options.id
+        idOfFunc: str = options.id
 
-        if id_of_func is None:
-            id_of_func = generate_id()
+        if idOfFunc is None:
+            idOfFunc = generateId()
 
-        if self.options.add_nope_service_id_prefix:
-            id_of_func = self.adapt_service_id(id_of_func)
-        if self.options.force_using_valid_var_names:
-            id_of_func = varify_path(id_of_func)
+        if self.options.addNopeServiceIdPrefix:
+            idOfFunc = self._adaptServiceId(idOfFunc)
+        if self.options.forceUsingValidVarNames:
+            idOfFunc = varifyPath(idOfFunc)
 
-        options.id = id_of_func
+        options.id = idOfFunc
 
-        if not self.__warned and not is_async_function(func):
+        if not self.__warned and not isAsyncFunction(func):
             self._logger.warn(
                 "!!! You have provided synchronous functions. They may break NoPE. Use them with care !!!")
             self._logger.warn(
-                f'The service "{id_of_func}" is synchronous!')
+                f'The service "{idOfFunc}" is synchronous!')
             # We only want to warn the user once.
             self.__warned = True
 
         # Unregister the Function:
         def unregister():
-            self.unregister_service(id_of_func)
+            self.unregisterService(idOfFunc)
 
         # Create a Wrapper
-        wrapped = WrappedFunction(func, id_of_func, unregister)
+        wrapped = WrappedFunction(func, idOfFunc, unregister)
 
-        self._registered_services[id_of_func] = ensure_dotted_dict({
+        self._registeredServices[idOfFunc] = ensureDottedAccess({
             "options": options,
             "func": wrapped
         })
 
-        self._send_available_services()
+        self._sendAvailableServices()
 
         if self._logger:
-            self._logger.debug(f'Dispatcher "{self._id}" registered: "{id_of_func}"')
+            self._logger.debug(f'Dispatcher "{self._id}" registered: "{idOfFunc}"')
 
         return wrapped
 
-    async def _perform_call(self, service_name, params, options=None):
-        options_to_use = ensure_dotted_dict({
-            "result_sink": self._get_service_name(service_name, "response"),
-            "wait_for_result": True
+    async def _performCall(self, serviceName, params, options=None):
+        optionsToUse = ensureDottedAccess({
+            "resultSink": self._getServiceName(serviceName, "response"),
+            "waitFor_result": True
         })
-        options_to_use.update(ensure_dotted_dict(options))
+        optionsToUse.update(ensureDottedAccess(options))
 
-        task_id = generate_id()
+        taskId = generateId()
 
         # Create a Future of the Loop.
-        future = self._generate_promise(task_id)
+        future = self._generatePromise(taskId)
 
         def clear():
-            if task_id in self._running_internal_requested_tasks:
-                task = self._running_internal_requested_tasks[task_id]
+            if taskId in self._runningInternalRequestedTasks:
+                task = self._runningInternalRequestedTasks[taskId]
 
                 if task.timeout is not None:
                     task.timeout.cancel()
 
-                self._running_internal_requested_tasks.pop(task_id)
+                self._runningInternalRequestedTasks.pop(taskId)
 
             if self._logger:
-                self._logger.debug('Clearing Callbacks from ' + task_id)
+                self._logger.debug('Clearing Callbacks from ' + taskId)
 
         try:
-            task_request = ensure_dotted_dict({
+            tastRequest = ensureDottedAccess({
                 "future": future,
                 "clear": clear,
-                'service_name': service_name,
+                'serviceName': serviceName,
                 'timeout': None,
             })
 
             # Store the Future as Task.
-            self._running_internal_requested_tasks[task_id] = task_request
+            self._runningInternalRequestedTasks[taskId] = tastRequest
 
             # Define the packet to send:
             packet = {
-                'function_id': service_name,
+                'functionId': serviceName,
                 'params': [],
-                'task_id': task_id,
-                'result_sink': options_to_use['result_sink'],
-                'requested_by': self._id,
+                'taskId': taskId,
+                'resultSink': optionsToUse['resultSink'],
+                'requestedBy': self._id,
                 'target': None
             }
 
@@ -524,56 +523,56 @@ class NopeRpcManager:
                     'data': param
                 })
 
-            if not self.service_exists(service_name):
-                error = Exception(f'No Service Provider known for "{service_name}"')
+            if not self.serviceExists(serviceName):
+                error = Exception(f'No Service Provider known for "{serviceName}"')
                 if self._logger:
-                    self._logger.error(f'No Service Provider known for "{service_name}"')
-                    self._logger.error(format_exception(error))
+                    self._logger.error(f'No Service Provider known for "{serviceName}"')
+                    self._logger.error(formatException(error))
 
                 raise error
 
-            if self.options.force_using_selectors or self.services.amount_of.get(service_name, 0) > 1:
+            if self.options.forceUsingSelectors or self.services.amountOf.get(serviceName, 0) > 1:
 
-                opts_for_selector = ensure_dotted_dict({
-                    "rpc_manager": self,
-                    "service_name": service_name
+                optionsForSelector = ensureDottedAccess({
+                    "rpcManager": self,
+                    "serviceName": serviceName
                 })
 
-                if type(options_to_use.target) is str:
-                    task_request.target = options_to_use.target
-                elif callable(options_to_use.selector):
-                    task_request.target = await options.selector(opts_for_selector)
-                elif type(options_to_use.selector) is str:
-                    task_request.target = await self._default_selector(opts_for_selector)
+                if type(optionsToUse.target) is str:
+                    tastRequest.target = optionsToUse.target
+                elif callable(optionsToUse.selector):
+                    tastRequest.target = await options.selector(optionsForSelector)
+                elif type(optionsToUse.selector) is str:
+                    tastRequest.target = await self._defaultSelector(optionsForSelector)
                 
             else:
-                task_request.target = list(self.services.key_mapping_reverse[service_name])[0]
+                tastRequest.target = list(self.services.keyMappingreverse[serviceName])[0]
 
-            packet["target"] = task_request.target
+            packet["target"] = tastRequest.target
 
             await self._communicator.emit("rpc_request", packet)
 
             if self._logger:
                 self._logger.debug(
-                    f'Dispatcher "${self._id}" putting task "${task_id}" on: "${self._get_service_name(task_request.function_id, "request")}"')
+                    f'Dispatcher "${self._id}" putting task "${taskId}" on: "${self._getServiceName(tastRequest.functionId, "request")}"')
 
-            if options_to_use.get("timeout", 0) > 0:
-                async def on_timeout():
-                    await self.cancel_task(
-                        task_id,
+            if optionsToUse.get("timeout", 0) > 0:
+                async def onTimeout():
+                    await self.cancelTask(
+                        taskId,
                         TimeoutError(
-                            f"TIMEOUT. The Service allowed execution time of {options_to_use.timeout} [ms] has been excided")
+                            f"TIMEOUT. The Service allowed execution time of {optionsToUse.timeout} [ms] has been excided")
                     )
 
                 # Create our timeout and store it.
-                task_request.timeout = EXECUTOR.set_timeout(on_timeout, options_to_use.timeout)
+                tastRequest.timeout = EXECUTOR.setTimeout(onTimeout, optionsToUse.timeout)
 
         except Exception as err:
             if self._logger:
                 self._logger.error('Something went wrong on calling')
-                self._logger.exception(format_exception(err))
+                self._logger.exception(formatException(err))
             else:
-                print(format_exception(err))
+                print(formatException(err))
 
             # Call the Clear Function
             clear()
@@ -582,53 +581,53 @@ class NopeRpcManager:
             future.set_exception(err)
 
         # Define a Function, which could be used for cancelation.
-        def _cancel_task(reason):
-            EXECUTOR.call_parallel(self.cancel_task,task_id,reason)
+        def _cancelTask(reason):
+            EXECUTOR.callParallel(self.cancelTask,taskId,reason)
 
-        future.cancel_callback = _cancel_task
+        future.cancelCallback = _cancelTask
 
-        if not options_to_use.wait_for_result:
+        if not optionsToUse.waitFor_result:
             EXECUTOR.loop.create_task(future)
             return future
 
         return await future
 
-    async def perform_call(self, service_name, params, options=None):
-        if is_list(service_name):
-            if is_list(options) and len(service_name) != len(options):
+    async def performCall(self, serviceName, params, options=None):
+        if isList(serviceName):
+            if isList(options) and len(serviceName) != len(options):
                 raise Exception("The length of the provided services and options does not match")
 
-            options_to_use = [options] * len(service_name) if not is_iterable(options) else options
+            optionsToUse = [options] * len(serviceName) if not isIterable(options) else options
 
             futures = []
 
-            for idx, srv in enumerate(service_name):
+            for idx, srv in enumerate(serviceName):
                 futures.append(
-                    self._perform_call(
+                    self._performCall(
                         srv,
                         params,
-                        options_to_use[idx]
+                        optionsToUse[idx]
                     )
                 )
 
             return await asyncio.gather(*futures)
 
         else:
-            if is_list(options):
+            if isList(options):
                 raise Exception("The length of the provided services and options does not match")
 
-            return await self._perform_call(service_name, params, options)
+            return await self._performCall(serviceName, params, options)
 
-    def clear_tasks(self):
-        self._running_internal_requested_tasks.clear()
+    def clearTasks(self):
+        self._runningInternalRequestedTasks.clear()
 
-    def unregister_all(self):
-        to_unregister = list(self._registered_services.keys())
-        for srv in to_unregister:
-            self.unregister_service(srv)
-        self._registered_services.clear()
+    def unregisterAll(self):
+        toUnregister = list(self._registeredServices.keys())
+        for srv in toUnregister:
+            self.unregisterService(srv)
+        self._registeredServices.clear()
 
     def reset(self):
-        self.clear_tasks()
-        self.unregister_all()
-        self._send_available_services()
+        self.clearTasks()
+        self.unregisterAll()
+        self._sendAvailableServices()

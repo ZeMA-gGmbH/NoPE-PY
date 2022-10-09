@@ -1,4 +1,4 @@
-from .dotted_dict import DottedDict
+from .dotted_dict import ensureDottedAccess
 
 
 class Emitter:
@@ -32,7 +32,7 @@ class Emitter:
 
         self._subscribers[event].add(callback)
 
-        ret = DottedDict({
+        ret = ensureDottedAccess({
             'pause': lambda: self._pause(callback),
             'unpause': lambda: self._unpause(callback),
             'unsubscribe': lambda: self.off(event=event, callback=callback)
@@ -92,7 +92,7 @@ class Emitter:
         self._subscribers = dict()
         self._paused = set()
 
-    def amount_subscriptions(self, event=None) -> int:
+    def amountOfSubscriptions(self, event=None) -> int:
         """ Returns, whether there are some subscribers listening.
 
         Returns:
@@ -112,5 +112,5 @@ class Emitter:
             return len(self._subscribers[event])
         return 0
 
-    def has_subscriptions(self, event=None) -> bool:
-        return self.amount_subscriptions(event) > 0
+    def hasSubscriptions(self, event=None) -> bool:
+        return self.amountOfSubscriptions(event) > 0

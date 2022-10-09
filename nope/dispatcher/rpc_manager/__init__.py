@@ -1,2 +1,2 @@
-from .selectors import generate_selector
+from .selectors import generateSelector
 from .rpc_manager import NopeRpcManager

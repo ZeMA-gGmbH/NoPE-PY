@@ -4,10 +4,10 @@
 
 from copy import deepcopy
 
-from .dotted_dict import DottedDict
-from .path import (MULTI_LEVEL_WILDCARD, SPLITCHAR, contains_wildcards,
-                   get_least_common_path_segment)
-from .path_matching_methods import compare_pattern_and_path
+from .dotted_dict import DottedDict, ensureDottedAccess
+from .path import (MULTI_LEVEL_WILDCARD, SPLITCHAR, containsWildcards,
+                   getLeastCommonPathSegment)
+from .path_matching_methods import comparePatternAndPath
 
 SENTINEL_1 = object()
 SENTINEL_2 = object()
@@ -49,16 +49,16 @@ def rgetattr(data, path, default=SENTINEL_1, _SPLITCHAR=SPLITCHAR):
     return obj
 
 
-def rquery_attr(data, query):
-    if not contains_wildcards(query):
-        extracted_data = rgetattr(data, query, SENTINEL_2)
-        if extracted_data == SENTINEL_2:
+def rqueryAttr(data, query):
+    if not containsWildcards(query):
+        extractedData = rgetattr(data, query, SENTINEL_2)
+        if extractedData == SENTINEL_2:
             return []
 
         return [
             DottedDict({
                 'path': query,
-                'data': extracted_data
+                'data': extractedData
             })
         ]
 
@@ -68,19 +68,19 @@ def rquery_attr(data, query):
     max_depth = None if multi_level else len(query.split(SPLITCHAR))
 
     # get the flatten object
-    _dict = flatten_object(
+    _dict = flattenObject(
         data,
         max_depth=max_depth,
-        only_path_to_simple_value=False
+        onlyPathToBaseValue=False
     )
 
     # Iterate over the items and use our path matcher to extract the matching items.
     for iter_item in _dict.items():
         path = iter_item[0]
         value = iter_item[1]
-        r = compare_pattern_and_path(query, path)
+        r = comparePatternAndPath(query, path)
 
-        if r.affected_on_same_level or (multi_level and r.affected_by_child):
+        if r.affectedOnSameLevel or (multi_level and r.affectedByChild):
             ret.append(
                 DottedDict({
                     'path': path,
@@ -91,7 +91,7 @@ def rquery_attr(data, query):
     return ret
 
 
-def convert_data(data, props):
+def convertData(data, props):
     """ Helper to query data from an object.
 
         props is defined as followed:
@@ -105,7 +105,7 @@ def convert_data(data, props):
         Example 1: 
         
         data = { "deep": { "nested": "test" } }
-        result = convert_data(data, [
+        result = convertData(data, [
             {
                 "key": "result",
                 "query": "deep/nested",
@@ -130,7 +130,7 @@ def convert_data(data, props):
             "not": { "nested": "hello" }
         }
 
-        result = convert_data(data, [
+        result = convertData(data, [
             {
                 "key": "a",
                 "query": "array/+/data1",
@@ -150,7 +150,7 @@ def convert_data(data, props):
 
     ret = DottedDict({})
 
-    common_pattern = get_least_common_path_segment(
+    commonPattern = getLeastCommonPathSegment(
         list(
             map(
                 lambda _item: _item.get("query"),
@@ -160,7 +160,7 @@ def convert_data(data, props):
     )
 
     for prop in props:
-        ret[prop.get("key")] = rquery_attr(data, prop.get("query"))
+        ret[prop.get("key")] = rqueryAttr(data, prop.get("query"))
 
     helper = DottedDict({})
 
@@ -169,13 +169,12 @@ def convert_data(data, props):
 
         for idx, item in enumerate(items):
 
-            if type(common_pattern) is str:
-                result = compare_pattern_and_path(common_pattern, item["path"])
-                if result.path_to_extract_data:
-                    if not (result.path_to_extract_data in helper):
-                        helper[result.path_to_extract_data] = DottedDict()
-                    helper[result.path_to_extract_data][prop.get(
-                        "key")] = item.data
+            if type(commonPattern) is str:
+                result = comparePatternAndPath(commonPattern, item["path"])
+                if result.pathToExtractData:
+                    if not (result.pathToExtractData in helper):
+                        helper[result.pathToExtractData] = DottedDict()
+                    helper[result.pathToExtractData][prop.get("key")] = item.data
             else:
                 if idx not in helper:
                     helper[idx] = DottedDict()
@@ -203,7 +202,7 @@ def rsetattr(data, path: str, value, _SPLITCHAR: str = SPLITCHAR):
         # Adapt the Object by going through a loop
         sub = None
 
-        accessor = int(attr) if is_int(attr) else attr
+        accessor = int(attr) if isInt(attr) else attr
 
         try:
             sub = obj[accessor]
@@ -219,18 +218,18 @@ def rsetattr(data, path: str, value, _SPLITCHAR: str = SPLITCHAR):
         if sub == None:
             # _obj is an Array and it doesnt contain the index
             # Extract the Next Element:
-            next_accessor = ptrs[idx + 1]
+            nextAccessor = ptrs[idx + 1]
 
-            next_is_int = is_int(next_accessor)
+            nextIsInt = isInt(nextAccessor)
 
             if type(obj) is list:
-                if next_is_int:
-                    obj[accessor] = [None] * (int(next_accessor) + 1)
+                if nextIsInt:
+                    obj[accessor] = [None] * (int(nextAccessor) + 1)
                 else:
                     obj[accessor] = DottedDict({})
             else:
-                if next_is_int:
-                    obj[accessor] = [None] * (int(next_accessor) + 1)
+                if nextIsInt:
+                    obj[accessor] = [None] * (int(nextAccessor) + 1)
                 else:
                     obj[accessor] = DottedDict({})
 
@@ -241,7 +240,7 @@ def rsetattr(data, path: str, value, _SPLITCHAR: str = SPLITCHAR):
     obj[ptrs[len(ptrs) - 1]] = value
 
 
-def is_int(value) -> bool:
+def isInt(value) -> bool:
     """ Checks whether the Value is an Integer
 
     Args:
@@ -257,7 +256,7 @@ def is_int(value) -> bool:
         return False
 
 
-def is_float(value) -> bool:
+def isFloat(value) -> bool:
     """ Checks whether the Value is a Float
 
     Args:
@@ -273,11 +272,11 @@ def is_float(value) -> bool:
         return False
 
 
-def is_number(value) -> bool:
-    return is_float(value) or is_int(value)
+def isNumber(value) -> bool:
+    return isFloat(value) or isInt(value)
 
 
-def object_to_dict(obj):
+def objectToDict(obj):
     """ Function Converts a Object to a dict.
 
     Args:
@@ -288,12 +287,12 @@ def object_to_dict(obj):
     # Iterate through all properties of the Object
     for prop in obj:
         if not callable(obj):
-            ret.set(prop, obj[prop])
+            ret[prop] = obj[prop]
 
     return ret
 
 
-def is_object_like(obj) -> bool:
+def isDictLike(obj) -> bool:
     """
     Check if the object is dict-like.
     Parameters
@@ -305,13 +304,13 @@ def is_object_like(obj) -> bool:
         Whether `obj` has dict-like properties.
     Examples
     --------
-    >>> is_object_like({1: 2})
+    >>> isDictLike({1: 2})
     True
-    >>> is_object_like([1, 2, 3])
+    >>> isDictLike([1, 2, 3])
     False
-    >>> is_object_like(dict)
+    >>> isDictLike(dict)
     False
-    >>> is_object_like(dict())
+    >>> isDictLike(dict())
     True
     """
     attributes_to_check = ("__getitem__")
@@ -324,38 +323,38 @@ def is_object_like(obj) -> bool:
     return not isinstance(obj, type)
 
 
-def allows_subscripton(obj):
+def allowsSubscripton(obj):
     return hasattr(obj, "__getitem__")
 
 
-def flatten_object(data, prefix = "", splitchar = SPLITCHAR, only_path_to_simple_value = False, max_depth = None):
+def flattenObject(data, prefix = "", splitchar = SPLITCHAR, onlyPathToBaseValue = False, max_depth = None):
 
     ret = DottedDict()
 
     # Check if we are ae to access the items using an subscription.
-    if allows_subscripton(data):
+    if allowsSubscripton(data):
         def callback(path, data, *args):
             ret[path] = data
 
-        recursive_for_each(
+        recursiveForEach(
             data,
             callback,
             prefix,
             splitchar,
-            only_path_to_simple_value,
+            onlyPathToBaseValue,
             max_depth
         )
 
     return ret
 
 
-def deflatten_object(flatten_object, options):
-    _options = DottedDict({'prefix': '', 'splitchar': SPLITCHAR})
-    _options.update(options)
+def deflattenObject(flattenObject, options = None):
+    _options = ensureDottedAccess({'prefix': '', 'splitchar': SPLITCHAR})
+    _options.update(ensureDottedAccess(options))
 
-    ret = DottedDict({})
+    ret = ensureDottedAccess({})
 
-    for key, val in flatten_object.items():
+    for key, val in flattenObject.items():
         if _options.prefix != '':
             key = key[len(_options.prefix):]
         rsetattr(ret, key, val, _options.splitchar)
@@ -363,7 +362,7 @@ def deflatten_object(flatten_object, options):
     return ret
 
 
-def get_keys(obj):
+def getKeys(obj):
     """ Helper, to get keys of an array, dict etc.
 
     Args:
@@ -391,7 +390,7 @@ def get_keys(obj):
     return keys
 
 
-def deep_assign(target, source):
+def deepAssign(target, source):
     """ Deeply assigns the items given in the dict, whereas the 
         keys of the source will be used as path, its value as value
         to assign.
@@ -402,7 +401,7 @@ def deep_assign(target, source):
     Returns:
         any: the manipulated target
     """
-    flattend = flatten_object(source)
+    flattend = flattenObject(source)
     for iter_item in flattend.entries():
         path = iter_item[0]
         value = iter_item[1]
@@ -410,30 +409,30 @@ def deep_assign(target, source):
     return target
 
 
-def recursive_for_each(obj, data_callback=None, prefix="", _SPLITCHAR=SPLITCHAR, call_only_on_values=True,
+def recursiveForEach(obj, callback=None, prefix="", _SPLITCHAR=SPLITCHAR, callOnlyOnBaseValues=True,
                        max_depth=None, parent='', level=0):
     """ Function, that will iterate over an object.
 
     Args:
         obj: The Object to iterate
         prefix (_type_): A prefix for the Path.
-        data_callback (callable, optional): Callback, that will be called.. Defaults to None.
+        callback (callable, optional): Callback, that will be called.. Defaults to None.
         _SPLITCHAR (_type_, optional): The Splitchar to use, to generate the path. Defaults to SPLITCHAR.
-        call_only_on_values (bool, optional): A Flag, to call the Function only on Values. Defaults to True.
+        callOnlyOnBaseValues (bool, optional): A Flag, to call the Function only on Values. Defaults to True.
         max_depth (_type_, optional): Determine the max Depth, after which the Iteration will be stopped.. Defaults to None.
         parent (str, optional): For Recursive call only. Defaults to ''.
         level (int, optional): For Recursive call only. Defaults to 0.
     """
-    if is_int(max_depth) and level > max_depth:
+    if isInt(max_depth) and level > max_depth:
         # Break the Loop
         return
 
     # No try to extrac the Keys.
-    keys = get_keys(obj)
+    keys = getKeys(obj)
 
     called = False
-    if not call_only_on_values and callable(data_callback):
-        data_callback(prefix, obj, parent, level)
+    if not callOnlyOnBaseValues and callable(callback):
+        callback(prefix, obj, parent, level)
         called = True
 
     # If there exits some keys:
@@ -446,12 +445,12 @@ def recursive_for_each(obj, data_callback=None, prefix="", _SPLITCHAR=SPLITCHAR,
             if obj[key] != None:
                 if hasattr(obj[key], "to_json") and callable(obj[key].to_json):
                     data = obj[key].to_json()
-                    recursive_for_each(
+                    recursiveForEach(
                         data,
-                        data_callback,
+                        callback,
                         path,
                         _SPLITCHAR,
-                        call_only_on_values,
+                        callOnlyOnBaseValues,
                         max_depth,
                         prefix,
                         level + 1
@@ -459,33 +458,33 @@ def recursive_for_each(obj, data_callback=None, prefix="", _SPLITCHAR=SPLITCHAR,
 
                 else:
 
-                    recursive_for_each(
+                    recursiveForEach(
                         obj[key],
-                        data_callback,
+                        callback,
                         path,
                         _SPLITCHAR,
-                        call_only_on_values,
+                        callOnlyOnBaseValues,
                         max_depth,
                         prefix,
                         level + 1
                     )
     elif not called:
-        data_callback(prefix, obj, prefix, level)
+        callback(prefix, obj, prefix, level)
 
 
-def keep_properties_of_object(obj, properties):
-    if allows_subscripton(obj):
+def keepProperties(obj, properties):
+    if allowsSubscripton(obj):
         ret = DottedDict({})
         default_obj = DottedDict({'error': True})
 
-        for key in get_keys(obj):
+        for key in getKeys(obj):
             value = rgetattr(obj, key, default_obj)
-            value_to_assign = value
+            valueToAssign = value
             if value != default_obj:
-                value_to_assign = copy(value)
+                valueToAssign = copy(value)
             else:
-                value_to_assign = properties[key]()
-            rsetattr(ret, key, value_to_assign)
+                valueToAssign = properties[key]()
+            rsetattr(ret, key, valueToAssign)
 
         return ret
     raise Exception('Function can only create Objects')
@@ -511,6 +510,5 @@ def copy(obj):
             if not WARNED:
                 WARNED = True
                 print("Failed to create a copy using orignal value.")
-
             return obj
     

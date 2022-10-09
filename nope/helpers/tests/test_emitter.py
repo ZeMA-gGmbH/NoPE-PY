@@ -70,14 +70,14 @@ def test_subscribe_with_eventname():
 
     emitter.on(event="01", callback=callback_01)
 
-    assert emitter.has_subscriptions(), "Failed to count recognize the listener"
-    assert emitter.amount_subscriptions() == 1, "Failed to count recognize the listener"
+    assert emitter.hasSubscriptions(), "Failed to count recognize the listener"
+    assert emitter.amountOfSubscriptions() == 1, "Failed to count recognize the listener"
 
     emitter.on(event="02", callback=callback_02)
 
-    assert emitter.has_subscriptions(), "Failed to count recognize the listener"
-    assert emitter.amount_subscriptions() == 2, "Failed to count recognize the listener"
-    assert emitter.amount_subscriptions("01") == 1, "Failed to count recognize the listener correctly"
+    assert emitter.hasSubscriptions(), "Failed to count recognize the listener"
+    assert emitter.amountOfSubscriptions() == 2, "Failed to count recognize the listener"
+    assert emitter.amountOfSubscriptions("01") == 1, "Failed to count recognize the listener correctly"
 
     emitter.emit(event="01", data="test")
 

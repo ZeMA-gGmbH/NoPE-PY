@@ -4,7 +4,7 @@ import pytest
 
 from ..nope_event_emitter import NopeEventEmitter
 from ...helpers import EXECUTOR
-from ...helpers import get_timestamp, format_exception, DottedDict
+from ...helpers import getTimestamp, formatException, DottedDict
 
 
 @pytest.fixture
@@ -23,9 +23,9 @@ def test_once():
     emitter = NopeEventEmitter()
     emitter.once(callback=callback)
 
-    emitter.emit(get_timestamp())
+    emitter.emit(getTimestamp())
     sleep(0.1)
-    emitter.emit(get_timestamp())
+    emitter.emit(getTimestamp())
 
     assert called == 1
 
@@ -41,13 +41,13 @@ async def test_wait_for_update():
             sleep(0.1)
             emitter.emit(True)
         except Exception as e:
-            print(format_exception(e))
+            print(formatException(e))
 
     try:
-        EXECUTOR.call_parallel(emit_event)
-        value = await emitter.wait_for_update()
+        EXECUTOR.callParallel(emit_event)
+        value = await emitter.waitForUpdate()
     except Exception as e:
-        print(format_exception(e))
+        print(formatException(e))
 
 
 async def test_wait_for():
@@ -64,10 +64,10 @@ async def test_wait_for():
                 sleep(0.01)
                 emitter.emit(counter)
         except Exception as e:
-            print(format_exception(e))
+            print(formatException(e))
 
     try:
-        EXECUTOR.call_parallel(emit_event)
+        EXECUTOR.callParallel(emit_event)
 
         def test(value, *args):
             nonlocal counter
@@ -75,9 +75,9 @@ async def test_wait_for():
 
             return value == 5
 
-        value = await emitter.wait_for(test)
+        value = await emitter.waitFor(test)
     except Exception as e:
-        print(format_exception(e))
+        print(formatException(e))
 
 
 def test_pausing():

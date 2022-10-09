@@ -2,10 +2,10 @@
 # @author Martin Karkowski
 # @email m.karkowski@zema.de
 
-from ...helpers import max_of_array, min_of_array
+from ...helpers import maxOfArray, minOfArray
 
 
-def generate_selector(selector, core):
+def generateSelector(selector, core):
     """ A Helper Function, to generate the Basic selector Functions.
 
     params
@@ -15,50 +15,50 @@ def generate_selector(selector, core):
     if selector == 'master':
 
         # Define a function, which will select the same master.
-        async def master_selector(opts):
-            master_id = core.connectivity_manager.master.id
-            data = core.rpc_manager.services.key_mapping_reverse
-            if opts.service_name in data:
-                arr = list(data[opts.service_name])
-                if master_id in arr:
-                    return master_id
+        async def masterSelector(opts):
+            masterId = core.connectivityManager.master.id
+            data = core.rpcManager.services.keyMappingreverse
+            if opts.serviceName in data:
+                arr = list(data[opts.serviceName])
+                if masterId in arr:
+                    return masterId
             raise Exception('No matching dispatcher present.')
 
-        return master_selector
+        return masterSelector
 
     elif selector == 'first':
 
-        async def first_found(opts):
-            data = core.rpc_manager.services.key_mapping_reverse
-            if opts.service_name in data:
-                arr = list(data[opts.service_name])
+        async def firstFound(opts):
+            data = core.rpcManager.services.keyMappingreverse
+            if opts.serviceName in data:
+                arr = list(data[opts.serviceName])
                 if len(arr) > 0:
                     return arr[0]
             raise Exception('No matching dispatcher present.')
 
-        return first_found
+        return firstFound
 
     elif selector == 'dispatcher':
 
-        async def own_dispatcher(opts):
-            ids = core.connectivity_manager.dispatchers.data.get_content()
+        async def ownDispatcher(opts):
+            ids = core.connectivityManager.dispatchers.data.getContent()
             if core.id in ids:
                 return core.id
             raise Exception('No matching dispatcher present.')
 
-        return own_dispatcher
+        return ownDispatcher
 
     elif selector == 'host':
 
-        host = core.connectivity_manager.info.host.name
+        host = core.connectivityManager.info.host.name
 
-        async def same_host(opts):
-            data = core.rpc_manager.services.key_mapping_reverse
-            if opts.service_name in data:
-                items = list(data[opts.service_name])
+        async def sameHost(opts):
+            data = core.rpcManager.services.keyMappingreverse
+            if opts.serviceName in data:
+                items = list(data[opts.serviceName])
                 hosts = list(
                     map(
-                        lambda item: core.connectivity_manager.dispatchers.original_data[item].host.name,
+                        lambda item: core.connectivityManager.dispatchers.originalData[item].host.name,
                         items
                     )
                 )
@@ -68,30 +68,30 @@ def generate_selector(selector, core):
 
             raise Exception('No matching dispatcher present.')
 
-        return same_host
+        return sameHost
 
     elif selector == 'cpu-usage':
 
-        async def cpu_usage():
-            dispatchers = core.connectivity_manager.dispatchers.data.get_content()
-            best_option = min_of_array(dispatchers, 'host.cpu.usage')
+        async def cpuUsage():
+            dispatchers = core.connectivityManager.dispatchers.data.getContent()
+            best_option = minOfArray(dispatchers, 'host.cpu.usage')
             if best_option.index >= 0:
                 return dispatchers[best_option.index]
             raise Exception('No matching dispatcher present.')
 
-        return cpu_usage
+        return cpuUsage
 
     elif selector == 'free-ram':
 
-        async def ram_usage():
-            dispatchers = core.connectivity_manager.dispatchers.data.get_content()
-            best_option = max_of_array(dispatchers, 'host.ram.free')
+        async def ramUsage():
+            dispatchers = core.connectivityManager.dispatchers.data.getContent()
+            best_option = maxOfArray(dispatchers, 'host.ram.free')
             if best_option.index >= 0:
                 return dispatchers[best_option.index]
 
             raise Exception('No matching dispatcher present.')
 
-        return ram_usage
+        return ramUsage
 
     else:
         raise Exception('Please use a valid selector')

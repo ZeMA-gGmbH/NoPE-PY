@@ -1,6 +1,6 @@
 import pytest
 
-from ..timestamp import get_timestamp
+from ..timestamp import getTimestamp
 from ...helpers import EXECUTOR
 
 
@@ -10,5 +10,5 @@ def event_loop():
     yield loop
 
 
-def test_compare_pattern_and_path():
-    return type(get_timestamp()) is int
+def test_comparePatternAndPath():
+    return type(getTimestamp()) is int

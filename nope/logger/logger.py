@@ -12,7 +12,7 @@ CRITICAL = logging.CRITICAL
 LEVELS = {'info': INFO, 'debug': DEBUG, 'warn': WARNING, 'error': ERROR}
 
 
-def get_logger(name: str, level=logging.INFO):
+def getNopeLogger(name: str, level=logging.INFO):
     """ Helper to return a specific logger.
 
     """
@@ -34,12 +34,12 @@ def get_logger(name: str, level=logging.INFO):
     return _logger
 
 
-def define_nope_logger(param, default_name: str):
+def defineNopeLogger(param, default_name: str):
     """ Helper to define a Logger. The parameter 'param' is either a logger, None, or a Logger-Level
 
     """
     if not param:
         return None
     if type(param) is str:
-        return get_logger(default_name, LEVELS[param])
+        return getNopeLogger(default_name, LEVELS[param])
     return param

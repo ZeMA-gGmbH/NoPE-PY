@@ -4,8 +4,8 @@
 
 import asyncio
 
-from ..helpers import keys_to_camel_nested
-from ..logger import get_logger
+from ..helpers import keysToCamelNested
+from ..logger import getNopeLogger
 
 
 class BaseModule(object):
@@ -98,7 +98,7 @@ class BaseModule(object):
 
     def __init__(self, dispatcher):
         super().__init__()
-        self._logger = get_logger(self.__class__.__name__)
+        self._logger = getNopeLogger(self.__class__.__name__)
 
         self._dispatcher = dispatcher
 
@@ -138,22 +138,22 @@ class BaseModule(object):
         for data in self._registered_properties.values():
             if data["observable"] == prop_or_func:
                 # Extract the Topics, pipe and scope.
-                _sub_topic = data["options"]['topic'] if type(
+                _subTopic = data["options"]['topic'] if type(
                     data["options"]['topic']) == str else data["options"]['topic'].get(['subscribe'], None)
-                _pub_topic = data["options"]['topic'] if type(
+                _pubTopic = data["options"]['topic'] if type(
                     data["options"]['topic']) == str else data["options"]['topic'].get(['publish'], None)
 
                 if type == "topic_to_subscribe":
-                    if _sub_topic == None:
+                    if _subTopic == None:
                         raise Exception("No topic for subscribing defined")
 
-                    return _sub_topic
+                    return _subTopic
 
                 elif type == "topic_to_publish":
-                    if _pub_topic == None:
+                    if _pubTopic == None:
                         raise Exception("No topic for publishing defined")
 
-                    return _pub_topic
+                    return _pubTopic
 
                 elif type == "both":
                     if type(data["options"]["topic"]) != str:
@@ -265,7 +265,7 @@ class BaseModule(object):
     async def init(self):
         # In self base Implementation, check if every requried property is set
         # correctly. If not => raise an error.
-        self._logger = get_logger(
+        self._logger = getNopeLogger(
             self.__class__.__name__ + '<' + self.identifier + '>')
 
         if self.type is None:
@@ -315,4 +315,4 @@ class BaseModule(object):
             'uiLinks': self.ui_links
         }
 
-        return keys_to_camel_nested(ret)
+        return keysToCamelNested(ret)

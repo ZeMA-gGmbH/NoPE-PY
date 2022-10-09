@@ -2,10 +2,10 @@ import asyncio
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 from functools import partial
 
-from .prints import format_exception
+from .prints import formatException
 
 
-def is_async_function(func) -> bool:
+def isAsyncFunction(func) -> bool:
     """ Test whether the function is defined async or not.
 
     Args:
@@ -17,7 +17,7 @@ def is_async_function(func) -> bool:
     return asyncio.iscoroutinefunction(func)
 
 
-def get_or_create_eventloop():
+def getOrCreateEventloop():
     """ Creates or gets the default Eventloop.
 
     Returns:
@@ -41,7 +41,7 @@ class NopeExecutor:
         self._loop: asyncio.AbstractEventLoop = loop
         self._executor: ThreadPoolExecutor | ProcessPoolExecutor = executor
         if self._loop is None:
-            self._loop = get_or_create_eventloop()
+            self._loop = getOrCreateEventloop()
 
         self.logger = None
 
@@ -51,10 +51,10 @@ class NopeExecutor:
     def loop(self) -> asyncio.AbstractEventLoop:
         return self._loop
 
-    def use_thread_pool(self, max_workers=None):
+    def useThreadPool(self, max_workers=None):
         self._executor = ThreadPoolExecutor(max_workers=max_workers)
 
-    def use_multi_process_pool(self, max_workers=None):
+    def useMultiProcessPool(self, max_workers=None):
         self._executor = ProcessPoolExecutor(max_workers=max_workers)
 
     def dispose(self, wait=True, cancel_futures=False):
@@ -70,8 +70,8 @@ class NopeExecutor:
         except KeyboardInterrupt:
             self.dispose()
 
-    def set_timeout(self, func, timeout_ms: int, *args, **kwargs):
-        function_to_use = self._wrap_func_if_required(func)
+    def setTimeout(self, func, timeout_ms: int, *args, **kwargs):
+        function_to_use = self._wrapFuncIfRequired(func)
 
         async def timeout():
             try:                
@@ -79,17 +79,17 @@ class NopeExecutor:
                 await function_to_use(*args, **kwargs)
             except Exception as error:
                 if self.logger:
-                    self.logger.error("Exception raised during executing 'set_timeout'")
-                    self.logger.error(format_exception(error))
+                    self.logger.error("Exception raised during executing 'setTimeout'")
+                    self.logger.error(formatException(error))
                 else:
-                    print(format_exception(error))
+                    print(formatException(error))
 
         task = self.loop.create_task(timeout())
 
         return task
 
-    def set_interval(self, func, timeout_ms: int, *args, **kwargs):
-        function_to_use = self._wrap_func_if_required(func)
+    def setInterval(self, func, timeout_ms: int, *args, **kwargs):
+        function_to_use = self._wrapFuncIfRequired(func)
 
         async def interval():
             try:
@@ -99,20 +99,20 @@ class NopeExecutor:
             except Exception as error:
                 if self.logger:
                     self.logger.error("Exception raised during executing 'interval'")
-                    self.logger.error(format_exception(error))
+                    self.logger.error(formatException(error))
                 else:
-                    print(format_exception(error))
+                    print(formatException(error))
 
         task = self.loop.create_task(interval())
 
         return task
 
-    def call_parallel(self, func, *args, **kwargs) -> asyncio.Task | asyncio.Future:
-        function_to_use = self._wrap_func_if_required(func)
+    def callParallel(self, func, *args, **kwargs) -> asyncio.Task | asyncio.Future:
+        function_to_use = self._wrapFuncIfRequired(func)
         task = self.loop.create_task(function_to_use(*args, **kwargs))
         return task
 
-    def _wrap_func_if_required(self, func):
+    def _wrapFuncIfRequired(self, func):
         if not callable(func):
             raise TypeError("The parameter 'func' is not callable")
 
@@ -123,10 +123,10 @@ class NopeExecutor:
                     return await self.loop.run_in_executor(self._executor, pfunc)
                 except Exception as error:
                     if self.logger:
-                        self.logger.error("Exception raised during executing a wrapped sync method '_wrap_func_if_required'")
-                        self.logger.error(format_exception(error))
+                        self.logger.error("Exception raised during executing a wrapped sync method '_wrapFuncIfRequired'")
+                        self.logger.error(formatException(error))
                     else:
-                        print(format_exception(error))
+                        print(formatException(error))
 
             return run
         else:
@@ -134,7 +134,7 @@ class NopeExecutor:
 
 
 EXECUTOR = NopeExecutor()
-EXECUTOR.use_thread_pool()
+EXECUTOR.useThreadPool()
 
 
 def Promise(callback):
@@ -150,17 +150,17 @@ def Promise(callback):
 
     def reject(error):
         if future.done():
-            print(format_exception(Exception("Called 'reject' multiple times")))
+            print(formatException(Exception("Called 'reject' multiple times")))
             return
         future.set_exception(error)
 
     def resolve(value):
         if future.done():
-            print(format_exception(Exception("Called 'resolve' multiple times")))
+            print(formatException(Exception("Called 'resolve' multiple times")))
             return
         future.set_result(value)
 
     # Now we want call the callback in an extra thread.
-    EXECUTOR.call_parallel(callback, resolve, reject)
+    EXECUTOR.callParallel(callback, resolve, reject)
 
     return future

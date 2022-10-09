@@ -1,30 +1,30 @@
 from .dotted_dict import DottedDict
-from .string_methods import replace_all, camel_to_snake, snake_to_camel
+from .string_methods import replaceAll, camelToSnake, snakeToCamel
 
 SPLITCHAR = '/'
 SINGLE_LEVEL_WILDCARD = '+'
 MULTI_LEVEL_WILDCARD = '#'
 
 
-def path_to_snake_case(path:str, splitchar = SPLITCHAR) -> str:
+def pathToSnakeCase(path:str, splitchar = SPLITCHAR) -> str:
     # Join the splitchar with the adapted strings.
     return splitchar.join(
         map(
-            lambda item: camel_to_snake(item),
+            lambda item: camelToSnake(item),
             path.split(splitchar)
         )
     )
 
-def path_to_camel_case(path:str, splitchar = SPLITCHAR) -> str:
+def pathToCamelCase(path:str, splitchar = SPLITCHAR) -> str:
     # Join the splitchar with the adapted strings.
     return splitchar.join(
         map(
-            lambda item: snake_to_camel(item),
+            lambda item: snakeToCamel(item),
             path.split(splitchar)
         )
     )
 
-def convert_path(path: str) -> str:
+def convertPath(path: str) -> str:
     """ converts the path 
 
     Args:
@@ -33,10 +33,10 @@ def convert_path(path: str) -> str:
     Returns:
         str: The adapted Path
     """
-    return replace_all(path, ['.', '[', [']', '']], SPLITCHAR)
+    return replaceAll(path, ['.', '[', [']', '']], SPLITCHAR)
 
 
-def contains_wildcards(str: str) -> bool:
+def containsWildcards(str: str) -> bool:
     """ Determines, whether the given string contains a single level card or not.
 
     Args:
@@ -48,17 +48,13 @@ def contains_wildcards(str: str) -> bool:
     return SINGLE_LEVEL_WILDCARD in str or MULTI_LEVEL_WILDCARD in str
 
 
-def get_least_common_path_segment(pathes, opts=DottedDict({})):
+def getLeastCommonPathSegment(pathes, considerSingleLevel = False, considerMultiLevel = False):
     """ Returns the least common segmet of all pathes, included in the pathes array.
-
-        The Following options are available.
-
-        "considerSingleLevel":boolean -> allows "singlelevel"-wildcards in the segments
-        "considerMultiLevel":boolean -> allows "multilevel"-wildcards in the segments
 
     Args:
         pathes (str[]): The Segments to compare. 
-        opts (dotted_dict, optional): the options. Defaults to dotted_dict({}).
+        considerSingleLevel (bool): allows "singlelevel"-wildcards in the segments
+        considerMultiLevel (bool): allows "multilevel"-wildcards in the segments
 
     Returns:
         (False | str): the least common segment of the pathes or False.
@@ -66,7 +62,7 @@ def get_least_common_path_segment(pathes, opts=DottedDict({})):
     current_path = pathes.pop()
     while len(pathes) > 0:
         next = pathes.pop()
-        current_path = _get_least_common_path_segment(current_path, next, opts)
+        current_path = _getLeastCommonPathSegment(current_path, next, considerSingleLevel=considerSingleLevel, considerMultiLevel=considerMultiLevel)
 
         # Only proceed, if there are elements included.
         if not current_path:
@@ -77,7 +73,7 @@ def get_least_common_path_segment(pathes, opts=DottedDict({})):
     return current_path
 
 
-def _get_least_common_path_segment(path01, path02, opts=DottedDict({})):
+def _getLeastCommonPathSegment(path01, path02, considerSingleLevel = False, considerMultiLevel = False):
     """_summary_
 
     Args:
@@ -88,8 +84,8 @@ def _get_least_common_path_segment(path01, path02, opts=DottedDict({})):
     Returns:
         _type_: _description_
     """
-    p1 = convert_path(path01).split(SPLITCHAR)
-    p2 = convert_path(path02).split(SPLITCHAR)
+    p1 = convertPath(path01).split(SPLITCHAR)
+    p2 = convertPath(path02).split(SPLITCHAR)
 
     ret = []
     idx = 0
@@ -103,14 +99,14 @@ def _get_least_common_path_segment(path01, path02, opts=DottedDict({})):
 
         if p1[idx] == p2[idx]:
             ret += [p1[idx]]
-        elif opts.consider_single_level:
+        elif considerSingleLevel:
             if p1[idx] == SINGLE_LEVEL_WILDCARD:
                 ret += [p2[idx:]]
             elif p2[idx] == SINGLE_LEVEL_WILDCARD:
                 ret += [p1[idx:]]
             else:
                 break
-        elif opts.consider_multi_level:
+        elif considerMultiLevel:
             if p1[idx] == MULTI_LEVEL_WILDCARD:
                 ret += [p2[idx:]]
                 break
@@ -127,7 +123,7 @@ def _get_least_common_path_segment(path01, path02, opts=DottedDict({})):
     return False
 
 
-def pattern_is_valid(str: str) -> bool:
+def patternIsValid(str: str) -> bool:
     """ Function to test if a pattern is valid
 
     Args:

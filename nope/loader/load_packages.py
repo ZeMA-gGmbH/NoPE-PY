@@ -5,76 +5,76 @@
 import json
 import logging
 
-from ..helpers import dynamic_import, format_exception, keys_to_snake_nested
-from ..logger import get_logger
+from ..helpers import dynamicImport, formatException, keysToSnakeNested
+from ..logger import getNopeLogger
 
 
-def load_config(path_to_file: str):
+def loadConfig(pathToFile: str):
     """ Load a config file.
 
-        param: path_to_file: str File to load
+        param: pathToFile: str File to load
     """
     config = {
         "functions": [],
         "packages": []
     }
-    with open(path_to_file, 'r') as file:
+    with open(pathToFile, 'r') as file:
         raw_data = file.read()
         config = json.loads(raw_data)
 
     return config
 
 
-async def load_desired_packages(loader, packages_to_load, logger: logging.Logger = get_logger('load_desired_packages')):
+async def loadDesiredPackages(loader, packages_to_load, logger: logging.Logger = getNopeLogger('loadDesiredPackages')):
     """ Load the Packages provided in the configuration
     """
 
     # Define the Return Array.
-    packages = []
+    pkgs = []
 
     # Scan for the Package-Files
     # And iterate over them.
     for item in packages_to_load:
         # Now Try to load a Package, to test whether is is an assembly.
 
-        item = keys_to_snake_nested(item)
+        item = keysToSnakeNested(item)
 
         try:
-            loaded_package = dynamic_import(
-                item["name_of_package"], item["path"]).DESCRIPTION
+            loadedPackage = dynamicImport(
+                item["nameOfPackage"], item["path"]).DESCRIPTION
 
-            loaded_package["autostart"] = item["autostart"]
-            loaded_package["default_instances"] = item["default_instances"]
+            loadedPackage["autostart"] = item["autostart"]
+            loadedPackage["defaultInstances"] = item["defaultInstances"]
 
             # Add it to the list with elements.
-            packages.append(loaded_package)
+            pkgs.append(loadedPackage)
         except Exception as e:
             if logger is not None:
                 logger.error("Failed Loading the Package " +
-                             item["name_of_package"])
+                             item["nameOfPackage"])
             else:
                 print("Failed Loading the Package " +
-                      item["name_of_package"])
-                print(format_exception(e))
+                      item["nameOfPackage"])
+                print(formatException(e))
 
-    await loader.dispatcher.ready.wait_for()
+    await loader.dispatcher.ready.waitFor()
 
     # Iterate over the Packages
-    for the_package_to_load in packages:
+    for pkgToLoad in pkgs:
         try:
-            await loader.add_package(the_package_to_load)
+            await loader.addPackage(pkgToLoad)
             if logger is not None:
                 logger.info("Added Package " +
-                            the_package_to_load["name_of_package"])
+                            pkgToLoad["nameOfPackage"])
 
         except Exception as e:
             if logger is not None:
                 logger.error("Failed add the Package " +
-                             the_package_to_load["name_of_package"])
+                             pkgToLoad["nameOfPackage"])
             else:
                 print("Failed Loading the Package " +
-                      item["name_of_package"])
-                print(format_exception(e))
+                      item["nameOfPackage"])
+                print(formatException(e))
 
     # Generate the instances.
-    await loader.generate_instances()
+    await loader.generateInstances()

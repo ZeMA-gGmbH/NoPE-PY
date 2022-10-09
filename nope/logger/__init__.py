@@ -1,1 +1,1 @@
-from .logger import define_nope_logger, get_logger, WARNING, ERROR, DEBUG, CRITICAL, INFO, LEVELS
+from .logger import defineNopeLogger, getNopeLogger, WARNING, ERROR, DEBUG, CRITICAL, INFO, LEVELS

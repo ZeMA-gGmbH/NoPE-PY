@@ -2,7 +2,7 @@ import pytest
 
 from ..nope_observable import NopeObservable
 from ...helpers import EXECUTOR
-from ...helpers import format_exception
+from ...helpers import formatException
 
 
 @pytest.fixture
@@ -21,7 +21,7 @@ def test_once():
     observable = NopeObservable()
     observable.once(callback)
 
-    observable.set_content(1)
+    observable.setContent(1)
 
     assert called == 1
 
@@ -34,12 +34,12 @@ def test_inital_value():
         called += 1
 
     observable = NopeObservable()
-    observable.set_content("This is a Test!")
+    observable.setContent("This is a Test!")
     observable.subscribe(callback)
-    observable.set_content(1)
+    observable.setContent(1)
 
     assert called == 2
-    assert observable.get_content() == 1
+    assert observable.getContent() == 1
 
 
 def test_change_detection():
@@ -50,15 +50,15 @@ def test_change_detection():
         called += 1
 
     observable = NopeObservable()
-    observable.set_content(1)
+    observable.setContent(1)
     observable.subscribe(callback)
-    observable.set_content(1)
-    observable.set_content(1)
-    observable.set_content(1)
-    observable.set_content(2)
+    observable.setContent(1)
+    observable.setContent(1)
+    observable.setContent(1)
+    observable.setContent(2)
 
     assert called == 2
-    assert observable.get_content() == 2
+    assert observable.getContent() == 2
 
 
 def test_setter():
@@ -75,7 +75,7 @@ def test_setter():
     observable.setter = setter
     observable.subscribe(callback)
 
-    observable.set_content("World")
+    observable.setContent("World")
 
 
 def test_getter():
@@ -89,7 +89,7 @@ def test_getter():
     observable.getter = getter
     sub = observable.subscribe(callback)
 
-    observable.set_content("Hello World")
+    observable.setContent("Hello World")
 
 
 def test_options():
@@ -100,14 +100,14 @@ def test_options():
         called += 1
 
     observable = NopeObservable()
-    observable.set_content(1)
-    sub = observable.subscribe(callback, {"skip_current": True})
-    observable.set_content(2)
+    observable.setContent(1)
+    sub = observable.subscribe(callback, {"skipCurrent": True})
+    observable.setContent(2)
 
     assert called == 1, "Failed to skip the current value"
 
 
-async def test_wait_for():
+async def test_waitFor():
     import asyncio
     import time
 
@@ -115,22 +115,22 @@ async def test_wait_for():
     asyncio.set_event_loop(loop)
 
     obs = NopeObservable()
-    obs.set_content(True)
+    obs.setContent(True)
 
-    await obs.wait_for()
+    await obs.waitFor()
 
-    obs.set_content(False)
+    obs.setContent(False)
 
     def change_value():
         try:
             time.sleep(0.1)
-            obs.set_content(True)
+            obs.setContent(True)
         except Exception as e:
-            print(format_exception(e))
+            print(formatException(e))
 
     try:
-        EXECUTOR.call_parallel(change_value)
+        EXECUTOR.callParallel(change_value)
 
-        await obs.wait_for()
+        await obs.waitFor()
     except Exception as e:
-        print(format_exception(e))
+        print(formatException(e))

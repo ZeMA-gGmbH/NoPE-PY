@@ -3,7 +3,7 @@
 # @email m.karkowski@zema.de
 
 from .base_module import BaseModule
-from ..helpers import keys_to_snake_nested
+from ..helpers import keysToSnakeNested
 
 
 class NopeGenericModule(BaseModule):
@@ -28,7 +28,7 @@ class NopeGenericModule(BaseModule):
         """
 
         # Adapt the Options:
-        description = keys_to_snake_nested(description)
+        description = keysToSnakeNested(description)
 
         if mode == 'overwrite':
             await self.dispose()
@@ -58,7 +58,7 @@ class NopeGenericModule(BaseModule):
         for name, options in description['functions'].items():
 
             async def _func(*args, _options=options):
-                return await self._dispatcher.perform_call(_options['id'], args, _options)
+                return await self._dispatcher.performCall(_options['id'], args, _options)
 
             if name in self.dynamic_instance_methods:
                 raise Exception(

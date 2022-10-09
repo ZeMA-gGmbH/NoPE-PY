@@ -2,7 +2,7 @@ import pytest
 
 from ..merge_data import DictBasedMergeData, MergeData
 from ...helpers import EXECUTOR
-from ...helpers.dict_methods import extract_unique_values
+from ...helpers.dict_methods import extractUniqueValues
 
 
 @pytest.fixture
@@ -13,19 +13,19 @@ def event_loop():
 
 def test_merge_data_general():
     d = dict()
-    merge = MergeData(d, lambda m: extract_unique_values(m))
+    merge = MergeData(d, extractUniqueValues)
 
     d["a"] = "b"
     d["b"] = "b"
 
     merge.update()
 
-    r = merge.data.get_content()
+    r = merge.data.getContent()
     assert len(r) == 1, "Failed to convert the data"
     assert r[0] == "b", "Extracted and stored the correct value"
 
     d = dict()
-    merge = MergeData(d, lambda m: extract_unique_values(m))
+    merge = MergeData(d, extractUniqueValues)
 
     called = 0
 
@@ -41,11 +41,11 @@ def test_merge_data_general():
     merge.update()
     merge.update()
 
-    r = merge.data.get_content()
+    r = merge.data.getContent()
     assert called == 2, "Called the subscription to many times"
 
     d = dict()
-    merge = MergeData(d, lambda m: extract_unique_values(m))
+    merge = MergeData(d, extractUniqueValues)
 
     called = 0
 
@@ -56,7 +56,7 @@ def test_merge_data_general():
         assert len(data.removed) == 0
         assert list(data.added)[0] == "b"
 
-    merge.on_change.subscribe(callback_02)
+    merge.onChange.subscribe(callback_02)
 
     d["a"] = "b"
     d["b"] = "b"
@@ -75,7 +75,7 @@ def test_dict_based_merge_data():
     d["b"] = "b"
 
     merge.update()
-    assert "b" in merge.key_mapping_reverse
+    assert "b" in merge.keyMappingreverse
 
     d = {
         "a": {"key": "keyA", "data": "dataA"},
@@ -83,7 +83,7 @@ def test_dict_based_merge_data():
     }
     merge = DictBasedMergeData(d, "data", "key")
     merge.update()
-    assert "keyA" in merge.key_mapping_reverse
-    assert "a" in merge.key_mapping
-    assert "dataA" in merge.data.get_content()
+    assert "keyA" in merge.keyMappingreverse
+    assert "a" in merge.keyMapping
+    assert "dataA" in merge.data.getContent()
     assert "keyA" in merge.simplified

@@ -2,47 +2,47 @@
 # @author Martin Karkowski
 # @email m.karkowski@zema.de
 
-from ...helpers import ensure_dotted_dict, generate_id
-from ...logger import get_logger
+from ...helpers import ensureDottedAccess, generateId
+from ...logger import getNopeLogger
 from ...observable import NopeObservable
 from ...pub_sub import DataPubSubSystem, PubSubSystem
-from ..connectivity_manager import NopeConnectivityManager
+from ..connectivityManager import NopeConnectivityManager
 
 
 class NopeCore:
 
     def __init__(self, _options, _id=None):
 
-        _options = ensure_dotted_dict(_options)
+        _options = ensureDottedAccess(_options)
 
-        def forward_event(item):
-            if item.sender != rcv_externally:
-                self.communicator.emit('Event', ensure_dotted_dict(
+        def forwardEvent(item):
+            if item.sender != rcvExternally:
+                self.communicator.emit('Event', ensureDottedAccess(
                     {**item, 'sender': self._id}))
 
-        def forward_data(item):
-            if item.sender != rcv_externally:
-                self.communicator.emit('DataChanged', ensure_dotted_dict(
+        def forwardData(item):
+            if item.sender != rcvExternally:
+                self.communicator.emit('DataChanged', ensureDottedAccess(
                     {**item, 'sender': self._id}))
 
         def is_ready():
-            return self.connectivity_manager.ready.get_content() and self.rpc_manager.ready.get_content() and self.instance_manager.ready.get_content()
+            return self.connectivityManager.ready.getContent() and self.rpcManager.ready.getContent() and self.instanceManager.ready.getContent()
 
         def on_event(msg):
-            msg = ensure_dotted_dict(msg)
+            msg = ensureDottedAccess(msg)
             if msg.sender != self._id:
                 data = msg.get("data")
                 path = msg.get("path")
-                msg.sender = rcv_externally
-                self.event_distributor.emit(path, data, msg)
+                msg.sender = rcvExternally
+                self.eventDistributor.emit(path, data, msg)
 
         def on_data(msg):
-            msg = ensure_dotted_dict(msg)
+            msg = ensureDottedAccess(msg)
             if msg.sender != self._id:
                 data = msg.get("data")
                 name = msg.get("path")
-                msg.sender = rcv_externally
-                self.data_distributor.push_data(name, data, msg)
+                msg.sender = rcvExternally
+                self.dataDistributor.pushData(name, data, msg)
 
         self._options = _options
         self._id = _id
@@ -53,25 +53,25 @@ class NopeCore:
             if _options.id:
                 self._id = _options.id
             else:
-                self._id = generate_id()
+                self._id = generateId()
 
-        self.logger = get_logger(_options.logger, 'core.rpc-manager')
+        self.logger = getNopeLogger(_options.logger, 'core.rpc-manager')
         self.logger.info('setting up sub-systems.')
 
-        self.event_distributor = PubSubSystem()
-        self.data_distributor = DataPubSubSystem()
+        self.eventDistributor = PubSubSystem()
+        self.dataDistributor  = DataPubSubSystem()
 
         # TODO: Ab hier:
 
-        default_selector = generate_selector(
-            _options.get("default_selector", "first"), self)
+        defaultSelector = generateSelector(
+            _options.get("defaultSelector", "first"), self)
 
-        self.connectivity_manager = NopeConnectivityManager(_options, self._id)
-        self.rpc_manager = nope_rpc_manager(
-            _options, default_selector, self._id, self.connectivity_manager)
-        self.instance_manager = nope_instance_manager(_options,
-                                                      default_selector, self._id, self.
-                                                      connectivity_manager, self.rpc_manager, self)
+        self.connectivityManager = NopeConnectivityManager(_options, self._id)
+        self.rpcManager = nope_rpcManager(
+            _options, defaultSelector, self._id, self.connectivityManager)
+        self.instanceManager = nope_instanceManager(_options,
+                                                      defaultSelector, self._id, self.
+                                                      connectivityManager, self.rpcManager, self)
 
 
         # TODO: bishier!
@@ -79,30 +79,30 @@ class NopeCore:
         self.ready = NopeObservable()
 
         self.ready.getter = is_ready
-        rcv_externally = generate_id()
+        rcvExternally = generateId()
 
         self.communicator.on('Event', on_event)
-        self.event_distributor.on_incremental_data_change.subscribe(
-            forward_event)
+        self.eventDistributor.onIncrementalDataChange.subscribe(
+            forwardEvent)
         self.communicator.on('DataChanged', on_data)
-        self.data_distributor.on_incremental_data_change.subscribe(
-            forward_data)
+        self.dataDistributor.onIncrementalDataChange.subscribe(
+            forwardData)
 
         # Forward the Ready items.
-        self.connectivity_manager.ready.subscribe(
-            lambda *args: self.ready.force_publish())
-        self.rpc_manager.ready.subscribe(
-            lambda *args: self.ready.force_publish())
-        self.instance_manager.ready.subscribe(
-            lambda *args: self.ready.force_publish())
+        self.connectivityManager.ready.subscribe(
+            lambda *args: self.ready.forcePublish())
+        self.rpcManager.ready.subscribe(
+            lambda *args: self.ready.forcePublish())
+        self.instanceManager.ready.subscribe(
+            lambda *args: self.ready.forcePublish())
 
         self.disposing = False
 
     async def dispose(self):
         self.disposing = True
         await self.ready.dispose()
-        await self.event_distributor.dispose()
-        await self.data_distributor.dispose()
-        await self.connectivity_manager.dispose()
-        await self.rpc_manager.dispose()
-        await self.instance_manager.dispose()
+        await self.eventDistributor.dispose()
+        await self.dataDistributor.dispose()
+        await self.connectivityManager.dispose()
+        await self.rpcManager.dispose()
+        await self.instanceManager.dispose()

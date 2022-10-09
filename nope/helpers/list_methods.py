@@ -9,7 +9,7 @@ from .object_methods import rgetattr
 from .dotted_dict import DottedDict
 
 
-def extract_list_element(_list, _path: str):
+def extractListElements(_list, _path: str):
     def extract(_prop):
         ret = rgetattr(_prop, _path)
         if ret:
@@ -18,47 +18,47 @@ def extract_list_element(_list, _path: str):
     return map(extract, _list)
 
 
-def get_element(_list, operand, _path=''):
+def getElement(_list, operand, _path=''):
     for element in _list:
         if operand == rgetattr(element, _path):
             return element
     return None
 
 
-def avg_of_array(_list, _path: str, default_value=0):
+def avgOfArray(_list, _path: str, defaultValue=0):
     if len(_list) == 0:
-        return default_value
+        return defaultValue
 
-    values = map(lambda item: rgetattr(item, _path, default_value), _list)
+    values = map(lambda item: rgetattr(item, _path, defaultValue), _list)
     value = reduce(lambda prev, curr: prev + curr, values)
     return value / len(_list)
 
 
-def min_of_array(_list, _path, default_value=float("inf")):
+def minOfArray(_list, _path, defaultValue=float("inf")):
     if len(_list) == 0:
-        return DottedDict({'min': default_value, 'index': None})
+        return DottedDict({'min': defaultValue, 'index': None})
 
-    values = list(map(lambda item: rgetattr(item, _path, default_value), _list))
-    min_value = min(values)
-    return DottedDict({'min': min_value, 'index': values.index(min_value)})
+    values = list(map(lambda item: rgetattr(item, _path, defaultValue), _list))
+    minValue = min(values)
+    return DottedDict({'min': minValue, 'index': values.index(minValue)})
 
 
-def max_of_array(_list, _path, default_value=-float("inf")):
+def maxOfArray(_list, _path, defaultValue=-float("inf")):
     if len(_list) == 0:
-        return DottedDict({'max': default_value, 'index': None})
+        return DottedDict({'max': defaultValue, 'index': None})
 
-    values = list(map(lambda item: rgetattr(item, _path, default_value), _list))
-    max_value = max(values)
-    return DottedDict({'max': max_value, 'index': values.index(max_value)})
+    values = list(map(lambda item: rgetattr(item, _path, defaultValue), _list))
+    maxValue = max(values)
+    return DottedDict({'max': maxValue, 'index': values.index(maxValue)})
 
 
-def is_iterable(_list_like):
+def isIterable(obj):
     """ Helper to test if an objec is iterable.
     """
 
-    if type(_list_like) is str:
+    if isinstance(obj, str):
         return False
-    return isinstance(_list_like, Iterable)
+    return isinstance(obj, Iterable)
 
-def is_list(obj) -> bool:
+def isList(obj) -> bool:
     return type(obj) in (list,)

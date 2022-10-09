@@ -7,7 +7,7 @@ from .dotted_dict import DottedDict
 pattern = re.compile(r'(?<!^)(?=[A-Z])')
 
 
-def snake_to_camel(input: str) -> str:
+def snakeToCamel(input: str) -> str:
     """Converts the given snake-case to camel-case
     """
     # split underscore using split
@@ -20,13 +20,13 @@ def snake_to_camel(input: str) -> str:
     return res
 
 
-def camel_to_snake(input: str) -> str:
+def camelToSnake(input: str) -> str:
     """Converts the given camel case to snake-case
     """
     return pattern.sub('_', input).lower()
 
 
-def replace_all(org_str:str, value, replacement: str)-> str:
+def replaceAll(org_str:str, value, replacement: str)-> str:
     """ Replaces all Chars in a String
 
     Args:
@@ -86,7 +86,7 @@ def to_camel_case(str: str, char='_') -> str:
     def callback_0(word, index):
         return word.to_lower_case() if index == 0 else word.to_upper_case()
     
-    return replace_all(str, char, ' ').replace(re.compile(
+    return replaceAll(str, char, ' ').replace(re.compile(
         '(?:^\\w|[A-Z]|\\b\\w)'), callback_0).replace(
         re.compile('\\s+'), '')
 

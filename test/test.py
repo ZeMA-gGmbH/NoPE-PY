@@ -1,5 +1,5 @@
 from nope.observable import NopeObservable
-from nope.helpers import extract_unique_values
+from nope.helpers import extractUniqueValues
 from nope.merging import MergeData,DictBasedMergeData
 called = 0
 
@@ -8,9 +8,9 @@ def callback(data, *args, **kwargs):
     called += 1
 
 observable = NopeObservable()
-observable.set_content(1) 
-sub = observable.subscribe(callback, {"skip_current": True})    
-observable.set_content(2) 
+observable.setContent(1) 
+sub = observable.subscribe(callback, {"skipCurrent": True})    
+observable.setContent(2) 
 
 d = {
     "a": {
@@ -37,11 +37,11 @@ d = {
         ]
     }
 }
-res = extract_unique_values(d, "a/+/content", "a/+/id")
+res = extractUniqueValues(d, "a/+/content", "a/+/id")
 
 
 d = dict()
-merge = MergeData(d, lambda m: extract_unique_values(m))
+merge = MergeData(d, lambda m: extractUniqueValues(m))
 
 called = 0
 
@@ -57,7 +57,7 @@ d["b"]="b"
 merge.update()
 merge.update()
 
-r = merge.data.get_content()
+r = merge.data.getContent()
 assert called == 2, "Called the subscription twice"
 
 d = {

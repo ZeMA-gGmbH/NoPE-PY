@@ -2,7 +2,7 @@ import time
 from asyncio import sleep
 
 from ..connectivity_manager import NopeConnectivityManager
-from ...communication import get_layer
+from ...communication import getLayer
 
 from ...helpers import EXECUTOR
 import pytest
@@ -13,7 +13,7 @@ def event_loop():
 
 async def get_manager(_communicator=None, _id=None):
     if _communicator is None:
-        _communicator = await get_layer("event")
+        _communicator = await getLayer("event")
 
     manager = NopeConnectivityManager({
         'communicator': _communicator,
@@ -26,33 +26,33 @@ async def get_manager(_communicator=None, _id=None):
 async def test_configuration():
     _, manager = await get_manager()
 
-    await manager.ready.wait_for()
+    await manager.ready.waitFor()
 
-    await manager.set_timings({
-        "check_interval": 10,
+    await manager.setTimings({
+        "checkInterval": 10,
         "dead": 25,
         "remove": 30,
-        "send_alive_interval": 5,
+        "sendAliveInterval": 5,
         "slow": 15,
         "warn": 20,
     })
 
-    assert manager.ready.get_content(), "Manager not ready"
+    assert manager.ready.getContent(), "Manager not ready"
 
-    assert manager.is_master, "Didnt assing the communicator as master"
-    manager.is_master = True
-    assert manager.is_master, "Failed forcing the master"
-    manager.is_master = False
-    assert not manager.is_master, "Didnt removed the master flag"
+    assert manager.isMaster, "Didnt assing the communicator as master"
+    manager.isMaster = True
+    assert manager.isMaster, "Failed forcing the master"
+    manager.isMaster = False
+    assert not manager.isMaster, "Didnt removed the master flag"
 
     # Kill the manager.
     await manager.dispose()
 
 
-async def aatest_communication():
+async def test_communication():
     _communicator, _first = await get_manager(_id="first")
 
-    await _first.ready.wait_for()
+    await _first.ready.waitFor()
 
     sub = None
 
@@ -70,10 +70,10 @@ async def aatest_communication():
             nonlocal sub
             sub.unsubscribe()
 
-    sub = _first.dispatchers.on_change.subscribe(detect_change)
+    sub = _first.dispatchers.onChange.subscribe(detect_change)
     _communicator, _second = await get_manager(_communicator, "second")
 
-    await _second.ready.wait_for()
+    await _second.ready.waitFor()
 
     await sleep(0.5)
 
@@ -83,9 +83,9 @@ async def aatest_communication():
     await _first.dispose()
 
 
-async def aatest_sync():
+async def test_sync():
     _communicator, _first = await get_manager()
-    await _first.ready.wait_for()
+    await _first.ready.waitFor()
 
     # Now we want to simulate an delay.
     start = _first.now
@@ -105,39 +105,39 @@ async def aatest_sync():
     await _first.dispose()
 
 
-async def aatest_master_selection():
+async def test_master_selection():
     _communicator, _first = await get_manager(None, "first")
-    await _first.ready.wait_for()
+    await _first.ready.waitFor()
     await sleep(0.1)
 
     _communicator, _second = await get_manager(_communicator, "second")
-    await _second.ready.wait_for()
+    await _second.ready.waitFor()
 
     # Wait for the first Handshake
     await sleep(1)
 
-    assert _first.is_master, "First should be master"
-    assert not _second.is_master, "First should be master"
+    assert _first.isMaster, "First should be master"
+    assert not _second.isMaster, "First should be master"
     assert _first.master.id == _first.id, "First should be master"
     assert _second.master.id == _first.id, "First should be master"
 
     # Manually assign a new master
 
-    _first.is_master = False
+    _first.isMaster = False
     await sleep(0.1)
 
-    assert _second.is_master, "Second should be autoselected as master"
-    assert not _first.is_master, "Second should be autoselected as master"
+    assert _second.isMaster, "Second should be autoselected as master"
+    assert not _first.isMaster, "Second should be autoselected as master"
     assert _second.master.id == _second.id, "Second should be autoselected as master"
     assert _second.master.id == _second.id, "Second should be autoselected as master"
 
     # release the assignment
 
-    _first.is_master = None
+    _first.isMaster = None
     await sleep(0.1)
 
-    assert _first.is_master, "First should be master again"
-    assert not _second.is_master, "First should be master again"
+    assert _first.isMaster, "First should be master again"
+    assert not _second.isMaster, "First should be master again"
     assert _first.master.id == _first.id, "First should be master again"
     assert _second.master.id == _first.id, "First should be master again"
 

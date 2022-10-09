@@ -1,15 +1,12 @@
 #!/usr/bin/env python
 # @author Martin Karkowski
 # @email m.karkowski@zema.de
-# @create date 2021-01-25 18:14:16
-# @modify date 2021-01-25 18:19:00
-# @desc [description]
 
 import sys
 import traceback
 
 
-def format_exception(e):
+def formatException(e):
     exception_list = traceback.format_stack()
     exception_list = exception_list[:-2]
     exception_list.extend(traceback.format_tb(sys.exc_info()[2]))

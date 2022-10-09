@@ -7,17 +7,17 @@ import threading
 import time
 from asyncio import iscoroutinefunction
 
-from .async_helpers import get_or_create_eventloop
+from .async_helpers import getOrCreateEventloop
 
 
-class set_interval:
+class setInterval:
     """ Starts an interval, on which the function will be called.
     """
 
     def __init__(self, func, interval, *args):
         self.interval = interval / 1000
         self._is_coroutine = iscoroutinefunction(func)
-        self._loop = None if not self._is_coroutine else get_or_create_eventloop()
+        self._loop = None if not self._is_coroutine else getOrCreateEventloop()
         self.func = func
         self.args = args
         self.stop_event = threading.Event()
@@ -27,7 +27,7 @@ class set_interval:
     def __run(self):
         next_time = time.time() + self.interval
         if self._is_coroutine:
-            loop = get_or_create_eventloop()
+            loop = getOrCreateEventloop()
             asyncio.set_event_loop(loop)
 
             while not self.stop_event.wait(next_time - time.time()):
@@ -43,12 +43,12 @@ class set_interval:
         self.stop_event.set()
 
 
-def set_timeout(func, msec, *args):
+def setTimeout(func, msec, *args):
     """ Calls the function delayed.
     """
     if iscoroutinefunction(func):
         def func_wrapper():
-            loop = get_or_create_eventloop()
+            loop = getOrCreateEventloop()
             asyncio.set_event_loop(loop)
             asyncio.run_coroutine_threadsafe(func(*args))
         t = threading.Timer(msec / 1000.0, func_wrapper)

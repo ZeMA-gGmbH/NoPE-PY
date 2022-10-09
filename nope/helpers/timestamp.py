@@ -1,6 +1,6 @@
 from time import time
 
 
-def get_timestamp():
+def getTimestamp():
     """ Retruns a Timestamp in [ms]"""
     return int(time()*1000)

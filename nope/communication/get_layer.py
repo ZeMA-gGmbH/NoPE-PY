@@ -1,4 +1,4 @@
-from ..helpers import generate_id, DottedDict
+from ..helpers import generateId, DottedDict
 from .bridge import Bridge
 from .layers import MQTTLayer, IoSocketClientLayer
 
@@ -14,15 +14,15 @@ LAYER_DEFAULT_PARAMETERS = DottedDict({
 })
 
 
-async def get_layer(layer: str, parameter=None, logger=False):
-    bridge = Bridge(generate_id(), logger)
+async def getLayer(layer: str, parameter=None, logger=False):
+    bridge = Bridge(generateId(), logger)
     params = parameter if parameter is not None else LAYER_DEFAULT_PARAMETERS.get(layer, False)
     if layer == 'event':
         pass
     elif layer == 'io-client':
-        await bridge.add_communication_layer(IoSocketClientLayer(params, logger), True)
+        await bridge.addCommunicationLayer(IoSocketClientLayer(params, logger), True)
     elif layer == 'mqtt':
-        await bridge.add_communication_layer(MQTTLayer(params, logger))
+        await bridge.addCommunicationLayer(MQTTLayer(params, logger))
 
-    bridge.connected.force_publish()
+    bridge.connected.forcePublish()
     return bridge

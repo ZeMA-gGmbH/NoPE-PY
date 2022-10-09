@@ -1,8 +1,10 @@
 from asyncio import sleep
 
+import yappi, time
+
 import pytest
 
-from nope import get_layer, NopeRpcManager, format_exception, get_timestamp, EXECUTOR
+from nope import getLayer, NopeRpcManager, formatException, getTimestamp, EXECUTOR
 
 
 @pytest.fixture
@@ -13,11 +15,11 @@ def event_loop():
 
 async def main():
     manager = NopeRpcManager({
-        "communicator": await get_layer("io-client"),
+        "communicator": await getLayer("event"),
         "logger": False,
     }, lambda *args: "test", "test")
 
-    await manager.ready.wait_for()
+    await manager.ready.waitFor()
 
     async def hello(name: str) -> str:
         return f"Hello {name}!"
@@ -26,65 +28,76 @@ async def main():
         await sleep(1)
         return await hello(name)
 
-    manager.register_service(hello, {
+    manager.registerService(hello, {
        "id": "hello"
     })
 
-    manager.register_service(delayed, {
+    manager.registerService(delayed, {
         "id": "delayed"
     })
 
-    await sleep(0.5)
+    await sleep(2.5)
 
     assert "hello" in manager.services.extracted_key, "Failed to register the services"
     assert "delayed" in manager.services.extracted_key, "Failed to register the services"
 
     # Try calling the Service
-    res = await manager.perform_call("hello", ["Pytest"])
-    res = await manager.perform_call("hello", ["Pytest"])
+    res = await manager.performCall("hello", ["Pytest"])
+    res = await manager.performCall("hello", ["Pytest"])
     assert res == "Hello Pytest!"
 
     try:
-        res = await manager.perform_call("delayed", ["Pytest"], {"timeout": 2000})
+        res = await manager.performCall("delayed", ["Pytest"], {"timeout": 2000})
         assert res == "Hello Pytest!"
     except Exception as error:
         print("HERE", error)
 
     try:
-        res = await manager.perform_call("delayed", ["Pytest"], {"timeout": 200})
+        res = await manager.performCall("delayed", ["Pytest"], {"timeout": 200})
         assert res == "Hello Pytest!"
     except Exception as error:
-        print(format_exception(error))
+        print(formatException(error))
 
-    start = get_timestamp()
-    res = await manager.perform_call(["delayed"] * 5, ["Pytest"])
-    end = get_timestamp()
+    start = getTimestamp()
+    res = await manager.performCall(["delayed"] * 5, ["Pytest"])
+    end = getTimestamp()
 
     delta = []
-    bench = 100
+    bench = 1000
 
-    start = get_timestamp()
+    start = time.process_time()
     for i in range(bench):
-        await manager.perform_call("hello", ["Benchmark"])
-    end = get_timestamp()
+        # s = time.process_time()
+        await manager.performCall("hello", ["Benchmark"])
+        # delta = (time.process_time() - s) * 1000
+        # print(i, "mainloop:", delta, "[ms]")
+    end = time.process_time()
     delta = end-start
-    time_per_call = delta / bench
+    print(delta, bench)
+    time_per_call = delta*1000 / bench
     qps = 1000.0 / time_per_call
 
     print("NOPE    ", round(time_per_call, 5), "[ms] ->", round(qps, 5), "[R/s]" )
 
 
-    bench = 10000
+    bench = 100000
 
-    start = get_timestamp()
+    start = getTimestamp()
     for i in range(bench):
         await hello("delayed")
-    end = get_timestamp()
+    end = getTimestamp()
     delta = end-start
     time_per_call = delta / bench
     qps = 1000.0 / time_per_call
 
     print("ORIGINAL", round(time_per_call, 5), "[ms] ->", round(qps, 5), "[R/s]" )
 
+    #await manager.dispose()
+
 EXECUTOR.loop.run_until_complete(main())
-EXECUTOR.run()
+
+# yappi.set_clock_type("CPU")
+# with yappi.run():
+#     EXECUTOR.loop.run_until_complete(main())
+# yappi.get_func_stats().print_all()
+

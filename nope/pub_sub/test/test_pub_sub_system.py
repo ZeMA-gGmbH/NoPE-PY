@@ -73,7 +73,7 @@ def test_pub_sub_system_smaller_topic():
     assert called == 1
 
 
-def test_pub_sub_system_sub_topic():
+def test_pub_sub_system_subTopic():
     called = 0
 
     pub_sub = PubSubSystem()

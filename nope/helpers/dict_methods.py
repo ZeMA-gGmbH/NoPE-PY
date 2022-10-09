@@ -1,127 +1,127 @@
 from collections.abc import Iterable
 
-from .dotted_dict import DottedDict, ensure_dotted_dict
-from .object_methods import convert_data, rgetattr, rquery_attr, is_object_like, flatten_object, rsetattr
-from .path import SPLITCHAR, get_least_common_path_segment, path_to_camel_case, path_to_snake_case
-from .string_methods import camel_to_snake, snake_to_camel
-from .prints import format_exception
+from .dotted_dict import DottedDict, ensureDottedAccess
+from .object_methods import convertData, rgetattr, rqueryAttr, isDictLike, flattenObject, rsetattr
+from .path import SPLITCHAR, getLeastCommonPathSegment, pathToCamelCase, pathToSnakeCase
+from .string_methods import camelToSnake, snakeToCamel
+from .prints import formatException
 
 __SENTINENTAL = object()
 
 
-def keys_to_snake(d: dict, adapt_str_values = False):
+def keysToSnake(d: dict, adaptStrValues = False):
     """ helperfunction, which will change the keys to 
         snake case.
     """
     ret = {}
     for key, value in d.items():
-        if adapt_str_values and type(value) is str:
-            ret[camel_to_snake(key)] = camel_to_snake(value)
+        if adaptStrValues and type(value) is str:
+            ret[camelToSnake(key)] = camelToSnake(value)
         else:
-            ret[camel_to_snake(key)] = value
+            ret[camelToSnake(key)] = value
 
     return ret
 
 
-def keys_to_snake_nested(d: dict, adapt_str_values = False):
+def keysToSnakeNested(d: dict, adaptStrValues = False):
     """ helper function, which will change the keys to
         snake case. this will work with nested dicts as well
     """
 
-    flatten = flatten_object(d, only_path_to_simple_value=True)
+    flatten = flattenObject(d, onlyPathToBaseValue=True)
 
-    ret = ensure_dotted_dict({})
+    ret = ensureDottedAccess({})
 
     for k, v in flatten.items():
-        if adapt_str_values and type(v) is str:
-            rsetattr(ret, path_to_snake_case(k), camel_to_snake(v))
+        if adaptStrValues and type(v) is str:
+            rsetattr(ret, pathToSnakeCase(k), camelToSnake(v))
         else:
-            rsetattr(ret, path_to_snake_case(k), v)
+            rsetattr(ret, pathToSnakeCase(k), v)
 
     return ret
 
 
-def keys_to_camel(d: dict, adapt_str_values = False):
+def keysToCamel(d: dict, adaptStrValues = False):
     """ helperfunction, which will change the options to 
         camel case.
     """
     ret = {}
     for key, value in d.items():
-        if adapt_str_values and type(value) is str:
-            ret[snake_to_camel(key)] = snake_to_camel(value)
+        if adaptStrValues and type(value) is str:
+            ret[snakeToCamel(key)] = snakeToCamel(value)
         else:
-            ret[snake_to_camel(key)] = value
+            ret[snakeToCamel(key)] = value
 
     return ret
 
 
-def keys_to_camel_nested(d: dict, adapt_str_values = False):
+def keysToCamelNested(d: dict, adaptStrValues = False):
     """ helperfunction, which will change the options to 
         camel case. this will work with nested dicts as well
         (expecting every key contains a dict again.)
     """
-    flatten = flatten_object(d, only_path_to_simple_value=True)
+    flatten = flattenObject(d, onlyPathToBaseValue=True)
 
-    ret = ensure_dotted_dict({})
+    ret = ensureDottedAccess({})
 
     for k, v in flatten.items():
-        if adapt_str_values and type(v) is str:
-            rsetattr(ret, path_to_camel_case(k), snake_to_camel(v))
+        if adaptStrValues and type(v) is str:
+            rsetattr(ret, pathToCamelCase(k), snakeToCamel(v))
         else:
-            rsetattr(ret, path_to_camel_case(k), v)
+            rsetattr(ret, pathToCamelCase(k), v)
 
     return ret
 
 
-def extract_unique_values(d, path='', path_key: str = None):
+def extractUniqueValues(d, path='', pathKey: str = None):
     """ Extracts the unique values of an map.
 
     Args:
         d (dict-like): The dict-like object that should be transformed.
         path (str, optional): The path of the attribute of that should be extracted of the value. Defaults to ''.
-        path_key (str, optional):   The Path of the unique key. If set to `None` -> The Item is selected directly.
+        pathKey (str, optional):   The Path of the unique key. If set to `None` -> The Item is selected directly.
                                     Defaults to None.
 
     Returns:
         set: A set containing the unique values.
     """
-    if path_key is None:
-        path_key = path
-    if path != path_key:
-        _common_segment = get_least_common_path_segment([path, path_key], DottedDict(
-            {'consider_single_level': False, 'consider_multi_level': False}))
+    if pathKey is None:
+        pathKey = path
+    if path != pathKey:
+        _commonSegment = getLeastCommonPathSegment([path, pathKey], DottedDict(
+            {'considerSingleLevel': False, 'considerMultiLevel': False}))
 
         # Assign the Value
-        _common_segment = _common_segment if _common_segment is not False else ""
+        _commonSegment = _commonSegment if _commonSegment is not False else ""
 
         # Determine the Length of the common segment, to determine the relative pathes
-        _common_segment_length = len(_common_segment.split(SPLITCHAR)) if _common_segment != "" else 0
+        _commonSegmentLength = len(_commonSegment.split(SPLITCHAR)) if _commonSegment != "" else 0
 
-        _rel_path_content = SPLITCHAR.join(path.split(SPLITCHAR)[_common_segment_length:])
-        _rel_path_key = SPLITCHAR.join(path_key.split(SPLITCHAR)[_common_segment_length:])
-        _items = extract_values(d, _common_segment)
-        _items_keys = set()
+        _relPathContent = SPLITCHAR.join(path.split(SPLITCHAR)[_commonSegmentLength:])
+        _relPathKey = SPLITCHAR.join(pathKey.split(SPLITCHAR)[_commonSegmentLength:])
+        _items = extractValues(d, _commonSegment)
+        _keysToUse = set()
         ret = []
         for item in _items:
             # Extract key and data:
-            key = rgetattr(item, _rel_path_key) if _rel_path_key else item
-            data = rgetattr(item, _rel_path_content) if _rel_path_content else item
-            if key not in _items_keys:
+            key = rgetattr(item, _relPathKey) if _relPathKey else item
+            data = rgetattr(item, _relPathContent) if _relPathContent else item
+            if key not in _keysToUse:
                 # Only if the Key has not been used we are allowed to add
                 # the data.
-                _items_keys.add(key)
+                _keysToUse.add(key)
                 if data not in ret:
                     ret.append(data)
         return ret
-    return extract_values(d, path, unique = True)
+    return extractValues(d, path, unique = True)
 
 
-def extract_values(d, path='', unique = False):
+def extractValues(d, path='', unique = False):
     """ Helper to extract values of the map. Therefore the path must be provided.
 
     Example:
         >> d = {1:{"a": 0}, 2:{"a": 1}}
-        >> r = extract_values(d,"a")
+        >> r = extractValues(d,"a")
 
         r = [0,1]
 
@@ -136,7 +136,7 @@ def extract_values(d, path='', unique = False):
     s = list()
     for v in d.values():
         if path:
-            for item in rquery_attr(v, path):
+            for item in rqueryAttr(v, path):
                 if not unique or (unique and (item.data not in s)):
                     s.append(item.data)
         elif not unique or (unique and (v not in s)):
@@ -144,43 +144,43 @@ def extract_values(d, path='', unique = False):
     return s
 
 
-def transform_dict(d, path_extracted_value, path_extracted_key, logger = None):
+def transform_dict(d, pathExtractedValue: str, pathExtractedKey: str, logger = None):
     """_summary_
 
     Args:
         d (_type_): _description_
-        path_extracted_value (_type_): _description_
-        path_extracted_key (_type_): _description_
+        pathExtractedValue (str): _description_
+        pathExtractedKey (str): _description_
 
     Returns:
         _type_: _description_
     """
 
     # Initialize all values:
-    key_mapping = dict()
-    reverse_key_mapping = dict()
+    keyMapping = dict()
+    reverseKeyMapping = dict()
     conflicts = dict()
-    extracted_dict = dict()
-    org_key_to_extracted_value = dict()
-    amount_of = dict()
+    extractedDict = dict()
+    orgKeyToExtractedValue = dict()
+    amountOf = dict()
     props = []
-    only_valid_props = True
+    onlyValidProps = True
 
-    if type(path_extracted_key) is str:
-        props.append(DottedDict({'key': 'key', 'query': path_extracted_key}))
-        only_valid_props = only_valid_props and (len(path_extracted_key) > 0)
+    if type(pathExtractedKey) is str:
+        props.append(DottedDict({'key': 'key', 'query': pathExtractedKey}))
+        onlyValidProps = onlyValidProps and (len(pathExtractedKey) > 0)
     else:
-        only_valid_props = False
+        onlyValidProps = False
 
-    if type(path_extracted_value) is str:
+    if type(pathExtractedValue) is str:
         props.append(DottedDict(
-            {'key': 'value', 'query': path_extracted_value}))
-        only_valid_props = only_valid_props and (len(path_extracted_value) > 0)
+            {'key': 'value', 'query': pathExtractedValue}))
+        onlyValidProps = onlyValidProps and (len(pathExtractedValue) > 0)
     else:
-        only_valid_props = False
+        onlyValidProps = False
 
-    key_hashable = True
-    value_hashable = True
+    keyIsHashable = True
+    valueIsHashable = True
 
     __warned = False
 
@@ -189,49 +189,49 @@ def transform_dict(d, path_extracted_value, path_extracted_key, logger = None):
     for k, v in d.items():
         extracted = []
 
-        if only_valid_props:
-            extracted = convert_data(v, props)
+        if onlyValidProps:
+            extracted = convertData(v, props)
 
             for element in extracted:
                 # Try to convert the data:
                 try:
                     hash(element.key)
-                    element.key_hashable = True
+                    element.keyIsHashable = True
                 except:
-                    element.key_hashable = False
-                    key_hashable = False
+                    element.keyIsHashable = False
+                    keyIsHashable = False
 
                 # Try to convert the data:
                 try:
                     hash(element.value)
-                    element.value_hashable = True
+                    element.valueIsHashable = True
                 except:
-                    element.value_hashable = False
-                    value_hashable = False
+                    element.valueIsHashable = False
+                    valueIsHashable = False
 
         else:
 
             data = DottedDict({
                 'key': None, 
                 'value': None,
-                'key_hashable': True,
-                'value_hashable': True
+                'keyIsHashable': True,
+                'valueIsHashable': True
             })
 
             # We migt adapt the key and the Value. Therefore we will use
             # the next if statements
 
-            if type(path_extracted_key) is str:
-                if len(path_extracted_key) > 0:
-                    data.key = rgetattr(v, path_extracted_key)
+            if type(pathExtractedKey) is str:
+                if len(pathExtractedKey) > 0:
+                    data.key = rgetattr(v, pathExtractedKey)
                 else:
                     data.key = v
             else:
                 data.key = k
 
-            if type(path_extracted_value) is str:
-                if len(path_extracted_value) > 0:
-                    data.value = rgetattr(v, path_extracted_value)
+            if type(pathExtractedValue) is str:
+                if len(pathExtractedValue) > 0:
+                    data.value = rgetattr(v, pathExtractedValue)
                 else:
                     data.value = v
             else:
@@ -241,78 +241,78 @@ def transform_dict(d, path_extracted_value, path_extracted_key, logger = None):
             try:
                 hash(data.key)
             except:
-                data.key_hashable = False
-                key_hashable = False
+                data.keyIsHashable = False
+                keyIsHashable = False
 
             # Try to convert the data:
             try:
                 hash(data.value)
             except:
-                data.value_hashable = False
-                value_hashable = False
+                data.valueIsHashable = False
+                valueIsHashable = False
 
             extracted.append(data)
 
         # Create the entries for the following dicts.
-        key_mapping[k] = set()
-        org_key_to_extracted_value[k] = set() if value_hashable else list()
+        keyMapping[k] = set()
+        orgKeyToExtractedValue[k] = set() if valueIsHashable else list()
 
         for item in extracted:
 
-            if not item.key_hashable:
-                error = Exception(f"Can not hash the new key='{item.key}' (type={type(item.key)}) from path='{path_extracted_key}'")
+            if not item.keyIsHashable:
+                error = Exception(f"Can not hash the new key='{item.key}' (type={type(item.key)}) from path='{pathExtractedKey}'")
                 
                 if logger:
                     logger.error(error)
                 else:
-                    print(format_exception(error))
+                    print(formatException(error))
 
                 raise error
 
-            if item.key in extracted_dict:
+            if item.key in extractedDict:
                 # If the extracted new key has already been defined,
                 # we have to determine whether the stored item matches
                 # the allready provided definition.
-                if not (extracted_dict.get(item.key) == item.value):
+                if not (extractedDict.get(item.key) == item.value):
                     # Conflict detected -> Store it
 
                     if item.key not in conflicts:
-                        conflicts[item.key] = set() if value_hashable else list()
+                        conflicts[item.key] = set() if valueIsHashable else list()
 
-                    getattr(conflicts.get(item.key), "add" if value_hashable else "append")(item.value)
-                    getattr(conflicts.get(item.key), "add" if value_hashable else "append")(extracted_dict.get(item.key))
+                    getattr(conflicts.get(item.key), "add" if valueIsHashable else "append")(item.value)
+                    getattr(conflicts.get(item.key), "add" if valueIsHashable else "append")(extractedDict.get(item.key))
                 else:
                     # No conflict -> just store the amount
-                    amount_of[item.key] = amount_of.get(item.key, 0) + 1
+                    amountOf[item.key] = amountOf.get(item.key, 0) + 1
             else:
                 # Store the item and amount
-                extracted_dict[item.key] = item.value
-                amount_of[item.key] = amount_of.get(item.key, 0) + 1
+                extractedDict[item.key] = item.value
+                amountOf[item.key] = amountOf.get(item.key, 0) + 1
 
             #  If the reverse haven't been set ==> create it.
-            if not (item.key in reverse_key_mapping):
-                reverse_key_mapping[item.key] = set()
+            if not (item.key in reverseKeyMapping):
+                reverseKeyMapping[item.key] = set()
 
             # Store the mapping of new-key --> org-key.
-            reverse_key_mapping[item.key].add(k)
+            reverseKeyMapping[item.key].add(k)
             
             # Store the mapping of org-key --> new-key.
-            key_mapping[k].add(item.key)
+            keyMapping[k].add(item.key)
             
             # Now store the item.
-            getattr(org_key_to_extracted_value[k], "add" if value_hashable else "append")(item.value)
+            getattr(orgKeyToExtractedValue[k], "add" if valueIsHashable else "append")(item.value)
 
     return DottedDict({
-        'extracted_map': extracted_dict,
-        'key_mapping': key_mapping,
+        'extracted_map': extractedDict,
+        'keyMapping': keyMapping,
         'conflicts': conflicts,
-        'key_mapping_reverse': reverse_key_mapping,
-        'org_key_to_extracted_value': org_key_to_extracted_value,
-        'amount_of': amount_of
+        'keyMappingreverse': reverseKeyMapping,
+        'orgKeyToExtractedValue': orgKeyToExtractedValue,
+        'amountOf': amountOf
     })
 
 
-def reverse(d, path='', path_key: str = None):
+def reverse(d, path='', pathKey: str = None):
     """ Reverses the given map.
 
         If the path is provided, the Data is extracted based on the given path.
@@ -321,29 +321,29 @@ def reverse(d, path='', path_key: str = None):
     Args:
         d (dict): The dict used as source.
         path (str, optional): The path for the attributes in the value. Defaults to ''.
-        path_key (str, optional): The path of the key, which will be provided in the `value`. Defaults to None.
+        pathKey (str, optional): The path of the key, which will be provided in the `value`. Defaults to None.
 
     Returns:
         dict: The reversed Dict.
     """
     ret = dict()
-    if path_key is None:
-        path_key = path
+    if pathKey is None:
+        pathKey = path
     for k, v in d.items():
-        key_to_use = k
+        keyToUse = k
 
-        if path_key:
-            key_to_use = rgetattr(v, path_key, __SENTINENTAL)
-        value_to_use = v
+        if pathKey:
+            keyToUse = rgetattr(v, pathKey, __SENTINENTAL)
+        valueToUse = v
         if path:
-            value_to_use = rgetattr(v, path, __SENTINENTAL)
-        if isinstance(value_to_use, Iterable):
-            for _v in value_to_use:
+            valueToUse = rgetattr(v, path, __SENTINENTAL)
+        if isinstance(valueToUse, Iterable):
+            for _v in valueToUse:
                 if _v not in ret:
                     ret[_v] = set()
-                ret.get(_v).add(key_to_use)
+                ret.get(_v).add(keyToUse)
         else:
-            if value_to_use not in ret:
-                ret[value_to_use] = set()
-            ret.get(value_to_use).add(key_to_use)
+            if valueToUse not in ret:
+                ret[valueToUse] = set()
+            ret.get(valueToUse).add(keyToUse)
     return ret

@@ -6,36 +6,36 @@ from . import (async_helpers, dict_methods, dispatcher_pathes, dotted_dict,
                emitter, id_methods, importing, object_methods, path,
                path_matching_methods, prints, runtime, string_methods, timers,
                timestamp, hashable)
-from .async_helpers import (Promise,get_or_create_eventloop, is_async_function, EXECUTOR)
-from .dict_methods import (extract_unique_values, extract_values,
-                           keys_to_camel, keys_to_camel_nested, keys_to_snake,
-                           keys_to_snake_nested, transform_dict)
-from .dispatcher_pathes import (get_emitter_path, get_method_path,
-                                get_property_path, is_emitter_path_correct,
-                                is_method_path_correct,
-                                is_property_path_correct)
-from .dotted_dict import DottedDict, convert_to_dotted_dict, ensure_dotted_dict
+from .async_helpers import (Promise,getOrCreateEventloop, isAsyncFunction, EXECUTOR)
+from .dict_methods import (extractUniqueValues, extractValues,
+                           keysToCamel, keysToCamelNested, keysToSnake,
+                           keysToSnakeNested, transform_dict)
+from .dispatcher_pathes import (getEmitterPath, getMethodPath,
+                                getPropertyPath, isEmitterPathCorrect,
+                                isMethodPathCorrect,
+                                isPropertyPathCorrect)
+from .dotted_dict import DottedDict, convertToDottedDict, ensureDottedAccess
 from .emitter import Emitter
 from .hashable import hlist, hset, hdict
-from .id_methods import generate_id
-from .importing import dynamic_import
-from .list_methods import (avg_of_array, extract_list_element, is_iterable, is_list,
-                           max_of_array, min_of_array)
-from .object_methods import (convert_data, copy, deep_assign, deflatten_object,
-                             flatten_object, get_keys, is_float, is_int,
-                             is_number, is_object_like,
-                             keep_properties_of_object, object_to_dict,
-                             recursive_for_each, rgetattr, rquery_attr,
+from .id_methods import generateId
+from .importing import dynamicImport
+from .list_methods import (avgOfArray, extractListElements, isIterable, isList,
+                           maxOfArray, minOfArray)
+from .object_methods import (convertData, copy, deepAssign, deflattenObject,
+                             flattenObject, getKeys, isFloat, isInt,
+                             isNumber, isDictLike,
+                             keepProperties, objectToDict,
+                             recursiveForEach, rgetattr, rqueryAttr,
                              rsetattr)
 from .path import (MULTI_LEVEL_WILDCARD, SINGLE_LEVEL_WILDCARD, SPLITCHAR,
-                   contains_wildcards, convert_path, path_to_camel_case, path_to_snake_case,
-                   get_least_common_path_segment, pattern_is_valid)
-from .path_matching_methods import compare_pattern_and_path
-from .prints import format_exception
+                   containsWildcards, convertPath, pathToCamelCase, pathToSnakeCase,
+                   getLeastCommonPathSegment, patternIsValid)
+from .path_matching_methods import comparePatternAndPath
+from .prints import formatException
 from .runtime import offload_function_to_thread
-from .set_methods import determine_difference, difference, union
-from .string_methods import (camel_to_snake, insert, insert_new_lines,
-                             limit_string, pad_string, replace_all,
-                             snake_to_camel, to_camel_case, to_snake_case)
-from .timers import set_interval, set_timeout
-from .timestamp import get_timestamp
+from .set_methods import determineDifference, difference, union
+from .string_methods import (camelToSnake, insert, insert_new_lines,
+                             limit_string, pad_string, replaceAll,
+                             snakeToCamel, to_camel_case, to_snake_case)
+from .timers import setInterval, setTimeout
+from .timestamp import getTimestamp

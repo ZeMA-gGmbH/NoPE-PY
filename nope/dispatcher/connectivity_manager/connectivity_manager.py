@@ -8,9 +8,9 @@ from socket import gethostname
 
 import psutil
 
-from ...helpers import get_timestamp, ensure_dotted_dict, generate_id, DottedDict, min_of_array, format_exception, \
+from ...helpers import getTimestamp, ensureDottedAccess, generateId, DottedDict, minOfArray, formatException, \
     EXECUTOR
-from ...logger import define_nope_logger
+from ...logger import defineNopeLogger
 from ...merging import DictBasedMergeData
 from ...observable import NopeObservable
 
@@ -53,33 +53,33 @@ class NopeConnectivityManager:
 
     def __init__(self, options, _id=None):
 
-        options = ensure_dotted_dict(options, False)
+        options = ensureDottedAccess(options, False)
 
         self.options = options
-        self._id = _id if _id is not None else generate_id()
-        self._delta_time = 0
-        self._check_status_task = None
-        self._send_status_task = None
+        self._id = _id if _id is not None else generateId()
+        self._deltaTime = 0
+        self._checkStatusTask = None
+        self._sendStatusTask = None
 
-        self._timeouts = ensure_dotted_dict({})
+        self._timeouts = ensureDottedAccess({})
 
         self._communicator = options.communicator
-        self._connected_since = get_timestamp()
-        self._is_master = options.is_master if type(options.is_master) is int else None
+        self._connectedSince = getTimestamp()
+        self._isMaster = options.isMaster if type(options.isMaster) is int else None
 
-        self._logger = define_nope_logger(options.logger, 'core.connectivity-manager')
+        self._logger = defineNopeLogger(options.logger, 'core.connectivity-manager')
 
         self.ready = NopeObservable()
-        self.ready.set_content(False)
-        self._external_dispatchers = dict()
-        self.dispatchers = DictBasedMergeData(self._external_dispatchers, 'id')
+        self.ready.setContent(False)
+        self._externalDispatchers = dict()
+        self.dispatchers = DictBasedMergeData(self._externalDispatchers, 'id')
 
         if self._logger:
             self._logger.info('core.connectivity-manager', self.id, 'is ready')
 
         self.reset()
         # asyncio.ensure_future(self.init())
-        EXECUTOR.call_parallel(self.init)
+        EXECUTOR.callParallel(self.init)
 
     @property
     def id(self):
@@ -89,14 +89,14 @@ class NopeConnectivityManager:
     def info(self):
 
         # Helper for the Memory.
-        virtual_memory = psutil.virtual_memory()
+        _virtual_memory = psutil.virtual_memory()
 
-        return ensure_dotted_dict({
+        return ensureDottedAccess({
             'id': self.id,
             'env': 'python',
             'version': _VERSION,
-            'is_master': self.is_master,
-            'is_master_forced': type(self._is_master) is bool,
+            'isMaster': self.isMaster,
+            'isMasterForced': type(self._isMaster) is bool,
             'host': {
                 'cores': os.cpu_count(),
                 'cpu': {
@@ -106,62 +106,62 @@ class NopeConnectivityManager:
                 },
                 'os': str(platform.system()) + " " + str(platform.release()),
                 'ram': {
-                    'used_perc': virtual_memory.percent,
-                    'free': round(virtual_memory.free / 1048576),
-                    'total': round(virtual_memory.total / 1048576)
+                    'used_perc': _virtual_memory.percent,
+                    'free': round(_virtual_memory.free / 1048576),
+                    'total': round(_virtual_memory.total / 1048576)
                 },
                 'name': gethostname()
             },
             'pid': os.getpid(),
             'timestamp': self.now,
-            'connected_since': self.connected_since,
+            'connectedSince': self.connectedSince,
             'status': ENopeDispatcherStatus.HEALTHY.value
         })
 
     @property
     def up_time(self):
-        return get_timestamp() - self.connected_since
+        return getTimestamp() - self.connectedSince
 
     @property
-    def connected_since(self):
-        return self._connected_since + self._delta_time
+    def connectedSince(self):
+        return self._connectedSince + self._deltaTime
 
     @property
-    def is_master(self):
-        if self._is_master is None:
+    def isMaster(self):
+        if self._isMaster is None:
             try:
                 return self.id == self.master.id
             except Exception as e:
                 return False
-        return self._is_master
+        return self._isMaster
 
-    @is_master.setter
-    def is_master(self, value):
-        self._is_master = value
-        asyncio.ensure_future(self._async_send_status())
+    @isMaster.setter
+    def isMaster(self, value):
+        self._isMaster = value
+        EXECUTOR.callParallel(self._asyncSendStatus)
 
-    def _get_possible_master_candidates(self):
-        possible_masters = []
-        for info in self.dispatchers.original_data.values():
+    def _getPossibleMasterCandidates(self):
+        possibleMasters = []
+        for info in self.dispatchers.originalData.values():
             # In here we have to use Camel-Case because we are considering
             # Camel-Case in the entire system.
-            if info.is_master_forced and not info.is_master:
+            if info.isMasterForced and not info.isMaster:
                 continue
-            possible_masters.append(info)
-        return possible_masters
+            possibleMasters.append(info)
+        return possibleMasters
 
     @property
     def master(self):
-        def check_if_master(item):
-            return item.is_master and item.is_master_forced
+        def checkIfIsMaster(item):
+            return item.isMaster and item.isMasterForced
 
-        candidates = self._get_possible_master_candidates()
-        masters = list(filter(check_if_master, candidates))
+        candidates = self._getPossibleMasterCandidates()
+        masters = list(filter(checkIfIsMaster, candidates))
         if len(masters) != 1:
             if len(masters) > 1 and self._logger:
                 self._logger.warn(
                     f"Found {len(masters)}. We now will select the one which has been online for the longest time.")
-            idx = min_of_array(candidates, 'connected_since').index
+            idx = minOfArray(candidates, 'connectedSince').index
             if idx is not None:
                 return candidates[idx]
             raise Exception('No Master has been found !')
@@ -169,72 +169,72 @@ class NopeConnectivityManager:
 
     @property
     def now(self):
-        return get_timestamp() + self._delta_time
+        return getTimestamp() + self._deltaTime
 
     async def init(self):
 
-        self.ready.set_content(False)
+        self.ready.setContent(False)
 
-        await self.set_timings(self.options.timeouts)
+        await self.setTimings(self.options.timeouts)
 
-        def on_connect(connected, _rest):
+        def onConnect(connected, _rest):
             if connected:
-                self._connected_since = get_timestamp()
+                self._connectedSince = getTimestamp()
 
-        self._communicator.connected.subscribe(on_connect)
-        await self._communicator.connected.wait_for()
+        self._communicator.connected.subscribe(onConnect)
+        await self._communicator.connected.waitFor()
 
-        def on_status_changed(info):
-            self._external_dispatchers[info.id] = ensure_dotted_dict(info)
+        def onStatusChanged(info):
+            self._externalDispatchers[info.id] = ensureDottedAccess(info)
             if info.id != self.id:
-                self._external_dispatchers[self.id] = self.info
+                self._externalDispatchers[self.id] = self.info
                 self.dispatchers.update()
 
-        await self._communicator.on('status_changed', on_status_changed)
+        await self._communicator.on('statusChanged', onStatusChanged)
 
-        def on_bonjour(opts):
-            if self.id != opts.dispatcher_id:
+        def onBonjour(opts):
+            if self.id != opts.dispatcherId:
                 if self._logger:
-                    self._logger.debug('Remote Dispatcher "' + opts.dispatcher_id + '" went online')
-                    self._async_send_status()
+                    self._logger.debug('Remote Dispatcher "' + opts.dispatcherId + '" went online')
+                    self._asyncSendStatus()
 
-        await self._communicator.on('bonjour', on_bonjour)
+        await self._communicator.on('bonjour', onBonjour)
 
-        def on_aurevoir(msg):
+        def onAurevoir(msg):
             # We try to pop the item. If it fails we wont update the elements
-            item = self._external_dispatchers.pop(msg.dispatcherId, False)
+            item = self._externalDispatchers.pop(msg.dispatcherId, False)
             if item:
                 self.dispatchers.update()
 
-        await self._communicator.on('aurevoir', on_aurevoir)
+        await self._communicator.on('aurevoir', onAurevoir)
 
-        await self._async_send_status()
+        await self._asyncSendStatus()
 
         if self._logger:
             self._logger.info('core.connectivity-manager', self.id, 'initialized')
 
-        await self.emit_bonjour()
-        await self._async_send_status()
-        self.ready.set_content(True)
+        await self.emitBonjour()
+        await self._asyncSendStatus()
+        self.ready.setContent(True)
 
-    def _check_dispachter_health(self):
+    def _checkDispachterHealth(self):
         """ Checks the health of dispatcher. If some changes like their connection
             are determined, an update is transmitted via the attribute `dispatchers`
 
         """
-        current_time = self.now
+        currentTime = self.now
 
         changes = False
 
-        for status in list(self._external_dispatchers.values()):
+        for status in list(self._externalDispatchers.values()):
             # determine the Difference
-            diff = current_time - status['timestamp']
+            diff = currentTime - status['timestamp']
 
             # Based on the Difference Determine the Status
             if diff > self._timeouts['remove']:
                 # remove the Dispatcher. But be quiet.
                 # Perhaps more dispatchers will be removed
-                self._remove_dispatcher(status['id'], True)
+                self._removeDispatcher(status['id'], True)
                 changes = True
             elif diff > self._timeouts['dead'] and status['status'] != ENopeDispatcherStatus.DEAD:
                 status['status'] = ENopeDispatcherStatus.DEAD
@@ -253,56 +253,56 @@ class NopeConnectivityManager:
 
         if changes:
             # Execute the following function parallel.
-            EXECUTOR.call_parallel(lambda: self.dispatchers.update)
+            EXECUTOR.callParallel(lambda: self.dispatchers.update)
 
-    def _remove_dispatcher(self, dispatcher: str, quiet=False):
+    def _removeDispatcher(self, dispatcher: str, quiet=False):
         """ Removes a dispatcher.
         """
-        dispatcher_info = self._external_dispatchers.pop(dispatcher, None)
+        dispatcherInfo = self._externalDispatchers.pop(dispatcher, None)
         if not quiet:
             self.dispatchers.update()
-        if self._logger and dispatcher_info:
+        if self._logger and dispatcherInfo:
             self._logger.warn(
-                f'a dispatcher on {dispatcher_info.host.name} went offline. ID of the Dispatcher: "{dispatcher}"')
+                f'a dispatcher on {dispatcherInfo.host.name} went offline. ID of the Dispatcher: "{dispatcher}"')
 
-    async def _async_send_status(self):
-        if self._communicator.connected.get_content():
+    async def _asyncSendStatus(self):
+        if self._communicator.connected.getContent():
             try:
                 info = self.info
-                self._external_dispatchers[self.id] = info
-                await self._communicator.emit('status_changed', info)
+                self._externalDispatchers[self.id] = info
+                await self._communicator.emit('statusChanged', info)
             except Exception as e:
                 if self._logger:
                     self._logger.error('Failled to send the status')
                     self._logger.error(e)
 
                 else:
-                    print(format_exception(e))
+                    print(formatException(e))
 
     def sync_time(self, timestamp, delay=0):
-        internal_timestamp = get_timestamp()
-        self._delta_time = internal_timestamp - (timestamp - delay)
+        internalTimestamp = getTimestamp()
+        self._deltaTime = internalTimestamp - (timestamp - delay)
 
-    def get_status(self, _id: str):
-        return self._external_dispatchers[_id]
+    def getStatus(self, _id: str):
+        return self._externalDispatchers[_id]
 
-    async def emit_bonjour(self):
+    async def emitBonjour(self):
         await self._communicator.emit('bonjour',
-                                      ensure_dotted_dict({'dispatcher_id': self.id}))
+                                      ensureDottedAccess({'dispatcherId': self.id}))
 
     def reset(self):
-        self._external_dispatchers.clear()
-        self.dispatchers.update(self._external_dispatchers)
+        self._externalDispatchers.clear()
+        self.dispatchers.update(self._externalDispatchers)
 
-    async def set_timings(self, options):
+    async def setTimings(self, options):
 
-        options = ensure_dotted_dict(options)
+        options = ensureDottedAccess(options)
 
         await self.dispose(True)
 
-        self._timeouts = ensure_dotted_dict({
-            'send_alive_interval': 500,
-            'check_interval': 250,
+        self._timeouts = ensureDottedAccess({
+            'sendAliveInterval': 500,
+            'checkInterval': 250,
             'slow': 1000,
             'warn': 2000,
             'dead': 5000,
@@ -313,33 +313,33 @@ class NopeConnectivityManager:
             self._timeouts.update(options)
 
         # Setup Test Intervals:
-        if self._timeouts.check_interval > 0:
+        if self._timeouts.checkInterval > 0:
             # Define a Checker, which will test the status
             # of the external Dispatchers.
-            self._check_status_task = EXECUTOR.set_interval(
-                self._check_dispachter_health,
-                self._timeouts["check_interval"]
+            self._checkStatusTask = EXECUTOR.setInterval(
+                self._checkDispachterHealth,
+                self._timeouts["checkInterval"]
             )
 
-        if self._timeouts["send_alive_interval"] > 0:
+        if self._timeouts.sendAliveInterval > 0:
             # Define a Timer, which will emit Status updates with
             # the desired delay.
-            self._send_status_task = EXECUTOR.set_interval(
-                self._async_send_status,
-                self._timeouts["send_alive_interval"]
+            self._sendStatusTask = EXECUTOR.setInterval(
+                self._asyncSendStatus,
+                self._timeouts["sendAliveInterval"]
             )
 
     @property
     def all_hosts(self):
         hosts = set()
-        for info in self.dispatchers.original_data.values():
+        for info in self.dispatchers.originalData.values():
             hosts.add(info.host.name)
         return list(hosts)
 
-    async def dispose(self, quite=False):
-        if self._send_status_task:
-            self._send_status_task.cancel()
-        if self._check_status_task:
-            self._check_status_task.cancel()
-        if not quite:
+    async def dispose(self, quiet=False):
+        if self._sendStatusTask:
+            self._sendStatusTask.cancel()
+        if self._checkStatusTask:
+            self._checkStatusTask.cancel()
+        if not quiet:
             await self._communicator.emit('aurevoir', DottedDict({'dispatcherId': self.id}))

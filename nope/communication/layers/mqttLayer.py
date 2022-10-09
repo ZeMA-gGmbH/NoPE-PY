@@ -3,17 +3,17 @@ from logging import Logger
 
 import paho.mqtt.client as mqtt
 from socket import gethostname
-from ...helpers import replace_all, generate_id, format_exception, SPLITCHAR
-from ...logger import get_logger, DEBUG, INFO
+from ...helpers import replaceAll, generateId, formatException, SPLITCHAR
+from ...logger import getNopeLogger, DEBUG, INFO
 from ...observable import NopeObservable
 
 HOSTNAME = gethostname()
 
 
-def mqtt_match(subscription: str, offered: str):
+def mqttMatch(subscription: str, offered: str):
     # Adapt the subscription and offered element to use the correct split char.
-    subscription = replace_all(subscription, SPLITCHAR, '/')
-    offered = replace_all(offered, SPLITCHAR, '/')
+    subscription = replaceAll(subscription, SPLITCHAR, '/')
+    offered = replaceAll(offered, SPLITCHAR, '/')
 
     # Perform the original method.
     res = mqtt.topic_matches_sub(subscription, offered)
@@ -38,47 +38,47 @@ def mqtt_match(subscription: str, offered: str):
 
 class MQTTLayer:
 
-    def __init__(self, uri, logger=INFO, pre_topic=HOSTNAME, qos=2, forward_to_custom_topics=True):
+    def __init__(self, uri, logger=INFO, preTopic=HOSTNAME, qos=2, forwardToCustomTopics=True):
 
         self.uri = uri
-        self.pre_topic = pre_topic
+        self.preTopic = preTopic
         self.qos = qos
-        self.forward_to_custom_topics = forward_to_custom_topics
+        self.forwardToCustomTopics = forwardToCustomTopics
         self.uri = self.uri if self.uri.starts_with('mqtt://') else 'mqtt://' + self.uri
         self.connected = NopeObservable()
-        self.connected.set_content(False)
+        self.connected.setContent(False)
         self._cbs = dict()
-        self.logger: Logger = get_logger(logger, 'core.layer.mqtt')
-        self.consider_connection = True
-        self.allow_service_redundancy = False
-        self._id = generate_id()
-        self.receives_own_messages = True
+        self.logger: Logger = getNopeLogger(logger, 'core.layer.mqtt')
+        self.considerConnection = True
+        self.allowServiceRedundancy = False
+        self._id = generateId()
+        self.receivesOwnMessages = True
 
         # Create a mqtt client
-        self.client = mqtt.Client(self.id, clean_session=False)
+        self._client = mqtt.Client(self.id, clean_session=False)
 
         # Create a handler for mqtt.
-        def on_connect(*args, **kwargs):
-            self.connected.set_content(True)
+        def onConnect(*args, **kwargs):
+            self.connected.setContent(True)
 
-        def on_disconnect(*args, **kwargs):
-            self.connected.set_content(False)
+        def onDisconnect(*args, **kwargs):
+            self.connected.setContent(False)
 
-        def on_message(client, user_data, msg):
+        def onMessage(client, user_data, msg):
             # call the messages
-            self._on_message(msg.topic, msg.payload.decode())
+            self._onMessage(msg.topic, msg.payload.decode())
 
-        self.client.on_connect = on_connect
-        self.client.on_disconnect = on_disconnect
-        self.client.on_message = on_message
+        self._client.onConnect = onConnect
+        self._client.onDisconnect = onDisconnect
+        self._client.onMessage = onMessage
 
         # Extract the Host and the Port based on the URI.
         _host = self.uri[len('mqtt://'):].split(":")[0]
         _port = self.uri[len('mqtt://'):].split(":")[1]
 
-        self.client.connect(_host, int(_port))
+        self._client.connect(_host, int(_port))
 
-        self.client.loop_start()
+        self._client.loop_start()
 
     @property
     def id(self):
@@ -86,35 +86,35 @@ class MQTTLayer:
 
     def _on(self, topic: str, callback):
 
-        _topic = self._adapt_topic(topic)
+        _topic = self._adaptTopic(topic)
 
         if _topic not in self._cbs:
             self._cbs[_topic] = set()
             self._logger.info("subscribing: " + _topic)
-            self.client.subscribe(_topic, qos=self.qos)
+            self._client.subscribe(_topic, qos=self.qos)
 
         self._cbs[_topic].add(callback)
 
     def _off(self, topic: str, callback):
         """ Removes a callback from the item"""
 
-        _topic = self._adapt_topic(topic)
+        _topic = self._adaptTopic(topic)
 
         if _topic in self._cbs:
             self._cbs[_topic].remove(callback)
 
             if len(self._cbs[_topic]) == 0:
                 self._logger.info("unsubscribing: " + _topic)
-                self.client.unsubscribe(_topic)
+                self._client.unsubscribe(_topic)
 
-    def _on_message(self, topic: str, content):
+    def _onMessage(self, topic: str, content):
 
         try:
             # the parsed data
             data = json.loads(content)
 
             for subscription in self._cbs:
-                if mqtt_match(subscription, topic):
+                if mqttMatch(subscription, topic):
                     if self.logger:
                         self.logger.debug(f'received message on "{topic}" with content={data}')
 
@@ -124,48 +124,49 @@ class MQTTLayer:
 
         except Exception as E:
             self._logger.error("Something went wrong during handling: '" + topic + "'. That shouldn't be the case")
-            self._logger.error(format_exception(E))
+            self._logger.error(formatException(E))
 
     def _emit(self, topic: str, data):
 
-        _topic = self._adapt_topic()
+        _topic = self._adaptTopic()
 
-        if not (_topic.startswith(HOSTNAME + "/nope/status_changed")):
+        if not (_topic.startswith(HOSTNAME + "/nope/statusChanged")):
             self._logger.debug("emitting on " + _topic)
-        self.client.publish(_topic, json.dumps(data), qos=self.qos)
+        self._client.publish(_topic, json.dumps(data), qos=self.qos)
 
-    async def on(self, event_name: str, cb):
-        return self._on(f'+/nope/{event_name}', cb)
+    async def _on(self, eventName: str, cb):
+        return self._on(f'+/nope/{eventName}', cb)
 
-    async def emit(self, event_name: str, data):
-        self._emit(f'{self.pre_topic}/nope/{event_name}', data)
+    async def emit(self, eventName: str, data):
+        self._emit(f'{self.preTopic}/nope/{eventName}', data)
 
-        if self.forward_to_custom_topics:
-            if event_name == 'DataChanged':
+        if self.forwardToCustomTopics:
+            if eventName == 'DataChanged':
                 topic = data.path
-                topic = self._adapt_topic(topic)
+                topic = self._adaptTopic(topic)
                 await self.emit(topic, data.data)
 
-            elif event_name == 'Event':
+            elif eventName == 'Event':
                 topic = data.path
-                topic = self._adapt_topic(topic)
+                topic = self._adaptTopic(topic)
                 await self.emit(topic, data.data)
 
-            elif event_name == 'RpcRequest':
-                topic = data.function_id
-                topic = self._adapt_topic(topic)
+            elif eventName == 'RpcRequest':
+                topic = data.functionId
+                topic = self._adaptTopic(topic)
                 await self.emit(topic, data.params)
 
-    def _adapt_topic(self, topic: str):
-        return replace_all(topic, SPLITCHAR, '/')
+    def _adaptTopic(self, topic: str):
+        return replaceAll(topic, SPLITCHAR, '/')
 
     async def on(self, topic, callback):
-        return self.on(topic, callback)
+        return self._on(topic, callback)
 
     async def off(self, topic, callback):
-        return self.off(topic, callback)
+        return self._off(topic, callback)
 
     async def dispose(self):
         """ Kills the connection
         """
-        self.client.disconnect()
+        self._client.disconnect()
+

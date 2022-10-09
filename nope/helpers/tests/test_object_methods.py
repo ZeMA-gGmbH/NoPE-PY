@@ -1,6 +1,6 @@
 import pytest
 
-from ..object_methods import (convert_data, flatten_object, rgetattr, rquery_attr)
+from ..object_methods import (convertData, flattenObject, rgetattr, rqueryAttr)
 from ...helpers import EXECUTOR
 
 
@@ -38,28 +38,28 @@ def test_rgetattr():
     assert result == None
 
 
-def test_flatten_object():
+def test_flattenObject():
     data = {"deep": {"nested": "test"}}
-    result = flatten_object(data)
+    result = flattenObject(data)
 
     assert "deep/nested" in result
     assert result["deep/nested"] == "test"
 
-    result = flatten_object(data, max_depth=1, only_path_to_simple_value=False)
+    result = flattenObject(data, max_depth=1, onlyPathToBaseValue=False)
     assert "deep" in result
     print(result)
     assert not ("deep/nested" in result)
 
-    result = flatten_object(data, max_depth=1, only_path_to_simple_value=True)
+    result = flattenObject(data, max_depth=1, onlyPathToBaseValue=True)
     assert len(result) == 0
 
-    result = flatten_object(data, prefix="test")
+    result = flattenObject(data, prefix="test")
     assert "test/deep/nested" in result
 
 
 def test_convert():
     data = {}
-    result = convert_data(data, [
+    result = convertData(data, [
         {
             "key": "result",
             "query": "a/b",
@@ -68,7 +68,7 @@ def test_convert():
     assert len(result) == 0, "we expected 0 entries"
 
     data = {"deep": {"nested": "test"}}
-    result = convert_data(data, [
+    result = convertData(data, [
         {
             "key": "result",
             "query": "deep/nested",
@@ -77,7 +77,7 @@ def test_convert():
     assert len(result) == 1, "we expected 1 entries"
     assert result[0].result == "test", "Expected result to be 'test'"
 
-    result = convert_data(data, [
+    result = convertData(data, [
         {
             "key": "result",
             "query": "deep/+",
@@ -99,7 +99,7 @@ def test_convert():
         ],
         "not": {"nested": "hello"},
     }
-    result = convert_data(data, [
+    result = convertData(data, [
         {
             "key": "a",
             "query": "array/+/data1",
@@ -116,7 +116,7 @@ def test_convert():
     assert (0 in items) and (1 in items)
 
     try:
-        result = convert_data(data, [
+        result = convertData(data, [
             {
                 "key": "a",
                 "query": "array/+/data1",
@@ -133,11 +133,11 @@ def test_convert():
 
 def test_query():
     data = {}
-    result = rquery_attr(data, "test/+")
+    result = rqueryAttr(data, "test/+")
     assert len(result) == 0, "we expected 0 entries"
 
     data = {"deep": {"nested": "test"}}
-    result = rquery_attr(data, "deep/+")
+    result = rqueryAttr(data, "deep/+")
     assert len(result) == 1, "we expected 1 entries"
     assert result[0].path == "deep/nested", "we expected the path to be 'deep/nested'"
     assert result[0].data == "test", "we expected the data to be 'test'"
@@ -146,7 +146,7 @@ def test_query():
         "deep": {"nested_01": {"nested_02": "test_01"}, "nested_03": "test_02"},
         "not": {"nested": "hello"},
     }
-    result = rquery_attr(data, "deep/+")
+    result = rqueryAttr(data, "deep/+")
     assert len(result) == 2, "we expected 2 entries"
 
     pathes = map(lambda item: item.path, result)
@@ -165,7 +165,7 @@ def test_query():
         "not": {"nested": "hello"},
     }
 
-    result = rquery_attr(data, "array/+/data")
+    result = rqueryAttr(data, "array/+/data")
     assert len(result) == 2, "we expected 2 entries"
     items = map(lambda item: item.data, result)
     assert (0 in items and 1 in items), 'we expected the "1" and "1" have been found'
@@ -174,7 +174,7 @@ def test_query():
         "deep": {"nested_01": {"nested_02": "test_01"}, "nested_03": "test_02"},
         "not": {"nested": "hello"},
     }
-    result = rquery_attr(data, "deep/#")
+    result = rqueryAttr(data, "deep/#")
     assert len(result) == 3, "we expected 2 entries"
     pathes = map(lambda item: item.path, result)
     assert (

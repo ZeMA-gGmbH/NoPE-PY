@@ -71,7 +71,7 @@ class NoneDottedDict(DottedDict):
 
 #NoneDottedDict = hashable(NoneDottedDict)
 
-def _convert_item(item, use_default_none: bool):
+def _convertItem(item, useNoneAsDefaultValue: bool):
     """ Helper that converts the items to the corresponding type
 
     Args:
@@ -81,36 +81,36 @@ def _convert_item(item, use_default_none: bool):
         any: the adapted item
     """
     if type(item) in (dict, DottedDict, NoneDottedDict):
-        return convert_to_dotted_dict(item, use_default_none)
+        return convertToDottedDict(item, useNoneAsDefaultValue)
     elif type(item) in (list, set):
         new_list = list()
         for i in item:
-            new_list.append(_convert_item(i, use_default_none))
+            new_list.append(_convertItem(i, useNoneAsDefaultValue))
         return new_list
     else:
         return item
 
 
-def convert_to_dotted_dict(d: dict | DottedDict | NoneDottedDict, use_default_none=True):
+def convertToDottedDict(d: dict | DottedDict | NoneDottedDict, useNoneAsDefaultValue=True):
     """ Converts a dict to a dotted dict. Although, ensures,
 
     Args:
         d (dict): The dictionary.
-        use_default_none (bool): Flag to enable the default value 'none' instead of an KeyError
+        useNoneAsDefaultValue (bool): Flag to enable the default value 'none' instead of an KeyError
     """
-    ret = NoneDottedDict() if use_default_none else DottedDict()
+    ret = NoneDottedDict() if useNoneAsDefaultValue else DottedDict()
     for k, v in d.items():
-        ret[k] = _convert_item(v, use_default_none)
+        ret[k] = _convertItem(v, useNoneAsDefaultValue)
 
     return ret
 
 
-def ensure_dotted_dict(d, use_default_none=True):
+def ensureDottedAccess(d, useNoneAsDefaultValue=True):
     """ Ensure the given item is a dotted dict.
 
     Args:
         d (any): Item to convert
-        use_default_none (bool): A flag to enable default-nones.
+        useNoneAsDefaultValue (bool): A flag to enable default-nones.
     Returns:
         DottedDict: _description_
     """
@@ -118,6 +118,6 @@ def ensure_dotted_dict(d, use_default_none=True):
         return DottedDict()
 
     elif type(d) != DottedDict:
-        return convert_to_dotted_dict(d, use_default_none)
+        return convertToDottedDict(d, useNoneAsDefaultValue)
 
     return d

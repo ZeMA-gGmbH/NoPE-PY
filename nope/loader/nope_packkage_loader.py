@@ -7,7 +7,7 @@ import sys
 import asyncio
 
 from nope.dispatcher.nope_dispatcher import NopeDispatcher
-from ..helpers import format_exception, get_logger
+from ..helpers import formatException, getNopeLogger
 
 
 class NopePackageLoader():
@@ -21,34 +21,34 @@ class NopePackageLoader():
         if logger is not None:
             self._logger = logger
         else:
-            self._logger = get_logger('NopePackageLoader',level)
+            self._logger = getNopeLogger('NopePackageLoader',level)
 
-    async def add_package(self, package):
+    async def addPackage(self, package):
         """ Loader Function. self function will register all provided functions,
             create the desired instances. Additionally it will add all descriptors.
 
             param package: The Package to add.
         """
-        if package["name_of_package"] in self.packages:
+        if package["nameOfPackage"] in self.packages:
             raise Exception(
                 "Already loaded a Package with the name \"" +
-                package["name_of_package"] +
+                package["nameOfPackage"] +
                 "\" !"
             )
 
         self._logger.warn("loading package \"" +
-                          package["name_of_package"] + "\"")
+                          package["nameOfPackage"] + "\"")
 
         # Store the Package:
-        self.packages[package["name_of_package"]] = package
+        self.packages[package["nameOfPackage"]] = package
 
         # Based on the provided settings register a generator Function for the Instances:
         for cl in package["provided_classes"]:
             # Get the Settings
             allow_instance_generation = cl.get(
                 "allow_instance_generation", False)
-            max_amount_of_instance = cl.get(
-                "max_amount_of_instance", -1)
+            max_amountOf_instance = cl.get(
+                "max_amountOf_instance", -1)
 
             # Get the "create instance" function
             async def _not_provided(dispatcher, identifier):
@@ -63,7 +63,7 @@ class NopePackageLoader():
                 async def _generate_instance(dispatcher, identifier):
                     current_amount = self._instances.get(selector, 0)
 
-                    if max_amount_of_instance == -1 or current_amount < max_amount_of_instance:
+                    if max_amountOf_instance == -1 or current_amount < max_amountOf_instance:
                         # Define the Instance:
                         instance = await create_instance(dispatcher, identifier)
                         # Assign the Name
@@ -74,7 +74,7 @@ class NopePackageLoader():
                         return instance
 
                     raise Exception("Not allowed to create instances")
-                await self.dispatcher.provide_instance_generator_for_external_dispatchers(
+                await self.dispatcher.provide_instance_generator_for_externalDispatchers(
                     selector,
                     _generate_instance
                 )
@@ -82,7 +82,7 @@ class NopePackageLoader():
         for func in package["provided_functions"]:
             await self.dispatcher.register_function(func["function"], func["options"])
 
-    async def generate_instances(self, test_requirements=True):
+    async def generateInstances(self, test_requirements=True):
         """ Function to initialize all the instances.
         """
         self._logger.info("Package Loader generates the instances.")
@@ -101,7 +101,7 @@ class NopePackageLoader():
 
         # Now iterate over the Packages and define the defined instances.
         for package in self.packages.values():
-            definitions = package["default_instances"]
+            definitions = package["defaultInstances"]
 
             # Iterate over the Defined Instances.
             for definition in definitions:
@@ -140,6 +140,6 @@ class NopePackageLoader():
                         self._logger.error(
                             "Failed performing autostart for " + definition["identifier"])
                         self._logger.error(e)
-                        print(format_exception(e))
+                        print(formatException(e))
 
         self._logger.info("generated all defined Instances")

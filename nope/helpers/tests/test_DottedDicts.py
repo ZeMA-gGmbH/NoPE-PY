@@ -1,6 +1,6 @@
 import pytest
 
-from ..dotted_dict import convert_to_dotted_dict
+from ..dotted_dict import convertToDottedDict
 from ...helpers import EXECUTOR
 
 
@@ -14,9 +14,9 @@ def generate_dict():
     return {"hello_world": 1, "nested_data": {"hello": "world"}}
 
 
-def test_convert_to_dotted_dict():
+def test_convertToDottedDict():
     d = generate_dict()
-    item = convert_to_dotted_dict(d)
+    item = convertToDottedDict(d)
 
     assert item.hello_world == d["hello_world"]
     assert item.nested_data.hello == d["nested_data"]["hello"]

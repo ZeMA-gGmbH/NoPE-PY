@@ -2,7 +2,7 @@ from asyncio import sleep
 
 import pytest
 
-from ...communication import get_layer
+from ...communication import getLayer
 from ..rpc_manager import NopeRpcManager
 from ...helpers import EXECUTOR
 
@@ -15,11 +15,11 @@ def event_loop():
 
 async def test_rpc_manager():
     manager = NopeRpcManager({
-        "communicator": await get_layer("event"),
+        "communicator": await getLayer("event"),
         "logger": False,
     }, lambda *args: "test", "test")
 
-    await manager.ready.wait_for()
+    await manager.ready.waitFor()
 
     async def hello(name: str) -> str:
         return f"Hello {name}!"
@@ -28,11 +28,11 @@ async def test_rpc_manager():
         await sleep(1)
         return await hello(name)
 
-    manager.register_service(hello, {
+    manager.registerService(hello, {
         "id": "hello"
     })
 
-    manager.register_service(delayed, {
+    manager.registerService(delayed, {
         "id": "delayed"
     })
 
@@ -42,8 +42,8 @@ async def test_rpc_manager():
     assert "delayed" in manager.services.extracted_key, "Failed to register the services"
 
     # Try calling the Service
-    res = await manager.perform_call("hello", ["Pytest"])
+    res = await manager.performCall("hello", ["Pytest"])
     assert res == "Hello Pytest!"
 
-    res = await manager.perform_call("delayed", ["Pytest"])
+    res = await manager.performCall("delayed", ["Pytest"])
     assert res == "Hello Pytest!"

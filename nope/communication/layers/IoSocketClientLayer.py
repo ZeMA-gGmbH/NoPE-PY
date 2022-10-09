@@ -1,6 +1,6 @@
 import socketio
 from .EventCommunicationInterface import EventCommunicationInterface
-from ...logger import define_nope_logger
+from ...logger import defineNopeLogger
 from ...observable import NopeObservable
 
 
@@ -11,31 +11,31 @@ class SocketIoEmitter:
         self.uri = uri
         self.uri = self.uri if self.uri.startswith('http://') else 'http://' + self.uri
 
-        self._logger = define_nope_logger(logger, "core.mirror.io")
+        self._logger = defineNopeLogger(logger, "core.mirror.io")
 
         self._client = socketio.Client()
         self._client.connect(self.uri)
 
         self.connected = NopeObservable()
-        self.connected.set_content(False)
+        self.connected.setContent(False)
 
-        def on_connect():
-            self.connected.set_content(True)
+        def onConnect():
+            self.connected.setContent(True)
 
-        def on_disconnect():
-            self.connected.set_content(False)
+        def onDisconnect():
+            self.connected.setContent(False)
 
-        self._client.on("connect", on_connect)
-        self._client.on("disconnect", on_disconnect())
+        self._client.on("connect", onConnect)
+        self._client.on("disconnect", onDisconnect())
 
-    def on(self, event_name: str, cb):
-        self._client.on(event_name, cb)
+    def on(self, eventName: str, cb):
+        self._client.on(eventName, cb)
 
-    def off(self, event_name: str, cb):
+    def off(self, eventName: str, cb):
         pass
 
-    def emit(self, event_name: str, data):
-        self._client.emit(event_name, data)
+    def emit(self, eventName: str, data):
+        self._client.emit(eventName, data)
 
     def close(self):
         self._client.disconnect()

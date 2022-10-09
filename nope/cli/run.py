@@ -9,9 +9,9 @@ import json
 import logging
 import sys
 
-from ..communication import get_layer, LAYER_DEFAULT_PARAMETERS
-from ..helpers import ensure_dotted_dict, format_exception
-from nope.loader import get_package_loader, load_config, load_desired_packages
+from ..communication import getLayer, LAYER_DEFAULT_PARAMETERS
+from ..helpers import ensureDottedAccess, formatException
+from nope.loader import get_package_loader, loadConfig, loadDesiredPackages
 
 
 def get_args(add_mode=True):
@@ -79,7 +79,7 @@ def generate_nope_backend(args: dict):
 
     # Test if we need to parse the Data.
     if isinstance(args, dict):
-        args = ensure_dotted_dict(args)
+        args = ensureDottedAccess(args)
 
     # Create an Event Loop.
     loop = asyncio.get_event_loop()
@@ -99,7 +99,7 @@ def generate_nope_backend(args: dict):
         level = logging.FATAL
 
     # Get a Communicator
-    communicator = get_layer(
+    communicator = getLayer(
         loop, getattr(args, "channel", "event"), getattr(
             args, "params", None), level
     )
@@ -117,8 +117,8 @@ def generate_nope_backend(args: dict):
 
                 # Load all Packages
                 loop.run_until_complete(
-                    load_desired_packages(
-                        loader, load_config(args.file)
+                    loadDesiredPackages(
+                        loader, loadConfig(args.file)
                     )
                 )
 

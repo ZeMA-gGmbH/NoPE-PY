@@ -1,6 +1,6 @@
 import pytest
 
-from ..dict_methods import extract_unique_values
+from ..dict_methods import extractUniqueValues
 from ...helpers import EXECUTOR
 
 
@@ -10,13 +10,13 @@ def event_loop():
     yield loop
 
 
-def test_extract_unique_values():
+def test_extractUniqueValues():
     d = {
         "a": "b",
         "b": "b"
     }
 
-    res = extract_unique_values(d)
+    res = extractUniqueValues(d)
     assert len(res) == 1, "Failed to determine the unique values correctly."
     assert list(res)[0] == "b", "Failed to determine the unique values correctly."
 
@@ -29,7 +29,7 @@ def test_extract_unique_values():
         },
     }
 
-    res = extract_unique_values(d, "a")
+    res = extractUniqueValues(d, "a")
     assert len(res) == 1, "Failed to determine the unique values correctly (nested)."
     assert list(res)[0] == "b", "Failed to determine the unique values correctly (nested)."
 
@@ -42,7 +42,7 @@ def test_extract_unique_values():
         },
     }
 
-    res = extract_unique_values(d, "a/+")
+    res = extractUniqueValues(d, "a/+")
     assert len(res) == 1, "Failed to determine the unique values correctly (using nested-arrays)."
     assert list(res)[0] == "b", "Failed to determine the unique values correctly (using nested-arrays)."
 
@@ -51,7 +51,7 @@ def test_extract_unique_values():
         "b": ["a"],
     }
 
-    res = extract_unique_values(d, "+")
+    res = extractUniqueValues(d, "+")
     assert len(res) == 2, "Failed to determine the unique values correctly (using flatted-arrays)."
     assert ("a" in res and "b" in res), "Failed to determine the unique values correctly (using flatted-arrays)."
 
@@ -64,7 +64,7 @@ def test_extract_unique_values():
         },
     }
 
-    res = extract_unique_values(d, "a/+")
+    res = extractUniqueValues(d, "a/+")
     assert len(res) == 2, "Failed to determine the unique values correctly (using flatted-arrays)."
     assert ("a" in res and "b" in res), "Failed to determine the unique values correctly (using flatted-arrays)."
 
@@ -93,7 +93,7 @@ def test_extract_unique_values():
             ]
         }
     }
-    res = extract_unique_values(d, "a/+/content", "a/+/id")
+    res = extractUniqueValues(d, "a/+/content", "a/+/id")
 
     assert len(res) == 3, "Failed to determine the unique values correctly (using flatted-arrays)."
     assert (

@@ -1,3 +1,3 @@
 # X
     - Fixes:
-        - Fixed the is_master related issues.
+        - Fixed the isMaster related issues.

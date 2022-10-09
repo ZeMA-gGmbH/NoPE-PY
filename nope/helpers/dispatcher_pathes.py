@@ -1,25 +1,25 @@
 from .path import SPLITCHAR
 
 
-def get_property_path(identifier, name):
+def getPropertyPath(identifier, name):
     return f'{identifier}{SPLITCHAR}properties{SPLITCHAR}{name}'
 
 
-def is_property_path_correct(identifier, path):
+def isPropertyPathCorrect(identifier, path):
     return path.starts_with(f'{identifier}{SPLITCHAR}prop{SPLITCHAR}')
 
 
-def get_method_path(identifier, name):
+def getMethodPath(identifier, name):
     return f'{identifier}{SPLITCHAR}methods{SPLITCHAR}{name}'
 
 
-def is_method_path_correct(identifier, path):
+def isMethodPathCorrect(identifier, path):
     return path.starts_with(f'{identifier}{SPLITCHAR}methods{SPLITCHAR}')
 
 
-def get_emitter_path(identifier, name):
+def getEmitterPath(identifier, name):
     return f'{identifier}{SPLITCHAR}events{SPLITCHAR}{name}'
 
 
-def is_emitter_path_correct(identifier, path):
+def isEmitterPathCorrect(identifier, path):
     return path.starts_with(f'{identifier}{SPLITCHAR}events{SPLITCHAR}')
