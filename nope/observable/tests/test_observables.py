@@ -1,5 +1,15 @@
+import pytest
+
 from ..nope_observable import NopeObservable
-from ...helpers import format_exception, offload_function_to_event_loop
+from ...helpers import EXECUTOR
+from ...helpers import format_exception
+
+
+@pytest.fixture
+def event_loop():
+    loop = EXECUTOR.loop
+    yield loop
+
 
 def test_once():
     called = 0
@@ -14,6 +24,7 @@ def test_once():
     observable.set_content(1)
 
     assert called == 1
+
 
 def test_inital_value():
     called = 0
@@ -30,6 +41,7 @@ def test_inital_value():
     assert called == 2
     assert observable.get_content() == 1
 
+
 def test_change_detection():
     called = 0
 
@@ -42,11 +54,12 @@ def test_change_detection():
     observable.subscribe(callback)
     observable.set_content(1)
     observable.set_content(1)
-    observable.set_content(1)    
+    observable.set_content(1)
     observable.set_content(2)
 
-    assert called == 2    
+    assert called == 2
     assert observable.get_content() == 2
+
 
 def test_setter():
     def callback(data, *args, **kwargs):
@@ -64,6 +77,7 @@ def test_setter():
 
     observable.set_content("World")
 
+
 def test_getter():
     def callback(data, *args, **kwargs):
         assert data == "Hello World!"
@@ -77,6 +91,7 @@ def test_getter():
 
     observable.set_content("Hello World")
 
+
 def test_options():
     called = 0
 
@@ -85,9 +100,9 @@ def test_options():
         called += 1
 
     observable = NopeObservable()
-    observable.set_content(1) 
-    sub = observable.subscribe(callback, {"skip_current": True})    
-    observable.set_content(2) 
+    observable.set_content(1)
+    sub = observable.subscribe(callback, {"skip_current": True})
+    observable.set_content(2)
 
     assert called == 1, "Failed to skip the current value"
 
@@ -114,9 +129,8 @@ async def test_wait_for():
             print(format_exception(e))
 
     try:
-        offload_function_to_event_loop(change_value)
+        EXECUTOR.call_parallel(change_value)
 
         await obs.wait_for()
     except Exception as e:
         print(format_exception(e))
-   

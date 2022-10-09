@@ -2,8 +2,8 @@
 # @author Martin Karkowski
 # @email m.karkowski@zema.de
 
-from ..helpers import keys_to_snake_nested
 from .base_module import BaseModule
+from ..helpers import keys_to_snake_nested
 
 
 class NopeGenericModule(BaseModule):
@@ -101,7 +101,7 @@ class NopeGenericModule(BaseModule):
                 options
             )
 
-            if not(options.get('is_dynamic', False)):
+            if not (options.get('is_dynamic', False)):
                 if getattr(self, name, None) is not None:
                     raise Exception(
                         'Name alread used. Not able to use the method name twice')

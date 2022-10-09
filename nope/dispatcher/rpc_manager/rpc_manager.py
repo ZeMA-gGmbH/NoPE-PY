@@ -98,6 +98,8 @@ class NopeRpcManager:
     async def _handle_external_request(self, data, func: WrappedFunction=None):
         try:
             if not callable(func):
+                if data.function_id not in self._registered_services:
+                    return
                 func = self._registered_services[data.function_id].get("func", None)
 
             if self._logger:
@@ -107,10 +109,9 @@ class NopeRpcManager:
             if callable(func):
                 # Now we check, if we have to perform test, whether
                 # we are allowed to execute the task:
-
                 if data.get("target", self.id) != self.id:
                     return
-
+                
                 # Define a list containing callbacks:
                 cbs = []
 
@@ -183,7 +184,9 @@ class NopeRpcManager:
 
             if self._logger:
                 self._logger.error(f'Dispatcher "{self.id}" failed with request: "{data.task_id}"')
-                self._logger.error(format_exception(error))
+                self._logger.error(format_exception(error))            
+            else:
+                print(format_exception(error))
 
             self._running_external_requested_tasks.pop(data.requested_by,None)
 
@@ -245,7 +248,9 @@ class NopeRpcManager:
         except Exception as error:
             if self._logger:
                 self._logger.error("Error during handling an external response")
-                self._logger.error(format_exception(error))
+                self._logger.error(format_exception(error))            
+            else:
+                print(format_exception(error))
 
         return False
 
@@ -261,9 +266,7 @@ class NopeRpcManager:
         if self._logger:
             self._logger.debug("sending available services")
 
-        asyncio.ensure_future(
-            self._communicator.emit("services_changed", message)
-        )
+        EXECUTOR.call_parallel(self._communicator.emit,"services_changed", message)
 
     async def _init(self):
         self.ready.set_content(False)
@@ -278,10 +281,12 @@ class NopeRpcManager:
                 if self._logger:
                     self._logger.error("Failed to add the new services")
                     self._logger.error(format_exception(error))
+                else:
+                    print(format_exception(error))
 
         await self._communicator.on("services_changed", on_services_changed)
-        await self._communicator.on("rpc_request", lambda data: asyncio.ensure_future(self._handle_external_request(data)))
-        await self._communicator.on("rpc_response", lambda data: asyncio.ensure_future(self._handle_external_response(data)))
+        await self._communicator.on("rpc_request", lambda data: EXECUTOR.call_parallel(self._handle_external_request,data))
+        await self._communicator.on("rpc_response", lambda data: EXECUTOR.call_parallel(self._handle_external_response,data))
 
         def on_cancelation(msg):
             if msg.dispatcher == self._id:
@@ -337,7 +342,7 @@ class NopeRpcManager:
             # Therefore use the desired Mode.
             await self._communicator.emit("task_cancelation", ensure_dotted_dict({
                 "dispatcher": self._id,
-                "reason": reason,
+                "reason": str(reason),
                 "task_id": task_id,
                 "quiet": quiet
             }))
@@ -346,46 +351,48 @@ class NopeRpcManager:
         # Task hasnt been found => Cancel the Task.
         return False
 
-    async def cancel_running_tasks_of_service(self, service_name: str, reason):
+    async def _chancel_helper(self, tasks_to_cancel: set, reason):
         """ Helper Function, used to close all tasks with a specific service.
         """
-
-        # List containing all Tasks, that has to be canceled
-        tasks_to_cancel = []
-        # Filter all Tasks that should be canceled.
-        for task_id, task in self._running_internal_requested_tasks.items():
-            if task.service_name == service_name:
-                tasks_to_cancel.append(task_id)
-
         if len(tasks_to_cancel) > 0:
             for task_id in tasks_to_cancel:
                 await self.cancel_task(task_id, reason)
+
+    async def cancel_running_tasks_of_service(self, service_name: str, reason):
+        """ Helper Function, used to close all tasks with a specific service.
+        """
+        # Set containing all Tasks, that has to be canceled
+        to_cancel = set()
+
+        # Filter all Tasks that should be canceled.
+        for task_id, task in self._running_internal_requested_tasks.items():
+            if task.service_name == service_name:
+                to_cancel.add(task_id)
+
+        return await self._chancel_helper(to_cancel, reason)
 
     async def cancel_requested_tasks_of_dispatcher(self, dispatcher: str, reason):
         """ Helper to cancel all Tasks which have been requested by a Dispatcher.
         """
-
-        # List containing all Tasks, that has to be canceled
+        # Set containing all Tasks, that has to be canceled
         to_cancel = set()
 
-        for task_id, requested_by in self._running_internal_requested_tasks.items():
+        for task_id, requested_by in self._running_external_requested_tasks.items():
             if requested_by == dispatcher:
                 to_cancel.add(task_id)
 
-        for task_id in to_cancel:
-            await self.cancel_task(task_id, reason)
+        return await self._chancel_helper(to_cancel, reason)
+
 
     async def cancel_running_tasks_of_dispatcher(self, dispatcher: str, reason):
         """ Cancels all Tasks of the given Dispatcher
         """
-        tasks_to_cancel = []
-        for task_id, task in self._running_internal_requested_tasks.items():
+        to_cancel = set()
+        for task_id, task in self._running_external_requested_tasks.items():
             if task.target == dispatcher:
-                tasks_to_cancel.append(task_id)
+                to_cancel.add(task_id)
 
-        if len(tasks_to_cancel) > 0:
-            for task_id in tasks_to_cancel:
-                await self.cancel_task(task_id, reason)
+        return await self._chancel_helper(to_cancel, reason)
 
     def service_exists(self, service_name: str):
         """ Function to test if a specific Service exists.
@@ -502,7 +509,8 @@ class NopeRpcManager:
                 'params': [],
                 'task_id': task_id,
                 'result_sink': options_to_use['result_sink'],
-                'requested_by': self._id
+                'requested_by': self._id,
+                'target': None
             }
 
             # Iterate over all Parameters and
@@ -537,6 +545,11 @@ class NopeRpcManager:
                     task_request.target = await options.selector(opts_for_selector)
                 elif type(options_to_use.selector) is str:
                     task_request.target = await self._default_selector(opts_for_selector)
+                
+            else:
+                task_request.target = list(self.services.key_mapping_reverse[service_name])[0]
+
+            packet["target"] = task_request.target
 
             await self._communicator.emit("rpc_request", packet)
 
@@ -556,8 +569,11 @@ class NopeRpcManager:
                 task_request.timeout = EXECUTOR.set_timeout(on_timeout, options_to_use.timeout)
 
         except Exception as err:
-            self._logger.error('Something went wrong on calling')
-            self._logger.exception(err)
+            if self._logger:
+                self._logger.error('Something went wrong on calling')
+                self._logger.exception(format_exception(err))
+            else:
+                print(format_exception(err))
 
             # Call the Clear Function
             clear()
@@ -572,7 +588,7 @@ class NopeRpcManager:
         future.cancel_callback = _cancel_task
 
         if not options_to_use.wait_for_result:
-            asyncio.ensure_future(future)
+            EXECUTOR.loop.create_task(future)
             return future
 
         return await future

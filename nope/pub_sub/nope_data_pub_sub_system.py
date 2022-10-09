@@ -1,5 +1,6 @@
 from .nope_pub_sub_system import PubSubSystem
-from ..helpers import copy, contains_wildcards, ensure_dotted_dict, MULTI_LEVEL_WILDCARD, flatten_object, compare_pattern_and_path
+from ..helpers import copy, contains_wildcards, ensure_dotted_dict, MULTI_LEVEL_WILDCARD, flatten_object, \
+    compare_pattern_and_path
 
 
 class DataPubSubSystem(PubSubSystem):
@@ -14,7 +15,7 @@ class DataPubSubSystem(PubSubSystem):
         # you'll never receive the original object.
         return copy(self._data)
 
-    def push_data(self, path:str, content, options=None):
+    def push_data(self, path: str, content, options=None):
         """ Function, to push data. Every subscriber will be informed, if pushing the data on the
             given path will affect the subscribers.
 
@@ -37,7 +38,7 @@ class DataPubSubSystem(PubSubSystem):
         Returns:
             any: The data.
         """
-        
+
         return self._pull_data(path, default)
 
     def patternbased_pull_data(self, pattern: str, default=None):
@@ -76,27 +77,14 @@ class DataPubSubSystem(PubSubSystem):
         if not contains_wildcards(pattern):
             return self.push_data(pattern, pattern, data, options)
         if MULTI_LEVEL_WILDCARD in pattern:
-            raise Exception(
-                'You can only use single-level wildcards in self action')
+            raise Exception('You can only use single-level wildcards in self action')
         flatten_data = flatten_object(self.data)
         options = self.update_options(options)
         for path in flatten_data.keys():
             if compare_pattern_and_path(pattern, path).affected_on_same_level:
-                self.push_data(
-                    path,
-                    pattern,
-                    data,
-                    options,
-                    fast
-                )
+                self.push_data(path, pattern, data, options, fast)
 
         if fast:
             # Its better for us, to just store the incremental changes
             # with the pattern
-            self.on_incremental_data_change.emit(
-                ensure_dotted_dict({
-                    'path': pattern,
-                    'data': data,
-                    **options
-                })
-            )
+            self.on_incremental_data_change.emit(ensure_dotted_dict({'path': pattern, 'data': data, **options}))

@@ -1,19 +1,24 @@
-from asyncio import sleep
 import time
+from asyncio import sleep
+
 from ..connectivity_manager import NopeConnectivityManager
 from ...communication import get_layer
 
+from ...helpers import EXECUTOR
+import pytest
+@pytest.fixture
+def event_loop():
+    loop = EXECUTOR.loop
+    yield loop
 
 async def get_manager(_communicator=None, _id=None):
     if _communicator is None:
-        _communicator = await get_layer("event", "", False)
+        _communicator = await get_layer("event")
 
     manager = NopeConnectivityManager({
         'communicator': _communicator,
         "logger": False
     }, _id)
-
-    time.sleep(0.5)
 
     return _communicator, manager
 
@@ -44,7 +49,7 @@ async def test_configuration():
     await manager.dispose()
 
 
-async def test_communication():
+async def aatest_communication():
     _communicator, _first = await get_manager(_id="first")
 
     await _first.ready.wait_for()
@@ -78,7 +83,7 @@ async def test_communication():
     await _first.dispose()
 
 
-async def test_sync():
+async def aatest_sync():
     _communicator, _first = await get_manager()
     await _first.ready.wait_for()
 
@@ -100,7 +105,7 @@ async def test_sync():
     await _first.dispose()
 
 
-async def test_master_selection():
+async def aatest_master_selection():
     _communicator, _first = await get_manager(None, "first")
     await _first.ready.wait_for()
     await sleep(0.1)

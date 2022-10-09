@@ -1,8 +1,10 @@
-from ..helpers import compare_pattern_and_path, copy, generate_id, DottedDict, ensure_dotted_dict, rgetattr, contains_wildcards, get_timestamp, is_iterable, rsetattr, flatten_object
 from ..event_emitter import NopeEventEmitter
+from ..helpers import compare_pattern_and_path, copy, generate_id, DottedDict, ensure_dotted_dict, rgetattr, \
+    contains_wildcards, get_timestamp, is_iterable, rsetattr, flatten_object
 from ..merging import DictBasedMergeData
 
 DEFAULT_OBJ = object()
+
 
 def _memoized_compare(match_topics_without_wildcards: bool):
     """ Helper to memoize the 
@@ -133,13 +135,14 @@ class PubSubSystem:
 
                     # We use this callback to forward the data into the system:
                     self._push_data(pub_topic, pub_topic,
-                                   content, opts, False, emitter)
+                                    content, opts, False, emitter)
 
                 callback = callback_to_assign
 
             # Register the emitter. This will be used during topic matching.
             self._emitters[emitter] = ensure_dotted_dict(
-                {'options': options, 'pub_topic': pub_topic, 'sub_topic': sub_topic, 'callback': callback, 'observer': observer})
+                {'options': options, 'pub_topic': pub_topic, 'sub_topic': sub_topic, 'callback': callback,
+                 'observer': observer})
 
             # Update the Matching Rules.
             self._partial_matching_update('add', emitter, pub_topic, sub_topic)
@@ -215,7 +218,7 @@ class PubSubSystem:
         emitter = NopeEventEmitter()
         observer = emitter.subscribe(subscription)
         self.register(emitter, {'mode': 'subscribe',
-                      'schema': {}, 'topic': topic})
+                                'schema': {}, 'topic': topic})
         return observer
 
     @property
@@ -252,7 +255,7 @@ class PubSubSystem:
             if not result.contains_wildcards and ((result.affected_by_child and
                                                    not self.options.forward_child_data) or
                                                   (result.affected_by_parent and not self.options.forward_parent_data)
-                                                  ):
+            ):
                 return
 
             # We now have match the topic as following described:
@@ -308,7 +311,7 @@ class PubSubSystem:
                 self.publishers.update()
                 self.subscriptions.update()
 
-    def emit(self, event_name, data, options = None):
+    def emit(self, event_name, data, options=None):
         return self._push_data(event_name, event_name, data, ensure_dotted_dict(options))
 
     def dispose(self):
@@ -360,10 +363,9 @@ class PubSubSystem:
         reference_to_match = self._matched[topic_of_content]
 
         for path_to_pull, emitters in reference_to_match.data_pull.items():
-            
+
             for emitter in emitters:
                 data = self._pull_data(path_to_pull, None)
-
 
                 # Only if we want to notify an exclusive emitter we
                 # have to continue, if our emitter isnt matched.
@@ -381,15 +383,15 @@ class PubSubSystem:
                 )
 
         for pattern, emitters in reference_to_match.data_query.items():
-            
+
             for emitter in emitters:
                 data = self._pull_data(pattern, None)
                 if emitter != None and emitter != emitter:
                     continue
                 emitter.emit(
-                    data, 
+                    data,
                     ensure_dotted_dict({
-                        **options, 
+                        **options,
                         'mode': 'direct',
                         'topic_of_change': topic_of_change,
                         'topic_of_content': topic_of_content,
@@ -408,7 +410,7 @@ class PubSubSystem:
             options.sender = self.id
         return options
 
-    def _push_data(self, path_of_content:str, path_of_change:str, data, options={}, quite=False, emitter=None):
+    def _push_data(self, path_of_content: str, path_of_change: str, data, options={}, quite=False, emitter=None):
         """ Internal helper to push data to the data property. This results in informing the subscribers.
 
         Args:
@@ -433,7 +435,7 @@ class PubSubSystem:
         if not quite:
             self.on_incremental_data_change.emit(ensure_dotted_dict({
                 'path': path_of_content,
-                'data': data, 
+                'data': data,
                 **options
             }))
 
@@ -442,7 +444,7 @@ class PubSubSystem:
             raise 'The Path contains wildcards. Please use the method "patternbasedPullData" instead'
         return copy(rgetattr(self._data, topic, default))
 
-    def _patternbased_pull_data(self, pattern:str, default=None):
+    def _patternbased_pull_data(self, pattern: str, default=None):
         """ Helper, which enable to perform a pattern based pull.
             The code receives a pattern, and matches the existing content 
             (by using there path attributes) and return the corresponding data.
@@ -476,7 +478,7 @@ class PubSubSystem:
                     ensure_dotted_dict({
                         'path': pattern,
                         'data': default
-                    })                    
+                    })
                 ]
 
             return []

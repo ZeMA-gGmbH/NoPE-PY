@@ -1,17 +1,23 @@
-from nope.communication import  get_layer
-from nope.dispatcher import NopeConnectivityManager
-from nope.helpers import get_or_create_eventloop
-from nope.merging import DictBasedMergeData
 from asyncio import sleep
 
+import pytest
+
+from nope import get_layer, EXECUTOR, NopeConnectivityManager, DictBasedMergeData
+
+
+@pytest.fixture
+def event_loop():
+    loop = EXECUTOR.loop
+    yield loop
 
 
 _mapping_of_dispatchers_and_services = dict()
 services = DictBasedMergeData(_mapping_of_dispatchers_and_services, 'services/+', 'services/+/id')
 
-def get_manager(_communicator=None, _id=None):
+
+async def get_manager(_communicator=None, _id=None):
     if _communicator is None:
-        _communicator = get_layer("event", "", False)
+        _communicator = await get_layer("event", "", False)
 
     manager = NopeConnectivityManager({
         'communicator': _communicator,
@@ -21,13 +27,39 @@ def get_manager(_communicator=None, _id=None):
     return _communicator, manager
 
 
+async def test_configuration():
+    _, manager = await get_manager()
+
+    await manager.ready.wait_for()
+
+    await manager.set_timings({
+        "check_interval": 10,
+        "dead": 25,
+        "remove": 30,
+        "send_alive_interval": 5,
+        "slow": 15,
+        "warn": 20,
+    })
+
+    assert manager.ready.get_content(), "Manager not ready"
+
+    assert manager.is_master, "Didnt assing the communicator as master"
+    manager.is_master = True
+    assert manager.is_master, "Failed forcing the master"
+    manager.is_master = False
+    assert not manager.is_master, "Didnt removed the master flag"
+
+    # Kill the manager.
+    await manager.dispose()
+
+
 async def main():
-    _communicator, _first = get_manager(None, "first")
+    _communicator, _first = await get_manager(None, "first")
     await _first.ready.wait_for()
 
     await sleep(0.1)
 
-    _communicator, _second = get_manager(_communicator, "second")
+    _communicator, _second = await get_manager(_communicator, "second")
     await _second.ready.wait_for()
 
     # Wait for the first Handshake
@@ -45,10 +77,9 @@ async def main():
 
     print(_first.master)
 
-
-    
+    await _first.dispose()
 
     print("ready")
 
-loop = get_or_create_eventloop()
-loop.run_until_complete(main())
+
+EXECUTOR.loop.run_until_complete(test_configuration())

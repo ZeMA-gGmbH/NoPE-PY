@@ -1,6 +1,14 @@
-from cmath import exp
 from ..nope_data_pub_sub_system import DataPubSubSystem
-from ...event_emitter import NopeEventEmitter
+import pytest
+
+from ..nope_data_pub_sub_system import DataPubSubSystem
+from ...helpers import EXECUTOR
+
+
+@pytest.fixture
+def event_loop():
+    loop = EXECUTOR.loop
+    yield loop
 
 
 def test_pub_sub_system():
@@ -27,7 +35,7 @@ def test_pub_sub_system():
     assert len(res) == 2, "Failed with 'patternbased_pull_data'"
     assert {"path": "test/a",
             "data": 1337} in res, "Failed with 'patternbased_pull_data'"
-    assert {"path": "test/b", "data":  {"c": 1337}
+    assert {"path": "test/b", "data": {"c": 1337}
             } in res, "Failed with 'patternbased_pull_data'"
 
     res = pub_sub.patternbased_pull_data("+/a")
@@ -35,6 +43,5 @@ def test_pub_sub_system():
     assert {"path": "test/a",
             "data": 1337} in res, "Failed with 'patternbased_pull_data'"
 
-    res = pub_sub.patternbased_pull_data("test/#")    
+    res = pub_sub.patternbased_pull_data("test/#")
     assert len(res) == 3, "Failed with 'patternbased_pull_data'"
-

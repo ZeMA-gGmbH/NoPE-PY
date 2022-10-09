@@ -1,5 +1,5 @@
-from ...observable import NopeObservable
 from ...helpers import Emitter, generate_id
+from ...observable import NopeObservable
 
 
 class EventCommunicationInterface:

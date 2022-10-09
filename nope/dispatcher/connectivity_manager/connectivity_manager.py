@@ -8,7 +8,8 @@ from socket import gethostname
 
 import psutil
 
-from ...helpers import get_timestamp, ensure_dotted_dict, generate_id, DottedDict, min_of_array, format_exception, EXECUTOR
+from ...helpers import get_timestamp, ensure_dotted_dict, generate_id, DottedDict, min_of_array, format_exception, \
+    EXECUTOR
 from ...logger import define_nope_logger
 from ...merging import DictBasedMergeData
 from ...observable import NopeObservable
@@ -57,8 +58,8 @@ class NopeConnectivityManager:
         self.options = options
         self._id = _id if _id is not None else generate_id()
         self._delta_time = 0
-        self._cancel_check_status_task = None
-        self._cancel_send_status_task = None
+        self._check_status_task = None
+        self._send_status_task = None
 
         self._timeouts = ensure_dotted_dict({})
 
@@ -77,8 +78,8 @@ class NopeConnectivityManager:
             self._logger.info('core.connectivity-manager', self.id, 'is ready')
 
         self.reset()
-        asyncio.ensure_future(self.set_timings(options.timeouts))
-        asyncio.ensure_future(self.init())
+        # asyncio.ensure_future(self.init())
+        EXECUTOR.call_parallel(self.init)
 
     @property
     def id(self):
@@ -174,6 +175,8 @@ class NopeConnectivityManager:
 
         self.ready.set_content(False)
 
+        await self.set_timings(self.options.timeouts)
+
         def on_connect(connected, _rest):
             if connected:
                 self._connected_since = get_timestamp()
@@ -198,8 +201,10 @@ class NopeConnectivityManager:
         await self._communicator.on('bonjour', on_bonjour)
 
         def on_aurevoir(msg):
-            self._external_dispatchers.pop(msg.dispatcherId)
-            self.dispatchers.update()
+            # We try to pop the item. If it fails we wont update the elements
+            item = self._external_dispatchers.pop(msg.dispatcherId, False)
+            if item:
+                self.dispatchers.update()
 
         await self._communicator.on('aurevoir', on_aurevoir)
 
@@ -294,6 +299,7 @@ class NopeConnectivityManager:
         options = ensure_dotted_dict(options)
 
         await self.dispose(True)
+
         self._timeouts = ensure_dotted_dict({
             'send_alive_interval': 500,
             'check_interval': 250,
@@ -310,7 +316,7 @@ class NopeConnectivityManager:
         if self._timeouts.check_interval > 0:
             # Define a Checker, which will test the status
             # of the external Dispatchers.
-            self._cancel_check_status_task = EXECUTOR.set_interval(
+            self._check_status_task = EXECUTOR.set_interval(
                 self._check_dispachter_health,
                 self._timeouts["check_interval"]
             )
@@ -318,7 +324,7 @@ class NopeConnectivityManager:
         if self._timeouts["send_alive_interval"] > 0:
             # Define a Timer, which will emit Status updates with
             # the desired delay.
-            self._cancel_send_status_task = EXECUTOR.set_interval(
+            self._send_status_task = EXECUTOR.set_interval(
                 self._async_send_status,
                 self._timeouts["send_alive_interval"]
             )
@@ -331,9 +337,9 @@ class NopeConnectivityManager:
         return list(hosts)
 
     async def dispose(self, quite=False):
-        if self._cancel_send_status_task:
-            self._cancel_send_status_task()
-        if self._cancel_check_status_task:
-            self._cancel_check_status_task()
+        if self._send_status_task:
+            self._send_status_task.cancel()
+        if self._check_status_task:
+            self._check_status_task.cancel()
         if not quite:
             await self._communicator.emit('aurevoir', DottedDict({'dispatcherId': self.id}))

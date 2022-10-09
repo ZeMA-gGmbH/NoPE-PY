@@ -4,6 +4,7 @@ from .dotted_dict import DottedDict, ensure_dotted_dict
 from .object_methods import convert_data, rgetattr, rquery_attr, is_object_like, flatten_object, rsetattr
 from .path import SPLITCHAR, get_least_common_path_segment, path_to_camel_case, path_to_snake_case
 from .string_methods import camel_to_snake, snake_to_camel
+from .prints import format_exception
 
 __SENTINENTAL = object()
 
@@ -109,12 +110,13 @@ def extract_unique_values(d, path='', path_key: str = None):
                 # Only if the Key has not been used we are allowed to add
                 # the data.
                 _items_keys.add(key)
-                ret.append(data)
-        return set(ret)
-    return set(extract_values(d, path))
+                if data not in ret:
+                    ret.append(data)
+        return ret
+    return extract_values(d, path, unique = True)
 
 
-def extract_values(d, path=''):
+def extract_values(d, path='', unique = False):
     """ Helper to extract values of the map. Therefore the path must be provided.
 
     Example:
@@ -126,6 +128,7 @@ def extract_values(d, path=''):
     Args:
         d (dict-like): The dict-like object that should be transformed.
         path (str, optional): The path of the attribute of that should be extracted of the value. Defaults to ''.
+        unique (bool, optional): Performs a check to extract only unique values.
 
     Returns:
         list: containing the element.
@@ -134,13 +137,14 @@ def extract_values(d, path=''):
     for v in d.values():
         if path:
             for item in rquery_attr(v, path):
-                s.append(item.data)
-        else:
+                if not unique or (unique and (item.data not in s)):
+                    s.append(item.data)
+        elif not unique or (unique and (v not in s)):
             s.append(v)
     return s
 
 
-def transform_dict(d, path_extracted_value, path_extracted_key):
+def transform_dict(d, path_extracted_value, path_extracted_key, logger = None):
     """_summary_
 
     Args:
@@ -175,6 +179,11 @@ def transform_dict(d, path_extracted_value, path_extracted_key):
     else:
         only_valid_props = False
 
+    key_hashable = True
+    value_hashable = True
+
+    __warned = False
+
     # Iterate over the items of the dict,
     # then we will extract the data stored in the Value.
     for k, v in d.items():
@@ -182,9 +191,32 @@ def transform_dict(d, path_extracted_value, path_extracted_key):
 
         if only_valid_props:
             extracted = convert_data(v, props)
+
+            for element in extracted:
+                # Try to convert the data:
+                try:
+                    hash(element.key)
+                    element.key_hashable = True
+                except:
+                    element.key_hashable = False
+                    key_hashable = False
+
+                # Try to convert the data:
+                try:
+                    hash(element.value)
+                    element.value_hashable = True
+                except:
+                    element.value_hashable = False
+                    value_hashable = False
+
         else:
 
-            data = DottedDict({'key': None, 'value': None})
+            data = DottedDict({
+                'key': None, 
+                'value': None,
+                'key_hashable': True,
+                'value_hashable': True
+            })
 
             # We migt adapt the key and the Value. Therefore we will use
             # the next if statements
@@ -205,26 +237,50 @@ def transform_dict(d, path_extracted_value, path_extracted_key):
             else:
                 data.value = v
 
+            # Try to convert the data:
+            try:
+                hash(data.key)
+            except:
+                data.key_hashable = False
+                key_hashable = False
+
+            # Try to convert the data:
+            try:
+                hash(data.value)
+            except:
+                data.value_hashable = False
+                value_hashable = False
+
             extracted.append(data)
 
         # Create the entries for the following dicts.
         key_mapping[k] = set()
-        org_key_to_extracted_value[k] = set()
+        org_key_to_extracted_value[k] = set() if value_hashable else list()
 
         for item in extracted:
+
+            if not item.key_hashable:
+                error = Exception(f"Can not hash the new key='{item.key}' (type={type(item.key)}) from path='{path_extracted_key}'")
+                
+                if logger:
+                    logger.error(error)
+                else:
+                    print(format_exception(error))
+
+                raise error
+
             if item.key in extracted_dict:
                 # If the extracted new key has already been defined,
                 # we have to determine whether the stored item matches
                 # the allready provided definition.
                 if not (extracted_dict.get(item.key) == item.value):
-
                     # Conflict detected -> Store it
 
                     if item.key not in conflicts:
-                        conflicts[item.key] = set()
+                        conflicts[item.key] = set() if value_hashable else list()
 
-                    conflicts.get(item.key).add(item.value)
-                    conflicts.get(item.key).add(extracted_dict.get(item.key))
+                    getattr(conflicts.get(item.key), "add" if value_hashable else "append")(item.value)
+                    getattr(conflicts.get(item.key), "add" if value_hashable else "append")(extracted_dict.get(item.key))
                 else:
                     # No conflict -> just store the amount
                     amount_of[item.key] = amount_of.get(item.key, 0) + 1
@@ -239,10 +295,12 @@ def transform_dict(d, path_extracted_value, path_extracted_key):
 
             # Store the mapping of new-key --> org-key.
             reverse_key_mapping[item.key].add(k)
+            
             # Store the mapping of org-key --> new-key.
             key_mapping[k].add(item.key)
-
-            org_key_to_extracted_value[k].add(item.value)
+            
+            # Now store the item.
+            getattr(org_key_to_extracted_value[k], "add" if value_hashable else "append")(item.value)
 
     return DottedDict({
         'extracted_map': extracted_dict,

@@ -1,4 +1,13 @@
+import pytest
+
 from ..path_matching_methods import compare_pattern_and_path, generate_result
+from ...helpers import EXECUTOR
+
+
+@pytest.fixture
+def event_loop():
+    loop = EXECUTOR.loop
+    yield loop
 
 
 def test_compare_pattern_and_path():
@@ -133,11 +142,12 @@ def test_compare_pattern_and_path():
 
     ]
 
-    for idx,test in enumerate(function_tests_1):
+    for idx, test in enumerate(function_tests_1):
         result = compare_pattern_and_path(test["pattern"], test["path"])
         desc = test["desc"]
         expected = test["expected_result"]
-        assert result == test["expected_result"], f"1.{idx} went wrong: '{desc}'\nresult:\t{result}\nexpected:\t{expected}"
+        assert result == test[
+            "expected_result"], f"1.{idx} went wrong: '{desc}'\nresult:\t{result}\nexpected:\t{expected}"
 
     errorTests = [
         {
@@ -334,10 +344,11 @@ def test_compare_pattern_and_path():
         }
     ]
 
-    for idx, test in enumerate (function_tests_2):
+    for idx, test in enumerate(function_tests_2):
         result = compare_pattern_and_path(test["pattern"], test["path"], {
             "match_topics_without_wildcards": True,
         })
         desc = test["desc"]
         expected = test["expected_result"]
-        assert result == test["expected_result"], f"2.{idx} went wrong: '{desc}'\nresult:\t{result}\nexpected:\t{expected}\n\n{test}"
+        assert result == test[
+            "expected_result"], f"2.{idx} went wrong: '{desc}'\nresult:\t{result}\nexpected:\t{expected}\n\n{test}"

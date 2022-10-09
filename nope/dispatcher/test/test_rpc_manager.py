@@ -1,7 +1,16 @@
 from asyncio import sleep
 
-from nope.dispatcher.rpc_manager.rpc_manager import NopeRpcManager
-from nope.communication import get_layer
+import pytest
+
+from ...communication import get_layer
+from ..rpc_manager import NopeRpcManager
+from ...helpers import EXECUTOR
+
+
+@pytest.fixture
+def event_loop():
+    loop = EXECUTOR.loop
+    yield loop
 
 
 async def test_rpc_manager():

@@ -3,7 +3,9 @@
 # @email m.karkowski@zema.de
 
 import asyncio
-from ..helpers import get_logger, keys_to_camel_nested
+
+from ..helpers import keys_to_camel_nested
+from ..logger import get_logger
 
 
 class BaseModule(object):
@@ -191,13 +193,14 @@ class BaseModule(object):
         if type(options['topic']) == str:
             options['topic'] = self.identifier + '.prop.' + name
         else:
-            if 'subscribe' in options['topic'] and not options['topic']['subscribe'].startswith(self.identifier + '.prop.'):
+            if 'subscribe' in options['topic'] and not options['topic']['subscribe'].startswith(
+                    self.identifier + '.prop.'):
                 options['topic']['subscribe'] = self.identifier + \
-                    '.prop.' + options['topic']['subscribe']
+                                                '.prop.' + options['topic']['subscribe']
 
             if 'publish' in options['topic'] and not options['topic']['publish'].startswith(self.identifier + '.prop.'):
                 options['topic']['publish'] = self.identifier + \
-                    '.prop.' + options['topic']['publish']
+                                              '.prop.' + options['topic']['publish']
 
         observable = await self._dispatcher.register_observable(observable, options)
 

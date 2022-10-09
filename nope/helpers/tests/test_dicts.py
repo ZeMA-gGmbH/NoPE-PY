@@ -1,10 +1,19 @@
-from ..dict_methods import keys_to_camel, keys_to_snake, extract_unique_values
+import pytest
+
+from ..dict_methods import extract_unique_values
+from ...helpers import EXECUTOR
+
+
+@pytest.fixture
+def event_loop():
+    loop = EXECUTOR.loop
+    yield loop
 
 
 def test_extract_unique_values():
     d = {
-        "a":"b",
-        "b":"b"
+        "a": "b",
+        "b": "b"
     }
 
     res = extract_unique_values(d)
@@ -13,10 +22,10 @@ def test_extract_unique_values():
 
     d = {
         "a": {
-            "a":"b"
+            "a": "b"
         },
         "b": {
-            "a":"b"
+            "a": "b"
         },
     }
 
@@ -26,10 +35,10 @@ def test_extract_unique_values():
 
     d = {
         "a": {
-            "a":["b"]
+            "a": ["b"]
         },
         "b": {
-            "a":["b"]
+            "a": ["b"]
         },
     }
 
@@ -38,7 +47,7 @@ def test_extract_unique_values():
     assert list(res)[0] == "b", "Failed to determine the unique values correctly (using nested-arrays)."
 
     d = {
-        "a": ["a","b"],
+        "a": ["a", "b"],
         "b": ["a"],
     }
 
@@ -48,10 +57,10 @@ def test_extract_unique_values():
 
     d = {
         "a": {
-            "a":["b"]
+            "a": ["b"]
         },
         "b": {
-            "a":["a","b"]
+            "a": ["a", "b"]
         },
     }
 
@@ -85,7 +94,7 @@ def test_extract_unique_values():
         }
     }
     res = extract_unique_values(d, "a/+/content", "a/+/id")
-    
+
     assert len(res) == 3, "Failed to determine the unique values correctly (using flatted-arrays)."
-    assert ("a" in res and "b" in res and "d" in res), "Failed to determine the unique values correctly (using flatted-arrays)."
-    
+    assert (
+                "a" in res and "b" in res and "d" in res), "Failed to determine the unique values correctly (using flatted-arrays)."

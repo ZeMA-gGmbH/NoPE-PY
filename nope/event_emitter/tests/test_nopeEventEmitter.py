@@ -1,6 +1,17 @@
-from ..nope_event_emitter import NopeEventEmitter
-from ...helpers import set_timeout, get_timestamp,format_exception, offload_function_to_event_loop,get_or_create_eventloop,DottedDict
 from time import sleep
+
+import pytest
+
+from ..nope_event_emitter import NopeEventEmitter
+from ...helpers import EXECUTOR
+from ...helpers import get_timestamp, format_exception, DottedDict
+
+
+@pytest.fixture
+def event_loop():
+    loop = EXECUTOR.loop
+    yield loop
+
 
 def test_once():
     called = 0
@@ -13,11 +24,11 @@ def test_once():
     emitter.once(callback=callback)
 
     emitter.emit(get_timestamp())
-    sleep(0.1)    
+    sleep(0.1)
     emitter.emit(get_timestamp())
 
     assert called == 1
-        
+
 
 async def test_wait_for_update():
     import asyncio
@@ -31,11 +42,9 @@ async def test_wait_for_update():
             emitter.emit(True)
         except Exception as e:
             print(format_exception(e))
-    
-    
-    
+
     try:
-        offload_function_to_event_loop(emit_event)
+        EXECUTOR.call_parallel(emit_event)
         value = await emitter.wait_for_update()
     except Exception as e:
         print(format_exception(e))
@@ -48,6 +57,7 @@ async def test_wait_for():
     asyncio.set_event_loop(loop)
 
     counter = 0
+
     def emit_event():
         try:
             for i in range(6):
@@ -57,7 +67,7 @@ async def test_wait_for():
             print(format_exception(e))
 
     try:
-        offload_function_to_event_loop(emit_event)
+        EXECUTOR.call_parallel(emit_event)
 
         def test(value, *args):
             nonlocal counter
@@ -90,8 +100,9 @@ def test_pausing():
 
     sub.unsubscribe()
     emitter.emit(4)
-    
+
     assert called == 2, "Failed to unsubscribe the subscription"
+
 
 def test_setter():
     def callback(data, *args, **kwargs):
@@ -109,6 +120,7 @@ def test_setter():
 
     emitter.emit("World")
 
+
 def test_getter():
     def callback(data, *args, **kwargs):
         assert data == "Hello World!"
@@ -121,6 +133,7 @@ def test_getter():
     sub = emitter.subscribe(callback)
 
     emitter.emit("Hello World")
+
 
 def test_order():
     called = []
@@ -136,4 +149,4 @@ def test_order():
     emitter.emit(2)
     emitter.emit(3)
 
-    assert called == [1,2,3], "Failed to maintain the order"
+    assert called == [1, 2, 3], "Failed to maintain the order"

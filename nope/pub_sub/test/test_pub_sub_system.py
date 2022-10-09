@@ -1,6 +1,15 @@
-from cmath import exp
+import pytest
+
 from ..nope_pub_sub_system import PubSubSystem
 from ...event_emitter import NopeEventEmitter
+from ...helpers import EXECUTOR
+
+
+@pytest.fixture
+def event_loop():
+    loop = EXECUTOR.loop
+    yield loop
+
 
 def test_pub_sub_system():
     called = 0
@@ -9,7 +18,7 @@ def test_pub_sub_system():
 
     publisher = NopeEventEmitter()
     subscriber = NopeEventEmitter()
-    
+
     pub_sub.register(publisher, {
         "mode": "publish",
         "schema": {},
@@ -32,6 +41,7 @@ def test_pub_sub_system():
 
     assert called == 1
 
+
 def test_pub_sub_system_smaller_topic():
     called = 0
 
@@ -39,7 +49,7 @@ def test_pub_sub_system_smaller_topic():
 
     publisher = NopeEventEmitter()
     subscriber = NopeEventEmitter()
-    
+
     pub_sub.register(publisher, {
         "mode": "publish",
         "schema": {},
@@ -62,6 +72,7 @@ def test_pub_sub_system_smaller_topic():
 
     assert called == 1
 
+
 def test_pub_sub_system_sub_topic():
     called = 0
 
@@ -69,7 +80,7 @@ def test_pub_sub_system_sub_topic():
 
     publisher = NopeEventEmitter()
     subscriber = NopeEventEmitter()
-    
+
     pub_sub.register(publisher, {
         "mode": "publish",
         "schema": {},
@@ -85,8 +96,8 @@ def test_pub_sub_system_sub_topic():
     def callback(data, rest):
         nonlocal called
         called += 1
-        assert data == { 
-            "a" : { 
+        assert data == {
+            "a": {
                 "test": "Hello World"
             }
         }
@@ -96,6 +107,7 @@ def test_pub_sub_system_sub_topic():
 
     assert called == 1
 
+
 def test_pub_sub_multiple_wildcards():
     called = 0
 
@@ -104,7 +116,7 @@ def test_pub_sub_multiple_wildcards():
     publisher = NopeEventEmitter()
     subscriber_01 = NopeEventEmitter()
     subscriber_02 = NopeEventEmitter()
-    
+
     pub_sub.register(publisher, {
         "mode": "publish",
         "schema": {},
@@ -141,7 +153,7 @@ def test_pub_sub_multiple_wildcards():
     # Now we will test, whether we receive an error on subscribing multiple times.
 
     NOT_THROWN = True
-    try: 
+    try:
         pub_sub.register(subscriber_01, {
             "mode": "subscribe",
             "schema": {},

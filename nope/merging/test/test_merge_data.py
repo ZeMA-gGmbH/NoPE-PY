@@ -1,13 +1,22 @@
+import pytest
+
 from ..merge_data import DictBasedMergeData, MergeData
+from ...helpers import EXECUTOR
 from ...helpers.dict_methods import extract_unique_values
+
+
+@pytest.fixture
+def event_loop():
+    loop = EXECUTOR.loop
+    yield loop
 
 
 def test_merge_data_general():
     d = dict()
     merge = MergeData(d, lambda m: extract_unique_values(m))
 
-    d["a"]="b"
-    d["b"]="b"
+    d["a"] = "b"
+    d["b"] = "b"
 
     merge.update()
 
@@ -26,8 +35,8 @@ def test_merge_data_general():
 
     merge.data.subscribe(callback_01)
 
-    d["a"]="b"
-    d["b"]="b"
+    d["a"] = "b"
+    d["b"] = "b"
 
     merge.update()
     merge.update()
@@ -40,7 +49,7 @@ def test_merge_data_general():
 
     called = 0
 
-    def callback_02(data, *args, **kwargs):        
+    def callback_02(data, *args, **kwargs):
         nonlocal called
         called += 1
         assert len(data.added) == 1
@@ -49,27 +58,28 @@ def test_merge_data_general():
 
     merge.on_change.subscribe(callback_02)
 
-    d["a"]="b"
-    d["b"]="b"
+    d["a"] = "b"
+    d["b"] = "b"
 
     merge.update()
     merge.update()
 
     assert called == 1, "Called the subscription to many times"
 
+
 def test_dict_based_merge_data():
     d = dict()
     merge = DictBasedMergeData(d)
 
-    d["a"]="b"
-    d["b"]="b"
+    d["a"] = "b"
+    d["b"] = "b"
 
     merge.update()
     assert "b" in merge.key_mapping_reverse
 
     d = {
-        "a": { "key": "keyA", "data": "dataA" },
-        "b": { "key": "keyB", "data": "dataB" }
+        "a": {"key": "keyA", "data": "dataA"},
+        "b": {"key": "keyB", "data": "dataB"}
     }
     merge = DictBasedMergeData(d, "data", "key")
     merge.update()

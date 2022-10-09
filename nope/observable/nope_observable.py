@@ -77,8 +77,7 @@ class NopeObservable(NopeEventEmitter):
 
     def subscribe(self, observer, options=None):
         if options is None:
-            options = {'type': 'sync', 'mode': [
-                'direct', 'sub', 'super'], 'skip_current': False}
+            options = {'type': 'sync', 'mode': ['direct', 'sub', 'super'], 'skip_current': False}
 
         res = self._subscribe(observer, ensure_dotted_dict(options))
 

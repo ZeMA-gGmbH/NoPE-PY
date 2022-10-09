@@ -10,14 +10,14 @@ def determine_difference(set01, set02):
     Returns:
         DottedDict: containing `added` for the added elements and `removed` for the removed items. 
     """
-    added = set()
-    removed = set()
+    added = list()
+    removed = list()
     for item in set01:
         if item not in set02:
-            removed.add(item)
+            removed.append(item)
     for item in set02:
         if item not in set01:
-            added.add(item)
+            added.append(item)
     return DottedDict({'added': added, 'removed': removed})
 
 def union(set01, set02):

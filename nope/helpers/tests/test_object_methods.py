@@ -1,5 +1,13 @@
-from ..object_methods import (convert_data, flatten_object, is_float, is_int,
-                             is_number, rgetattr, rquery_attr)
+import pytest
+
+from ..object_methods import (convert_data, flatten_object, rgetattr, rquery_attr)
+from ...helpers import EXECUTOR
+
+
+@pytest.fixture
+def event_loop():
+    loop = EXECUTOR.loop
+    yield loop
 
 
 def generate_dict():
@@ -37,12 +45,12 @@ def test_flatten_object():
     assert "deep/nested" in result
     assert result["deep/nested"] == "test"
 
-    result = flatten_object(data, max_depth=1,only_path_to_simple_value= False)
+    result = flatten_object(data, max_depth=1, only_path_to_simple_value=False)
     assert "deep" in result
     print(result)
     assert not ("deep/nested" in result)
 
-    result = flatten_object(data, max_depth=1,only_path_to_simple_value= True)
+    result = flatten_object(data, max_depth=1, only_path_to_simple_value=True)
     assert len(result) == 0
 
     result = flatten_object(data, prefix="test")
@@ -101,7 +109,7 @@ def test_convert():
             "query": "array/+/data2",
         },
     ]
-    )
+                          )
     assert len(result) == 2, "we expected 2 entries"
     items = map(lambda item: item.a, result)
 
@@ -124,7 +132,6 @@ def test_convert():
 
 
 def test_query():
-
     data = {}
     result = rquery_attr(data, "test/+")
     assert len(result) == 0, "we expected 0 entries"
@@ -143,7 +150,8 @@ def test_query():
     assert len(result) == 2, "we expected 2 entries"
 
     pathes = map(lambda item: item.path, result)
-    assert ("deep/nested_01" in pathes and "deep/nested_03" in pathes), 'we expected the "deep/nested_01" and "deep/nested_03" have been found'
+    assert (
+                "deep/nested_01" in pathes and "deep/nested_03" in pathes), 'we expected the "deep/nested_01" and "deep/nested_03" have been found'
 
     data = {
         "array": [
@@ -169,4 +177,5 @@ def test_query():
     result = rquery_attr(data, "deep/#")
     assert len(result) == 3, "we expected 2 entries"
     pathes = map(lambda item: item.path, result)
-    assert ("deep/nested_01" in pathes and "deep/nested_01/nested_02" in pathes and "deep/nested_03" in pathes), 'we expected the "deep/nested_01", "deep/nested_01/nested_02" and "deep/nested_03" have been found'
+    assert (
+                "deep/nested_01" in pathes and "deep/nested_01/nested_02" in pathes and "deep/nested_03" in pathes), 'we expected the "deep/nested_01", "deep/nested_01/nested_02" and "deep/nested_03" have been found'

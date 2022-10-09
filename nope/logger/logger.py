@@ -9,12 +9,8 @@ ERROR = logging.ERROR
 WARNING = logging.WARNING
 CRITICAL = logging.CRITICAL
 
-LEVELS = {
-    'info': INFO,
-    'debug': DEBUG,
-    'warn': WARNING,
-    'error': ERROR
-}
+LEVELS = {'info': INFO, 'debug': DEBUG, 'warn': WARNING, 'error': ERROR}
+
 
 def get_logger(name: str, level=logging.INFO):
     """ Helper to return a specific logger.
@@ -22,8 +18,7 @@ def get_logger(name: str, level=logging.INFO):
     """
     _logger = logging.getLogger(name)
     # Define  a Logging Format
-    _format = _format = logging.Formatter(
-        '%(asctime)s - %(levelname)s - ' + name + ' - %(message)s')
+    _format = _format = logging.Formatter('%(asctime)s - %(levelname)s - ' + name + ' - %(message)s')
     # Create Console Output
     _handler = logging.StreamHandler(sys.stdout)
     # Add the Format to the Handler
