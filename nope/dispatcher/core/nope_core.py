@@ -26,7 +26,8 @@ class NopeCore:
                     {**item, 'sender': self._id}))
 
         def is_ready():
-            return self.connectivityManager.ready.getContent() and self.rpcManager.ready.getContent() and self.instanceManager.ready.getContent()
+            return self.connectivityManager.ready.getContent(
+            ) and self.rpcManager.ready.getContent() and self.instanceManager.ready.getContent()
 
         def on_event(msg):
             msg = ensureDottedAccess(msg)
@@ -49,7 +50,7 @@ class NopeCore:
 
         self.communicator = _options.communicator
 
-        if _id == None:
+        if _id is None:
             if _options.id:
                 self._id = _options.id
             else:
@@ -59,7 +60,7 @@ class NopeCore:
         self.logger.info('setting up sub-systems.')
 
         self.eventDistributor = PubSubSystem()
-        self.dataDistributor  = DataPubSubSystem()
+        self.dataDistributor = DataPubSubSystem()
 
         # TODO: Ab hier:
 
@@ -70,9 +71,8 @@ class NopeCore:
         self.rpcManager = nope_rpcManager(
             _options, defaultSelector, self._id, self.connectivityManager)
         self.instanceManager = nope_instanceManager(_options,
-                                                      defaultSelector, self._id, self.
-                                                      connectivityManager, self.rpcManager, self)
-
+                                                    defaultSelector, self._id, self.
+                                                    connectivityManager, self.rpcManager, self)
 
         # TODO: bishier!
 

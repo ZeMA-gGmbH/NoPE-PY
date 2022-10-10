@@ -13,10 +13,10 @@ usage: nope-py [-h] mode
 NoPE - Command Line Interface. Please select the option you want.
 
 positional arguments:
-    mode        mode of the cli-tool. Possible Options "run", "scan"          
+    mode        mode of the cli-tool. Possible Options "run", "scan"
 
 optional arguments:
-    -h, --help  show this help message and exit 
+    -h, --help  show this help message and exit
 '''
 
 

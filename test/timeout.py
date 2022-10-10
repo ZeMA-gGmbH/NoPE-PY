@@ -23,7 +23,7 @@ from time import sleep
 async def test_waitForUpdate():
     emitter = NopeEventEmitter()
 
-    def timer():        
+    def timer():
         try:
             print(getTimestamp())
             sleep(1)
@@ -33,7 +33,7 @@ async def test_waitForUpdate():
             print(formatException(e))
 
     # setTimeout = offload_function(timer)
-    
+
     try:
         offload_function_to_event_loop(timer)
         value = await emitter.waitForUpdate()

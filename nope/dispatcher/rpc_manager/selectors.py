@@ -58,7 +58,8 @@ def generateSelector(selector, core):
                 items = list(data[opts.serviceName])
                 hosts = list(
                     map(
-                        lambda item: core.connectivityManager.dispatchers.originalData[item].host.name,
+                        lambda item: core.connectivityManager.dispatchers.originalData[
+                            item].host.name,
                         items
                     )
                 )

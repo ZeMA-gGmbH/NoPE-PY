@@ -8,7 +8,7 @@ import setuptools
 
 try:
     long_description = open("README").read()
-except:
+except BaseException:
     long_description = """NOPE-Python Backend. A Generic Backend for Python"""
 
 if __name__ == "__main__":
@@ -22,7 +22,8 @@ if __name__ == "__main__":
           maintainer="Martin Karkowski",
           maintainer_email="m.karkowski@zema.de",
           install_requires=['paho-mqtt',
-                            'python-socketio[client]',
+                            'python-socketio[asyncio_client]',
+                            'aiohttp',
                             'psutil'],
           url="https://github.com/anti-held-333/nope-py.git",
           packages=["nope",

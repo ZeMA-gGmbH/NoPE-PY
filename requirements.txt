@@ -1,6 +1,5 @@
-python-socketio[client]
-nope~=1.4.1
-observable~=1.0.3
+python-socketio[asyncio_client]
+aiohttp
 psutil~=5.9.2
 paho-mqtt~=1.6.1
 setuptools~=60.2.0

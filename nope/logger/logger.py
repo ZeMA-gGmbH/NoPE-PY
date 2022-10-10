@@ -18,7 +18,8 @@ def getNopeLogger(name: str, level=logging.INFO):
     """
     _logger = logging.getLogger(name)
     # Define  a Logging Format
-    _format = _format = logging.Formatter('%(asctime)s - %(levelname)s - ' + name + ' - %(message)s')
+    _format = _format = logging.Formatter(
+        '%(asctime)s - %(levelname)s - ' + name + ' - %(message)s')
     # Create Console Output
     _handler = logging.StreamHandler(sys.stdout)
     # Add the Format to the Handler
@@ -40,6 +41,6 @@ def defineNopeLogger(param, default_name: str):
     """
     if not param:
         return None
-    if type(param) is str:
+    if isinstance(param, str):
         return getNopeLogger(default_name, LEVELS[param])
     return param

@@ -39,7 +39,8 @@ class NopeObservable(NopeEventEmitter):
         else:
             self._value = value
         valueToPublish = self.getContent()
-        if (not self.disablePublishing) and (options.forced or not (self._lastValue == valueToPublish)):
+        if (not self.disablePublishing) and (
+                options.forced or not (self._lastValue == valueToPublish)):
             return self._publish(valueToPublish, options)
         return False
 
@@ -57,7 +58,8 @@ class NopeObservable(NopeEventEmitter):
             options = self._updateSenderAndTimestamp(options)
             self._lastRest = options
             self._lastValue = value
-            self._emitter.emit(data=ensureDottedAccess({'value': value, **options}))
+            self._emitter.emit(data=ensureDottedAccess(
+                {'value': value, **options}))
             return self.hasSubscriptions
         return False
 
@@ -77,7 +79,8 @@ class NopeObservable(NopeEventEmitter):
 
     def subscribe(self, observer, options=None):
         if options is None:
-            options = {'type': 'sync', 'mode': ['direct', 'sub', 'super'], 'skipCurrent': False}
+            options = {'type': 'sync', 'mode': [
+                'direct', 'sub', 'super'], 'skipCurrent': False}
 
         res = self._subscribe(observer, ensureDottedAccess(options))
 
@@ -85,4 +88,3 @@ class NopeObservable(NopeEventEmitter):
         self._informSpecificObserver(observer)
 
         return res
-

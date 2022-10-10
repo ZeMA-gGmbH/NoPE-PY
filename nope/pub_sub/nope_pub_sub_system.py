@@ -7,7 +7,7 @@ DEFAULT_OBJ = object()
 
 
 def _memoizedCompare(matchTopicsWithoutWildcards: bool):
-    """ Helper to memoize the 
+    """ Helper to memoize the
 
     Args:
         options (bool): Flag to match topics with or without a wildcard
@@ -43,13 +43,13 @@ def _extractPubAndSubTopic(options: DottedDict):
         subTopic, pubTopic: the strings.
     """
     pubTopic = None
-    if type(options.topic) is str:
+    if isinstance(options.topic, str):
         pubTopic = options.topic
     else:
         pubTopic = options.topic.publish
 
     subTopic = None
-    if type(options.topic) is str:
+    if isinstance(options.topic, str):
         subTopic = options.topic
     else:
         subTopic = options.topic.subscribe
@@ -59,7 +59,8 @@ def _extractPubAndSubTopic(options: DottedDict):
 
 class PubSubSystem:
 
-    def __init__(self, mqttPatternBasedSubscriptions = True, forwardChildData = True, forwardParentData = True, matchTopicsWithoutWildcards = True, **kwargs):
+    def __init__(self, mqttPatternBasedSubscriptions=True, forwardChildData=True,
+                 forwardParentData=True, matchTopicsWithoutWildcards=True, **kwargs):
 
         # Adapt the Options
         self._options = ensureDottedAccess({
@@ -101,13 +102,13 @@ class PubSubSystem:
             # this is defined in the options.
 
             pubTopic = None
-            if type(options.topic) is str:
+            if isinstance(options.topic, str):
                 pubTopic = options.topic
             else:
                 pubTopic = options.topic.publish
 
             subTopic = None
-            if type(options.topic) is str:
+            if isinstance(options.topic, str):
                 subTopic = options.topic
             else:
                 subTopic = options.topic.subscribe
@@ -131,12 +132,13 @@ class PubSubSystem:
 
                     # We use this callback to forward the data into the system:
                     self._pushData(pubTopic, pubTopic,
-                                    content, opts, False, emitter)
+                                   content, opts, False, emitter)
 
                 callback = callbackToAssign
 
             # Register the emitter. This will be used during topic matching.
-            self._emitters[emitter] = ensureDottedAccess({'options': options, 'pubTopic': pubTopic, 'subTopic': subTopic, 'callback': callback,'observer': observer})
+            self._emitters[emitter] = ensureDottedAccess(
+                {'options': options, 'pubTopic': pubTopic, 'subTopic': subTopic, 'callback': callback, 'observer': observer})
 
             # Update the Matching Rules.
             self._updatePartialMatching('add', emitter, pubTopic, subTopic)
@@ -165,7 +167,7 @@ class PubSubSystem:
                             )
                 else:
                     currentContent = self._pullData(subTopic, None)
-                    if currentContent != None:
+                    if currentContent is not None:
                         emitter.emit(
                             item.data,
                             ensureDottedAccess({
@@ -201,7 +203,7 @@ class PubSubSystem:
         if emitter in self._emitters:
             options = self._emitters.pop(emitter)
             subTopic, pubTopic = _extractPubAndSubTopic(options)
-            
+
             self._updatePartialMatching('remove', emitter, pubTopic, subTopic)
             return True
         return False
@@ -246,8 +248,9 @@ class PubSubSystem:
         result = self._comparePatternAndPath(subTopic, pubTopic)
         if result.affected:
             if not result.containsWildcards and ((result.affectedByChild and
-                                                   not self.options.forwardChildData) or
-                                                  (result.affectedByParent and not self.options.forwardParentData)
+                                                  not self.options.forwardChildData) or
+                                                 (
+                result.affectedByParent and not self.options.forwardParentData)
             ):
                 return
 
@@ -284,7 +287,8 @@ class PubSubSystem:
                     raise Exception(
                         "Implementation Error. The 'pathToExtractData' must be provided")
 
-    def _updatePartialMatching(self, mode:str, emitter, pubTopic:str, subTopic:str):
+    def _updatePartialMatching(
+            self, mode: str, emitter, pubTopic: str, subTopic: str):
         for item in self._emitters.values():
             pubTopic = item.pubTopic
             if mode == 'remove' and pubTopic and subTopic:
@@ -305,7 +309,8 @@ class PubSubSystem:
                 self.subscriptions.update()
 
     def emit(self, eventName, data, options=None):
-        return self._pushData(eventName, eventName, data, ensureDottedAccess(options))
+        return self._pushData(eventName, eventName, data,
+                              ensureDottedAccess(options))
 
     def dispose(self):
         self._disposing = True
@@ -317,7 +322,8 @@ class PubSubSystem:
         self.publishers.dispose()
         self.subscriptions.dispose()
 
-    def _addToMatchingStructure(self, entry, topicOfChange, path_or_pattern, emitter):
+    def _addToMatchingStructure(
+            self, entry, topicOfChange, path_or_pattern, emitter):
         if topicOfChange not in self._matched:
             self._matched[topicOfChange] = ensureDottedAccess(
                 {'dataPull': {}, 'dataQuery': {}})
@@ -336,7 +342,8 @@ class PubSubSystem:
                 self._addMatchingEntryIfRequired(
                     topicOfChange, item.subTopic, emitter)
 
-    def _notify(self, topicOfContent:str, topicOfChange:str, options, emitterCausingUpdate=None):
+    def _notify(self, topicOfContent: str, topicOfChange: str,
+                options, emitterCausingUpdate=None):
         """ Internal Function to _notify all subscribers
 
         Args:
@@ -379,7 +386,7 @@ class PubSubSystem:
 
             for emitter in emitters:
                 data = self._pullData(pattern, None)
-                if emitter != None and emitter != emitter:
+                if emitter is not None and emitter != emitter:
                     continue
                 emitter.emit(
                     data,
@@ -395,7 +402,7 @@ class PubSubSystem:
     def _updateOptions(self, options):
         if not options.timestamp:
             options.timestamp = getTimestamp()
-        if type(options.forced) is not bool:
+        if not isinstance(options.forced, bool):
             options.forced = False
         if not isIterable(options.args):
             options.args = []
@@ -403,7 +410,8 @@ class PubSubSystem:
             options.sender = self.id
         return options
 
-    def _pushData(self, pathOfContent: str, pathOfChange: str, data, options={}, quiet=False, emitter=None):
+    def _pushData(self, pathOfContent: str, pathOfChange: str,
+                  data, options={}, quiet=False, emitter=None):
         """ Internal helper to push data to the data property. This results in informing the subscribers.
 
         Args:
@@ -439,7 +447,7 @@ class PubSubSystem:
 
     def _patternbasedPullData(self, pattern: str, default=None):
         """ Helper, which enable to perform a pattern based pull.
-            The code receives a pattern, and matches the existing content 
+            The code receives a pattern, and matches the existing content
             (by using there path attributes) and return the corresponding data.
 
         Args:

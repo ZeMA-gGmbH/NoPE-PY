@@ -20,16 +20,19 @@ def mqttMatch(subscription: str, offered: str):
     if res:
         return res
 
-    if (len(offered.split('/')) > len(subscription.split('/'))) and subscription.index('+') == 1:
+    if (len(offered.split('/')) > len(subscription.split('/'))
+        ) and subscription.index('+') == 1:
         # Adapt the offered Topic, that is max as long as the subscription
-        offered = ('/').join(offered.split('/')[0:len(subscription.split('/'))])
+        offered = ('/').join(offered.split('/')
+                             [0:len(subscription.split('/'))])
 
         # Now we will use our default matcher again
         res = mqtt.topic_matches_sub(subscription, offered)
 
     elif (len(offered.split('/')) < len(subscription.split('/'))) and subscription.index('+') == 1:
         # Adapt the subscription Topic, that is max as long as the offered one
-        subscription = ('/').join(subscription.split('/')[0:len(offered.split('/'))])
+        subscription = ('/').join(subscription.split('/')
+                                  [0:len(offered.split('/'))])
 
         # Now we will use our default matcher again
         res = mqtt.topic_matches_sub(subscription, offered)
@@ -38,13 +41,15 @@ def mqttMatch(subscription: str, offered: str):
 
 class MQTTLayer:
 
-    def __init__(self, uri, logger=INFO, preTopic=HOSTNAME, qos=2, forwardToCustomTopics=True):
+    def __init__(self, uri, logger=INFO, preTopic=HOSTNAME,
+                 qos=2, forwardToCustomTopics=True):
 
         self.uri = uri
         self.preTopic = preTopic
         self.qos = qos
         self.forwardToCustomTopics = forwardToCustomTopics
-        self.uri = self.uri if self.uri.starts_with('mqtt://') else 'mqtt://' + self.uri
+        self.uri = self.uri if self.uri.starts_with(
+            'mqtt://') else 'mqtt://' + self.uri
         self.connected = NopeObservable()
         self.connected.setContent(False)
         self._cbs = dict()
@@ -116,14 +121,16 @@ class MQTTLayer:
             for subscription in self._cbs:
                 if mqttMatch(subscription, topic):
                     if self.logger:
-                        self.logger.debug(f'received message on "{topic}" with content={data}')
+                        self.logger.debug(
+                            f'received message on "{topic}" with content={data}')
 
                     for cb in self._cbs[subscription]:
                         # perform the callback
                         cb(data)
 
         except Exception as E:
-            self._logger.error("Something went wrong during handling: '" + topic + "'. That shouldn't be the case")
+            self._logger.error(
+                "Something went wrong during handling: '" + topic + "'. That shouldn't be the case")
             self._logger.error(formatException(E))
 
     def _emit(self, topic: str, data):
@@ -169,4 +176,3 @@ class MQTTLayer:
         """ Kills the connection
         """
         self._client.disconnect()
-

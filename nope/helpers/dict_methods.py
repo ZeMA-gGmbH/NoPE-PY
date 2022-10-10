@@ -9,13 +9,13 @@ from .prints import formatException
 __SENTINENTAL = object()
 
 
-def keysToSnake(d: dict, adaptStrValues = False):
-    """ helperfunction, which will change the keys to 
+def keysToSnake(d: dict, adaptStrValues=False):
+    """ helperfunction, which will change the keys to
         snake case.
     """
     ret = {}
     for key, value in d.items():
-        if adaptStrValues and type(value) is str:
+        if adaptStrValues and isinstance(value, str):
             ret[camelToSnake(key)] = camelToSnake(value)
         else:
             ret[camelToSnake(key)] = value
@@ -23,7 +23,7 @@ def keysToSnake(d: dict, adaptStrValues = False):
     return ret
 
 
-def keysToSnakeNested(d: dict, adaptStrValues = False):
+def keysToSnakeNested(d: dict, adaptStrValues=False):
     """ helper function, which will change the keys to
         snake case. this will work with nested dicts as well
     """
@@ -33,7 +33,7 @@ def keysToSnakeNested(d: dict, adaptStrValues = False):
     ret = ensureDottedAccess({})
 
     for k, v in flatten.items():
-        if adaptStrValues and type(v) is str:
+        if adaptStrValues and isinstance(v, str):
             rsetattr(ret, pathToSnakeCase(k), camelToSnake(v))
         else:
             rsetattr(ret, pathToSnakeCase(k), v)
@@ -41,13 +41,13 @@ def keysToSnakeNested(d: dict, adaptStrValues = False):
     return ret
 
 
-def keysToCamel(d: dict, adaptStrValues = False):
-    """ helperfunction, which will change the options to 
+def keysToCamel(d: dict, adaptStrValues=False):
+    """ helperfunction, which will change the options to
         camel case.
     """
     ret = {}
     for key, value in d.items():
-        if adaptStrValues and type(value) is str:
+        if adaptStrValues and isinstance(value, str):
             ret[snakeToCamel(key)] = snakeToCamel(value)
         else:
             ret[snakeToCamel(key)] = value
@@ -55,8 +55,8 @@ def keysToCamel(d: dict, adaptStrValues = False):
     return ret
 
 
-def keysToCamelNested(d: dict, adaptStrValues = False):
-    """ helperfunction, which will change the options to 
+def keysToCamelNested(d: dict, adaptStrValues=False):
+    """ helperfunction, which will change the options to
         camel case. this will work with nested dicts as well
         (expecting every key contains a dict again.)
     """
@@ -65,7 +65,7 @@ def keysToCamelNested(d: dict, adaptStrValues = False):
     ret = ensureDottedAccess({})
 
     for k, v in flatten.items():
-        if adaptStrValues and type(v) is str:
+        if adaptStrValues and isinstance(v, str):
             rsetattr(ret, pathToCamelCase(k), snakeToCamel(v))
         else:
             rsetattr(ret, pathToCamelCase(k), v)
@@ -94,11 +94,15 @@ def extractUniqueValues(d, path='', pathKey: str = None):
         # Assign the Value
         _commonSegment = _commonSegment if _commonSegment is not False else ""
 
-        # Determine the Length of the common segment, to determine the relative pathes
-        _commonSegmentLength = len(_commonSegment.split(SPLITCHAR)) if _commonSegment != "" else 0
+        # Determine the Length of the common segment, to determine the relative
+        # pathes
+        _commonSegmentLength = len(_commonSegment.split(
+            SPLITCHAR)) if _commonSegment != "" else 0
 
-        _relPathContent = SPLITCHAR.join(path.split(SPLITCHAR)[_commonSegmentLength:])
-        _relPathKey = SPLITCHAR.join(pathKey.split(SPLITCHAR)[_commonSegmentLength:])
+        _relPathContent = SPLITCHAR.join(
+            path.split(SPLITCHAR)[_commonSegmentLength:])
+        _relPathKey = SPLITCHAR.join(pathKey.split(SPLITCHAR)[
+                                     _commonSegmentLength:])
         _items = extractValues(d, _commonSegment)
         _keysToUse = set()
         ret = []
@@ -113,10 +117,10 @@ def extractUniqueValues(d, path='', pathKey: str = None):
                 if data not in ret:
                     ret.append(data)
         return ret
-    return extractValues(d, path, unique = True)
+    return extractValues(d, path, unique=True)
 
 
-def extractValues(d, path='', unique = False):
+def extractValues(d, path='', unique=False):
     """ Helper to extract values of the map. Therefore the path must be provided.
 
     Example:
@@ -144,7 +148,8 @@ def extractValues(d, path='', unique = False):
     return s
 
 
-def transform_dict(d, pathExtractedValue: str, pathExtractedKey: str, logger = None):
+def transform_dict(d, pathExtractedValue: str,
+                   pathExtractedKey: str, logger=None):
     """_summary_
 
     Args:
@@ -166,13 +171,13 @@ def transform_dict(d, pathExtractedValue: str, pathExtractedKey: str, logger = N
     props = []
     onlyValidProps = True
 
-    if type(pathExtractedKey) is str:
+    if isinstance(pathExtractedKey, str):
         props.append(DottedDict({'key': 'key', 'query': pathExtractedKey}))
         onlyValidProps = onlyValidProps and (len(pathExtractedKey) > 0)
     else:
         onlyValidProps = False
 
-    if type(pathExtractedValue) is str:
+    if isinstance(pathExtractedValue, str):
         props.append(DottedDict(
             {'key': 'value', 'query': pathExtractedValue}))
         onlyValidProps = onlyValidProps and (len(pathExtractedValue) > 0)
@@ -197,7 +202,7 @@ def transform_dict(d, pathExtractedValue: str, pathExtractedKey: str, logger = N
                 try:
                     hash(element.key)
                     element.keyIsHashable = True
-                except:
+                except BaseException:
                     element.keyIsHashable = False
                     keyIsHashable = False
 
@@ -205,14 +210,14 @@ def transform_dict(d, pathExtractedValue: str, pathExtractedKey: str, logger = N
                 try:
                     hash(element.value)
                     element.valueIsHashable = True
-                except:
+                except BaseException:
                     element.valueIsHashable = False
                     valueIsHashable = False
 
         else:
 
             data = DottedDict({
-                'key': None, 
+                'key': None,
                 'value': None,
                 'keyIsHashable': True,
                 'valueIsHashable': True
@@ -221,7 +226,7 @@ def transform_dict(d, pathExtractedValue: str, pathExtractedKey: str, logger = N
             # We migt adapt the key and the Value. Therefore we will use
             # the next if statements
 
-            if type(pathExtractedKey) is str:
+            if isinstance(pathExtractedKey, str):
                 if len(pathExtractedKey) > 0:
                     data.key = rgetattr(v, pathExtractedKey)
                 else:
@@ -229,7 +234,7 @@ def transform_dict(d, pathExtractedValue: str, pathExtractedKey: str, logger = N
             else:
                 data.key = k
 
-            if type(pathExtractedValue) is str:
+            if isinstance(pathExtractedValue, str):
                 if len(pathExtractedValue) > 0:
                     data.value = rgetattr(v, pathExtractedValue)
                 else:
@@ -240,14 +245,14 @@ def transform_dict(d, pathExtractedValue: str, pathExtractedKey: str, logger = N
             # Try to convert the data:
             try:
                 hash(data.key)
-            except:
+            except BaseException:
                 data.keyIsHashable = False
                 keyIsHashable = False
 
             # Try to convert the data:
             try:
                 hash(data.value)
-            except:
+            except BaseException:
                 data.valueIsHashable = False
                 valueIsHashable = False
 
@@ -260,8 +265,9 @@ def transform_dict(d, pathExtractedValue: str, pathExtractedKey: str, logger = N
         for item in extracted:
 
             if not item.keyIsHashable:
-                error = Exception(f"Can not hash the new key='{item.key}' (type={type(item.key)}) from path='{pathExtractedKey}'")
-                
+                error = Exception(
+                    f"Can not hash the new key='{item.key}' (type={type(item.key)}) from path='{pathExtractedKey}'")
+
                 if logger:
                     logger.error(error)
                 else:
@@ -277,10 +283,13 @@ def transform_dict(d, pathExtractedValue: str, pathExtractedKey: str, logger = N
                     # Conflict detected -> Store it
 
                     if item.key not in conflicts:
-                        conflicts[item.key] = set() if valueIsHashable else list()
+                        conflicts[item.key] = set(
+                        ) if valueIsHashable else list()
 
-                    getattr(conflicts.get(item.key), "add" if valueIsHashable else "append")(item.value)
-                    getattr(conflicts.get(item.key), "add" if valueIsHashable else "append")(extractedDict.get(item.key))
+                    getattr(conflicts.get(item.key),
+                            "add" if valueIsHashable else "append")(item.value)
+                    getattr(conflicts.get(item.key), "add" if valueIsHashable else "append")(
+                        extractedDict.get(item.key))
                 else:
                     # No conflict -> just store the amount
                     amountOf[item.key] = amountOf.get(item.key, 0) + 1
@@ -295,12 +304,13 @@ def transform_dict(d, pathExtractedValue: str, pathExtractedKey: str, logger = N
 
             # Store the mapping of new-key --> org-key.
             reverseKeyMapping[item.key].add(k)
-            
+
             # Store the mapping of org-key --> new-key.
             keyMapping[k].add(item.key)
-            
+
             # Now store the item.
-            getattr(orgKeyToExtractedValue[k], "add" if valueIsHashable else "append")(item.value)
+            getattr(orgKeyToExtractedValue[k], "add" if valueIsHashable else "append")(
+                item.value)
 
     return DottedDict({
         'extracted_map': extractedDict,

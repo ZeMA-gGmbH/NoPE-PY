@@ -6,7 +6,7 @@ SINGLE_LEVEL_WILDCARD = '+'
 MULTI_LEVEL_WILDCARD = '#'
 
 
-def pathToSnakeCase(path:str, splitchar = SPLITCHAR) -> str:
+def pathToSnakeCase(path: str, splitchar=SPLITCHAR) -> str:
     # Join the splitchar with the adapted strings.
     return splitchar.join(
         map(
@@ -15,7 +15,8 @@ def pathToSnakeCase(path:str, splitchar = SPLITCHAR) -> str:
         )
     )
 
-def pathToCamelCase(path:str, splitchar = SPLITCHAR) -> str:
+
+def pathToCamelCase(path: str, splitchar=SPLITCHAR) -> str:
     # Join the splitchar with the adapted strings.
     return splitchar.join(
         map(
@@ -24,8 +25,9 @@ def pathToCamelCase(path:str, splitchar = SPLITCHAR) -> str:
         )
     )
 
+
 def convertPath(path: str) -> str:
-    """ converts the path 
+    """ converts the path
 
     Args:
         path (str): The Path to adapt.
@@ -48,11 +50,12 @@ def containsWildcards(str: str) -> bool:
     return SINGLE_LEVEL_WILDCARD in str or MULTI_LEVEL_WILDCARD in str
 
 
-def getLeastCommonPathSegment(pathes, considerSingleLevel = False, considerMultiLevel = False):
+def getLeastCommonPathSegment(
+        pathes, considerSingleLevel=False, considerMultiLevel=False):
     """ Returns the least common segmet of all pathes, included in the pathes array.
 
     Args:
-        pathes (str[]): The Segments to compare. 
+        pathes (str[]): The Segments to compare.
         considerSingleLevel (bool): allows "singlelevel"-wildcards in the segments
         considerMultiLevel (bool): allows "multilevel"-wildcards in the segments
 
@@ -62,7 +65,8 @@ def getLeastCommonPathSegment(pathes, considerSingleLevel = False, considerMulti
     current_path = pathes.pop()
     while len(pathes) > 0:
         next = pathes.pop()
-        current_path = _getLeastCommonPathSegment(current_path, next, considerSingleLevel=considerSingleLevel, considerMultiLevel=considerMultiLevel)
+        current_path = _getLeastCommonPathSegment(
+            current_path, next, considerSingleLevel=considerSingleLevel, considerMultiLevel=considerMultiLevel)
 
         # Only proceed, if there are elements included.
         if not current_path:
@@ -73,7 +77,8 @@ def getLeastCommonPathSegment(pathes, considerSingleLevel = False, considerMulti
     return current_path
 
 
-def _getLeastCommonPathSegment(path01, path02, considerSingleLevel = False, considerMultiLevel = False):
+def _getLeastCommonPathSegment(
+        path01, path02, considerSingleLevel=False, considerMultiLevel=False):
     """_summary_
 
     Args:

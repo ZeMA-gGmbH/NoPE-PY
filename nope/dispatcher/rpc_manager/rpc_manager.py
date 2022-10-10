@@ -30,7 +30,8 @@ class WrappedFunction:
 
 class NopeRpcManager:
 
-    def __init__(self, options, defaultSelector, _id=None, _connectivityManager=None):
+    def __init__(self, options, defaultSelector, _id=None,
+                 _connectivityManager=None):
 
         options = ensureDottedAccess(options)
 
@@ -47,7 +48,8 @@ class NopeRpcManager:
             self._id = generateId()
 
         if self._connectivityManager is None:
-            self._connectivityManager = NopeConnectivityManager(options, self.id)
+            self._connectivityManager = NopeConnectivityManager(
+                options, self.id)
 
         self._logger = defineNopeLogger(options.logger, 'core.rpc-manager')
         self.ready = NopeObservable()
@@ -56,7 +58,8 @@ class NopeRpcManager:
         self.__warned = False
 
         self._mappingOfDispatchersAndServices = dict()
-        self.services = DictBasedMergeData(self._mappingOfDispatchersAndServices, 'services/+', 'services/+/id')
+        self.services = DictBasedMergeData(
+            self._mappingOfDispatchersAndServices, 'services/+', 'services/+/id')
         self.onCancelTask = NopeEventEmitter()
 
         if self._logger:
@@ -75,12 +78,13 @@ class NopeRpcManager:
         self._mappingOfDispatchersAndServices[msg.dispatcher] = msg
         self.services.update()
 
-    async def _handleExternalRequest(self, data, func: WrappedFunction=None):
+    async def _handleExternalRequest(self, data, func: WrappedFunction = None):
         try:
             if not callable(func):
                 if data.functionId not in self._registeredServices:
                     return
-                func = self._registeredServices[data.functionId].get("func", None)
+                func = self._registeredServices[data.functionId].get(
+                    "func", None)
 
             if self._logger:
                 self._logger.debug(
@@ -91,7 +95,7 @@ class NopeRpcManager:
                 # we are allowed to execute the task:
                 if data.get("target", self.id) != self.id:
                     return
-                
+
                 # Define a list containing callbacks:
                 cbs = []
 
@@ -128,7 +132,8 @@ class NopeRpcManager:
                 resultPromise = func(*args)
 
                 try:
-                    if resultPromise is not None and getattr(resultPromise, 'cancelCallback', False):
+                    if resultPromise is not None and getattr(
+                            resultPromise, 'cancelCallback', False):
                         def _cancel_main(reason):
                             resultPromise.cancelCallback(reason)
 
@@ -144,7 +149,6 @@ class NopeRpcManager:
                 # Wait for the Result to finish.
                 _result = await resultPromise
 
-                
                 # Define the Result message
                 result = {
                     'result': _result if _result is not _DEFAULT_RESULT else None,
@@ -163,12 +167,13 @@ class NopeRpcManager:
         except Exception as error:
 
             if self._logger:
-                self._logger.error(f'Dispatcher "{self.id}" failed with request: "{data.taskId}"')
-                self._logger.error(formatException(error))            
+                self._logger.error(
+                    f'Dispatcher "{self.id}" failed with request: "{data.taskId}"')
+                self._logger.error(formatException(error))
             else:
                 print(formatException(error))
 
-            self._runningExternalRequestedTasks.pop(data.requestedBy,None)
+            self._runningExternalRequestedTasks.pop(data.requestedBy, None)
 
             result = {
                 'error': {
@@ -185,7 +190,8 @@ class NopeRpcManager:
     async def _handle_external_response(self, data):
         try:
             # Extract the Task
-            task: DottedDict = self._runningInternalRequestedTasks.get(data.taskId, None)
+            task: DottedDict = self._runningInternalRequestedTasks.get(
+                data.taskId, None)
 
             if task:
 
@@ -227,8 +233,9 @@ class NopeRpcManager:
 
         except Exception as error:
             if self._logger:
-                self._logger.error("Error during handling an external response")
-                self._logger.error(formatException(error))            
+                self._logger.error(
+                    "Error during handling an external response")
+                self._logger.error(formatException(error))
             else:
                 print(formatException(error))
 
@@ -246,7 +253,8 @@ class NopeRpcManager:
         if self._logger:
             self._logger.debug("sending available services")
 
-        EXECUTOR.callParallel(self._communicator.emit,"servicesChanged", message)
+        EXECUTOR.callParallel(self._communicator.emit,
+                              "servicesChanged", message)
 
     async def _init(self):
         self.ready.setContent(False)
@@ -265,8 +273,8 @@ class NopeRpcManager:
                     print(formatException(error))
 
         await self._communicator.on("servicesChanged", onServicesChanged)
-        await self._communicator.on("rpcRequest", lambda data: EXECUTOR.callParallel(self._handleExternalRequest,data))
-        await self._communicator.on("rpcResponse", lambda data: EXECUTOR.callParallel(self._handle_external_response,data))
+        await self._communicator.on("rpcRequest", lambda data: EXECUTOR.callParallel(self._handleExternalRequest, data))
+        await self._communicator.on("rpcResponse", lambda data: EXECUTOR.callParallel(self._handle_external_response, data))
 
         def on_cancelation(msg):
             if msg.dispatcher == self._id:
@@ -289,7 +297,8 @@ class NopeRpcManager:
                 for rm in changes.removed:
                     self.removeDispatcher(rm)
 
-        self._connectivityManager.dispatchers.onChange.subscribe(onDispatchersChanged)
+        self._connectivityManager.dispatchers.onChange.subscribe(
+            onDispatchersChanged)
 
         if self._logger:
             self._logger.info(f"core.rpc-manager {self._id} initialized!")
@@ -302,10 +311,10 @@ class NopeRpcManager:
 
         # Now we need to cancel every Task of the dispatcher,
         # which isnt present any more.
-        self.cancelRunningTasksOfDispatcher(dispatcherId, Exception(
+        EXECUTOR.callParallel(self.cancelRunningTasksOfDispatcher, dispatcherId, Exception(
             "Dispatcher has been removed! Tasks cannot be executed any more."))
         # Stop executing the requested Tasks.
-        self.cancelRequestedTasksOfDispatcher(dispatcherId, Exception(
+        EXECUTOR.callParallel(self.cancelRequestedTasksOfDispatcher, dispatcherId, Exception(
             "Dispatcher has been removed! Tasks are not required any more."))
 
     async def cancelTask(self, taskId: str, reason, quiet=False):
@@ -363,13 +372,12 @@ class NopeRpcManager:
 
         return await self._cancelHelper(toCancel, reason)
 
-
     async def cancelRunningTasksOfDispatcher(self, dispatcher: str, reason):
         """ Cancels all Tasks of the given Dispatcher
         """
         toCancel = set()
-        for taskId, task in self._runningExternalRequestedTasks.items():
-            if task.target == dispatcher:
+        for taskId, target in self._runningExternalRequestedTasks.items():
+            if target == dispatcher:
                 toCancel.add(taskId)
 
         return await self._cancelHelper(toCancel, reason)
@@ -377,16 +385,18 @@ class NopeRpcManager:
     def serviceExists(self, serviceName: str):
         """ Function to test if a specific Service exists.
         """
-        return serviceName in self.services.amountOf and self.services.amountOf[serviceName] > 0
+        return serviceName in self.services.amountOf and self.services.amountOf[
+            serviceName] > 0
 
     def _getServiceName(self, _id: str, _type: str):
         if _type in ("request", "response"):
             return _id if _id.startswith(f"{_type}/") else f"{_type}/{_id}"
-        raise Exception("For the parameter 'type' the values: 'request' and 'response' are allowed!")
+        raise Exception(
+            "For the parameter 'type' the values: 'request' and 'response' are allowed!")
 
     def unregisterService(self, func):
         idOfFunc: str = ""
-        if type(func) is str:
+        if isinstance(func, str):
             if self.options.forceUsingValidVarNames:
                 idOfFunc = varifyPath(func)
             else:
@@ -397,7 +407,8 @@ class NopeRpcManager:
         self._sendAvailableServices()
 
         if self._logger:
-            self._logger.debug(f'Dispatcher "{self._id}" unregistered: "{idOfFunc}"')
+            self._logger.debug(
+                f'Dispatcher "{self._id}" unregistered: "{idOfFunc}"')
         return self._registeredServices.pop(id)
 
     def _adaptServiceId(self, serviceName: str):
@@ -444,7 +455,8 @@ class NopeRpcManager:
         self._sendAvailableServices()
 
         if self._logger:
-            self._logger.debug(f'Dispatcher "{self._id}" registered: "{idOfFunc}"')
+            self._logger.debug(
+                f'Dispatcher "{self._id}" registered: "{idOfFunc}"')
 
         return wrapped
 
@@ -505,29 +517,33 @@ class NopeRpcManager:
                 })
 
             if not self.serviceExists(serviceName):
-                error = Exception(f'No Service Provider known for "{serviceName}"')
+                error = Exception(
+                    f'No Service Provider known for "{serviceName}"')
                 if self._logger:
-                    self._logger.error(f'No Service Provider known for "{serviceName}"')
+                    self._logger.error(
+                        f'No Service Provider known for "{serviceName}"')
                     self._logger.error(formatException(error))
 
                 raise error
 
-            if self.options.forceUsingSelectors or self.services.amountOf.get(serviceName, 0) > 1:
+            if self.options.forceUsingSelectors or self.services.amountOf.get(
+                    serviceName, 0) > 1:
 
                 optionsForSelector = ensureDottedAccess({
                     "rpcManager": self,
                     "serviceName": serviceName
                 })
 
-                if type(optionsToUse.target) is str:
+                if isinstance(optionsToUse.target, str):
                     tastRequest.target = optionsToUse.target
                 elif callable(optionsToUse.selector):
                     tastRequest.target = await options.selector(optionsForSelector)
-                elif type(optionsToUse.selector) is str:
+                elif isinstance(optionsToUse.selector, str):
                     tastRequest.target = await self._defaultSelector(optionsForSelector)
-                
+
             else:
-                tastRequest.target = list(self.services.keyMappingreverse[serviceName])[0]
+                tastRequest.target = list(
+                    self.services.keyMappingreverse[serviceName])[0]
 
             packet["target"] = tastRequest.target
 
@@ -546,7 +562,8 @@ class NopeRpcManager:
                     )
 
                 # Create our timeout and store it.
-                tastRequest.timeout = EXECUTOR.setTimeout(onTimeout, optionsToUse.timeout)
+                tastRequest.timeout = EXECUTOR.setTimeout(
+                    onTimeout, optionsToUse.timeout)
 
         except Exception as err:
             if self._logger:
@@ -563,7 +580,7 @@ class NopeRpcManager:
 
         # Define a Function, which could be used for cancelation.
         def _cancelTask(reason):
-            EXECUTOR.callParallel(self.cancelTask,taskId,reason)
+            EXECUTOR.callParallel(self.cancelTask, taskId, reason)
 
         future.cancelCallback = _cancelTask
 
@@ -576,9 +593,11 @@ class NopeRpcManager:
     async def performCall(self, serviceName, params, options=None):
         if isList(serviceName):
             if isList(options) and len(serviceName) != len(options):
-                raise Exception("The length of the provided services and options does not match")
+                raise Exception(
+                    "The length of the provided services and options does not match")
 
-            optionsToUse = [options] * len(serviceName) if not isIterable(options) else options
+            optionsToUse = [options] * \
+                len(serviceName) if not isIterable(options) else options
 
             futures = []
 
@@ -595,7 +614,8 @@ class NopeRpcManager:
 
         else:
             if isList(options):
-                raise Exception("The length of the provided services and options does not match")
+                raise Exception(
+                    "The length of the provided services and options does not match")
 
             return await self._performCall(serviceName, params, options)
 

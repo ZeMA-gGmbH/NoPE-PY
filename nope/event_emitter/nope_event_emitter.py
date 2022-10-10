@@ -27,7 +27,7 @@ class NopeEventEmitter:
         options = ensureDottedAccess(options)
 
         _value = value
-        if self.setter != None:
+        if self.setter is not None:
             adapted = ensureDottedAccess(self.setter(value, options))
             if not adapted.valid:
                 return False
@@ -36,7 +36,8 @@ class NopeEventEmitter:
         _value = self.getter(_value) if self.getter is not None else _value
         if options.forced or (self.disablePublishing == False):
             options = self._updateSenderAndTimestamp(options)
-            self._emitter.emit(data=ensureDottedAccess({'value': _value, **options}))
+            self._emitter.emit(data=ensureDottedAccess(
+                {'value': _value, **options}))
             return self.hasSubscriptions
         return False
 
@@ -76,7 +77,7 @@ class NopeEventEmitter:
 
             first = False
 
-            if active and data != None:
+            if active and data is not None:
                 # Pop the value
                 value = data.pop("value")
                 # Now we call value, ... rest
@@ -149,7 +150,7 @@ class NopeEventEmitter:
 
                         # prom.add_done_callback(lambda result: finish(False, result.result(), value))
                         prom.add_done_callback(done)
-                        # prom.catch(lambda err: finish(err, None, None))                        
+                        # prom.catch(lambda err: finish(err, None, None))
                     else:
                         result = testCallback(value, rest)
                         finish(False, result, value)
@@ -158,7 +159,7 @@ class NopeEventEmitter:
 
             try:
                 subscription = self.subscribe(check_data)
-            except:
+            except BaseException:
                 reject(Exception("Failed to subscribe"))
 
         return Promise(callback)

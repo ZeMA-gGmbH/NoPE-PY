@@ -65,7 +65,7 @@ def unhash(obj):
     """
     try:
         del obj._hash
-    except:
+    except BaseException:
         pass
 
 
@@ -83,7 +83,7 @@ def hashable(cls):
                 attr.__doc__ = "\n".join([inspect.getdoc(getattr(bases[0],
                                                                  name)),
                                           doc])
-        except:
+        except BaseException:
             pass
 
     def __hash__(self):
@@ -102,7 +102,7 @@ def hashable(cls):
 
     try:
         __mutable__.__doc__ = __mutable__.__doc__ % classname
-    except:
+    except BaseException:
         pass
     cls.__mutable__ = __mutable__
 
@@ -112,7 +112,7 @@ def hashable(cls):
 
     try:
         hashed.__doc__ = hashed.__doc__ % classname
-    except:
+    except BaseException:
         pass
     cls.hashed = hashed
 
@@ -122,7 +122,7 @@ def hashable(cls):
 
     try:
         mutable.__doc__ = mutable.__doc__ % classname
-    except:
+    except BaseException:
         pass
     cls.mutable = mutable
     return cls
@@ -309,6 +309,7 @@ class hdict(dict):
         self.__mutable__()
         return dict.update(self, other, **more)
 
+
 hdict = hashable(hdict)
 
 
@@ -388,7 +389,8 @@ class hset(set):
         return self.__class__(set.__rxor__(self, other))
 
     def __str__(self):
-        return self.__class__.__name__ + "(" + set.__str__(self).split("(", 1)[1]
+        return self.__class__.__name__ + \
+            "(" + set.__str__(self).split("(", 1)[1]
 
     def __sub__(self, other):
         return self.__class__(set.__sub__(self, other))

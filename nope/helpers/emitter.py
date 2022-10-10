@@ -53,14 +53,14 @@ class Emitter:
 
         try:
             self._paused.remove(callback)
-        except:
+        except BaseException:
             pass
 
         if event in self._subscribers:
             try:
                 self._subscribers[event].remove(callback)
                 return True
-            except:
+            except BaseException:
                 return False
         return False
 
@@ -70,11 +70,11 @@ class Emitter:
     def _unpause(self, callback):
         try:
             self._paused.remove(callback)
-        except:
+        except BaseException:
             pass
 
     def emit(self, event: str = None, data=None, *args, **kwargs):
-        """ Emits an event on with the given data. 
+        """ Emits an event on with the given data.
 
         Args:
             event (str, optional): _description_. Defaults to None.

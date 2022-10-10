@@ -1,4 +1,4 @@
-from ..helpers import Emitter, generateId, keysToCamelNested, formatException, keysToSnakeNested, ensureDottedAccess, snakeToCamel, camelToSnake, pathToCamelCase, EXECUTOR ,pathToSnakeCase
+from ..helpers import Emitter, generateId, keysToCamelNested, formatException, keysToSnakeNested, ensureDottedAccess, snakeToCamel, camelToSnake, pathToCamelCase, EXECUTOR, pathToSnakeCase
 from ..logger import defineNopeLogger
 from ..observable import NopeObservable
 import asyncio
@@ -27,7 +27,6 @@ class Bridge:
         self.connected = NopeObservable()
         self.connected.setContent(False)
         self.connected.getter = getter
-
 
     @property
     def receivesOwnMessages(self):
@@ -107,7 +106,8 @@ class Bridge:
                         await data.layer.emit(event, dataToSend)
                     except Exception as error:
                         if self._logger:
-                            self._logger.error('failed to emit the event "${event}"')
+                            self._logger.error(
+                                'failed to emit the event "${event}"')
                             self._logger.error(error)
                         else:
                             print(formatException(error))
@@ -129,7 +129,7 @@ class Bridge:
 
             await layer.connected.waitFor()
 
-            for event,cbs in self._callbacks.items():
+            for event, cbs in self._callbacks.items():
                 for callback in cbs:
                     layer.on(event, callback)
                     self._checkInternalEmitter()

@@ -60,5 +60,6 @@ def isIterable(obj):
         return False
     return isinstance(obj, Iterable)
 
+
 def isList(obj) -> bool:
     return type(obj) in (list,)

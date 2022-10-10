@@ -15,7 +15,8 @@ from .nope_dispatcher import NopeDispatcher
 class NopeDispatcherSingleton(object):
     _instance = None
 
-    def __new__(cls, communicator, options={}, loop=None, logger: logging.Logger = None, level=logging.INFO):
+    def __new__(cls, communicator, options={}, loop=None,
+                logger: logging.Logger = None, level=logging.INFO):
         if cls._instance is None:
             # Create an Event Loop.
             if loop is None:
@@ -29,7 +30,8 @@ class NopeDispatcherSingleton(object):
         return cls._instance
 
 
-def get_dispatcher(communicator, options={}, loop=None, logger: logging.Logger = None, level=logging.INFO):
+def get_dispatcher(communicator, options={}, loop=None,
+                   logger: logging.Logger = None, level=logging.INFO):
     """Function, which woll return a nope-dispatcher
     """
 

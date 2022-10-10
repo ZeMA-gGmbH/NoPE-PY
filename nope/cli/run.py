@@ -15,7 +15,7 @@ from nope.loader import get_package_loader, loadConfig, loadDesiredPackages
 
 
 def get_args(add_mode=True):
-    """ Helper Function to extract the Arguments 
+    """ Helper Function to extract the Arguments
     """
     parser = argparse.ArgumentParser(description='cli-tool to run the backend')
     if add_mode:
@@ -49,12 +49,13 @@ def get_args(add_mode=True):
                 print(args.params)
             except Exception as E:
                 "".startswith
-                if not (args.params.startswith("{") or args.params.startswith("[")):
+                if not (args.params.startswith(
+                        "{") or args.params.startswith("[")):
                     args.params = json.loads('"' + args.params + '"')
                 else:
                     print(E)
                     raise Exception("Please provide valid JSON")
-        except:
+        except BaseException:
             print("Please provide valid JSON")
             sys.exit()
 
@@ -84,7 +85,8 @@ def generate_nope_backend(args: dict):
     # Create an Event Loop.
     loop = asyncio.get_event_loop()
 
-    if getattr(args, "channel", "event") in [key for key in LAYER_DEFAULT_PARAMETERS.keys()]:
+    if getattr(args, "channel", "event") in [
+            key for key in LAYER_DEFAULT_PARAMETERS.keys()]:
         pass
     else:
         print("invalid communication-layer has been selected")

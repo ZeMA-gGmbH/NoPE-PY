@@ -26,7 +26,7 @@ def camelToSnake(input: str) -> str:
     return pattern.sub('_', input).lower()
 
 
-def replaceAll(org_str:str, value, replacement: str)-> str:
+def replaceAll(org_str: str, value, replacement: str) -> str:
     """ Replaces all Chars in a String
 
     Args:
@@ -40,11 +40,11 @@ def replaceAll(org_str:str, value, replacement: str)-> str:
 
     ret: str = org_str
 
-    if type(value) is str and (replacement is not None):
+    if isinstance(value, str) and (replacement is not None):
         ret = ret.replace(value, replacement)
     else:
         for pair in value:
-            if type(pair) is str and (replacement is not None):
+            if isinstance(pair, str) and (replacement is not None):
                 ret = ret.replace(pair, replacement)
             else:
                 ret = ret.replace(pair[0], pair[1])
@@ -52,7 +52,7 @@ def replaceAll(org_str:str, value, replacement: str)-> str:
     return ret
 
 
-def pad_string(num: Union[float,int], size: int, max_length=False):
+def pad_string(num: Union[float, int], size: int, max_length=False):
     """ Function to Pad a String.
 
     Args:
@@ -64,7 +64,7 @@ def pad_string(num: Union[float,int], size: int, max_length=False):
         str: the Number as String
     """
     size = size
-    if type(max_length) is bool and max_length:
+    if isinstance(max_length, bool) and max_length:
         size = math.ceil(math.log10(size))
     s = str(num)
     while len(s) < size:
@@ -72,7 +72,7 @@ def pad_string(num: Union[float,int], size: int, max_length=False):
     return s
 
 
-def insert(str:str, index: int, content: str) -> str:
+def insert(str: str, index: int, content: str) -> str:
     """ Inserts a String in the String
     """
     if index > 0:
@@ -85,12 +85,13 @@ def to_camel_case(str: str, char='_') -> str:
 
     def callback_0(word, index):
         return word.to_lower_case() if index == 0 else word.to_upper_case()
-    
+
     return replaceAll(str, char, ' ').replace(re.compile(
         '(?:^\\w|[A-Z]|\\b\\w)'), callback_0).replace(
         re.compile('\\s+'), '')
 
-def to_snake_case(str:str)->str:
+
+def to_snake_case(str: str) -> str:
     """ Helper to convert the string to the snake-case
 
     Args:
@@ -102,8 +103,8 @@ def to_snake_case(str:str)->str:
     if str == str.upper():
         return str
 
-    ret = ''.join(['_'+i.lower() if i.isupper()
-                    else i for i in str]).lstrip('_')
+    ret = ''.join(['_' + i.lower() if i.isupper()
+                   else i for i in str]).lstrip('_')
 
     if ret.startswith("_"):
         ret[1:]
@@ -111,7 +112,8 @@ def to_snake_case(str:str)->str:
     return ret
 
 
-def limit_string(str: str, length: int, limit_chars: str='...') -> DottedDict:
+def limit_string(str: str, length: int,
+                 limit_chars: str = '...') -> DottedDict:
     """ Helper to limit the string to a specific length. the rest is reduced by the limitChars
 
     Args:
@@ -124,19 +126,19 @@ def limit_string(str: str, length: int, limit_chars: str='...') -> DottedDict:
     """
     if len(str) > length:
         return DottedDict({
-            'is_limited': True, 
-            'original': str, 
+            'is_limited': True,
+            'original': str,
             'limited': str[0, length - len(limit_chars)] + limit_chars
         })
     else:
         return DottedDict({
-            'is_limited': False, 
-            'original': str, 
+            'is_limited': False,
+            'original': str,
             'limited': str
         })
 
 
-def insert_new_lines(str: str, max_length: int=100) -> str:
+def insert_new_lines(str: str, max_length: int = 100) -> str:
     """ Helper to insert new lines after a given amount of time.
 
     Args:
@@ -151,9 +153,9 @@ def insert_new_lines(str: str, max_length: int=100) -> str:
     ret = []
     length = 0
     for word in splitted:
-        
+
         length = length + len(word) + 1
-        
+
         ret.append(word)
 
         if length > max_length:

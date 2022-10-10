@@ -43,16 +43,16 @@ class NopeGenericModule(BaseModule):
 
         else:
 
-            if self.author == None:
+            if self.author is None:
                 self._author = description['author']
 
-            if self.description == None:
+            if self.description is None:
                 self.description = description['description']
 
-            if self.version == None:
+            if self.version is None:
                 self._version = description['version']
 
-            if self.identifier == None:
+            if self.identifier is None:
                 self.identifier = description['identifier']
 
         for name, options in description['functions'].items():
@@ -129,7 +129,7 @@ class NopeGenericModule(BaseModule):
     async def init(self):
         try:
             await super().init()
-        except:
+        except BaseException:
             raise Exception('Call fromDescription before using')
 
     async def dispose(self):

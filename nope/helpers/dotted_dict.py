@@ -56,7 +56,6 @@ class NoneDottedDict(DottedDict):
         except KeyError:
             return None
 
-
     def copy(self):
         # Manually copy the contained Dict.
         cp = {}
@@ -91,7 +90,8 @@ def _convertItem(item, useNoneAsDefaultValue: bool):
         return item
 
 
-def convertToDottedDict(d: dict | DottedDict | NoneDottedDict, useNoneAsDefaultValue=True):
+def convertToDottedDict(d: dict | DottedDict |
+                        NoneDottedDict, useNoneAsDefaultValue=True):
     """ Converts a dict to a dotted dict. Although, ensures,
 
     Args:
@@ -117,7 +117,7 @@ def ensureDottedAccess(d, useNoneAsDefaultValue=True):
     if d is None:
         return DottedDict()
 
-    elif type(d) != DottedDict:
+    elif not isinstance(d, DottedDict):
         return convertToDottedDict(d, useNoneAsDefaultValue)
 
     return d

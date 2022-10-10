@@ -16,13 +16,14 @@ class MergeData:
         self.update(force=True)
 
     def update(self, data=None, force=False):
-        if data != None:
+        if data is not None:
             self.originalData = data
         after_adding = self._extractData(self.originalData)
         diff = determineDifference(self.data.getContent(), after_adding)
         if force or ((len(diff.removed) > 0) or len(diff.added) > 0):
             self.data.setContent(list(after_adding))
-            self.onChange.emit(DottedDict({'added': list(diff.added), 'removed': list(diff.removed)}))
+            self.onChange.emit(DottedDict(
+                {'added': list(diff.added), 'removed': list(diff.removed)}))
 
     def dispose(self):
         self.data.dispose()
@@ -49,7 +50,7 @@ class DictBasedMergeData(MergeData):
         super().__init__(originalData, callback)
 
     def update(self, data=None, force=False):
-        if data != None:
+        if data is not None:
             self.originalData = data
         result = transform_dict(self.originalData, self._path, self._pathKey)
 

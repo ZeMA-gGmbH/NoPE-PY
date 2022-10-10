@@ -34,7 +34,7 @@ def rgetattr(data, path, default=SENTINEL_1, _SPLITCHAR=SPLITCHAR):
                 else:
                     try:
                         obj = obj[attr]
-                    except:
+                    except BaseException:
                         if default == SENTINEL_1:
                             return None
                         return default
@@ -74,7 +74,8 @@ def rqueryAttr(data, query):
         onlyPathToBaseValue=False
     )
 
-    # Iterate over the items and use our path matcher to extract the matching items.
+    # Iterate over the items and use our path matcher to extract the matching
+    # items.
     for iter_item in _dict.items():
         path = iter_item[0]
         value = iter_item[1]
@@ -102,8 +103,8 @@ def convertData(data, props):
         }[]
         ```
 
-        Example 1: 
-        
+        Example 1:
+
         data = { "deep": { "nested": "test" } }
         result = convertData(data, [
             {
@@ -169,12 +170,13 @@ def convertData(data, props):
 
         for idx, item in enumerate(items):
 
-            if type(commonPattern) is str:
+            if isinstance(commonPattern, str):
                 result = comparePatternAndPath(commonPattern, item["path"])
                 if result.pathToExtractData:
                     if not (result.pathToExtractData in helper):
                         helper[result.pathToExtractData] = DottedDict()
-                    helper[result.pathToExtractData][prop.get("key")] = item.data
+                    helper[result.pathToExtractData][prop.get(
+                        "key")] = item.data
             else:
                 if idx not in helper:
                     helper[idx] = DottedDict()
@@ -206,23 +208,23 @@ def rsetattr(data, path: str, value, _SPLITCHAR: str = SPLITCHAR):
 
         try:
             sub = obj[accessor]
-        except:
+        except BaseException:
             pass
 
-        if type(obj) is list:
+        if isinstance(obj, list):
             length = len(obj)
             while length <= accessor:
                 obj.append(None)
                 length = len(obj)
 
-        if sub == None:
+        if sub is None:
             # _obj is an Array and it doesnt contain the index
             # Extract the Next Element:
             nextAccessor = ptrs[idx + 1]
 
             nextIsInt = isInt(nextAccessor)
 
-            if type(obj) is list:
+            if isinstance(obj, list):
                 if nextIsInt:
                     obj[accessor] = [None] * (int(nextAccessor) + 1)
                 else:
@@ -246,13 +248,13 @@ def isInt(value) -> bool:
     Args:
         value: Value to be checked
     """
-    if type(value) is int:
+    if isinstance(value, int):
         return True
 
     try:
         int(value)
         return True
-    except:
+    except BaseException:
         return False
 
 
@@ -262,13 +264,13 @@ def isFloat(value) -> bool:
     Args:
         value: Value to be checked
     """
-    if type(value) is float:
+    if isinstance(value, float):
         return True
 
     try:
         float(value)
         return True
-    except:
+    except BaseException:
         return False
 
 
@@ -327,7 +329,8 @@ def allowsSubscripton(obj):
     return hasattr(obj, "__getitem__")
 
 
-def flattenObject(data, prefix = "", splitchar = SPLITCHAR, onlyPathToBaseValue = False, max_depth = None):
+def flattenObject(data, prefix="", splitchar=SPLITCHAR,
+                  onlyPathToBaseValue=False, max_depth=None):
 
     ret = DottedDict()
 
@@ -348,7 +351,7 @@ def flattenObject(data, prefix = "", splitchar = SPLITCHAR, onlyPathToBaseValue 
     return ret
 
 
-def deflattenObject(flattenObject, options = None):
+def deflattenObject(flattenObject, options=None):
     _options = ensureDottedAccess({'prefix': '', 'splitchar': SPLITCHAR})
     _options.update(ensureDottedAccess(options))
 
@@ -384,14 +387,14 @@ def getKeys(obj):
             try:
                 # For all other items, we will use the vars as key.
                 keys = list(vars(obj))
-            except:
+            except BaseException:
                 pass
 
     return keys
 
 
 def deepAssign(target, source):
-    """ Deeply assigns the items given in the dict, whereas the 
+    """ Deeply assigns the items given in the dict, whereas the
         keys of the source will be used as path, its value as value
         to assign.
     Args:
@@ -410,7 +413,7 @@ def deepAssign(target, source):
 
 
 def recursiveForEach(obj, callback=None, prefix="", _SPLITCHAR=SPLITCHAR, callOnlyOnBaseValues=True,
-                       max_depth=None, parent='', level=0):
+                     max_depth=None, parent='', level=0):
     """ Function, that will iterate over an object.
 
     Args:
@@ -442,7 +445,7 @@ def recursiveForEach(obj, callback=None, prefix="", _SPLITCHAR=SPLITCHAR, callOn
             # Define the variable, containing the path
             path = str(key) if '' == prefix else prefix + _SPLITCHAR + str(key)
 
-            if obj[key] != None:
+            if obj[key] is not None:
                 if hasattr(obj[key], "to_json") and callable(obj[key].to_json):
                     data = obj[key].to_json()
                     recursiveForEach(
@@ -489,10 +492,12 @@ def keepProperties(obj, properties):
         return ret
     raise Exception('Function can only create Objects')
 
+
 WARNED = False
 
+
 def copy(obj):
-    """ A Helper, which can be used to receive a copy.    
+    """ A Helper, which can be used to receive a copy.
 
     Args:
         obj (any): The Object to copy
@@ -502,13 +507,12 @@ def copy(obj):
     """
     try:
         return deepcopy(obj)
-    except:
-        try: 
+    except BaseException:
+        try:
             return obj.copy()
-        except:            
+        except BaseException:
             global WARNED
             if not WARNED:
                 WARNED = True
                 print("Failed to create a copy using orignal value.")
             return obj
-    

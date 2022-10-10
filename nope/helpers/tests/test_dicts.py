@@ -18,7 +18,8 @@ def test_extractUniqueValues():
 
     res = extractUniqueValues(d)
     assert len(res) == 1, "Failed to determine the unique values correctly."
-    assert list(res)[0] == "b", "Failed to determine the unique values correctly."
+    assert list(res)[
+        0] == "b", "Failed to determine the unique values correctly."
 
     d = {
         "a": {
@@ -30,8 +31,10 @@ def test_extractUniqueValues():
     }
 
     res = extractUniqueValues(d, "a")
-    assert len(res) == 1, "Failed to determine the unique values correctly (nested)."
-    assert list(res)[0] == "b", "Failed to determine the unique values correctly (nested)."
+    assert len(
+        res) == 1, "Failed to determine the unique values correctly (nested)."
+    assert list(res)[
+        0] == "b", "Failed to determine the unique values correctly (nested)."
 
     d = {
         "a": {
@@ -43,8 +46,10 @@ def test_extractUniqueValues():
     }
 
     res = extractUniqueValues(d, "a/+")
-    assert len(res) == 1, "Failed to determine the unique values correctly (using nested-arrays)."
-    assert list(res)[0] == "b", "Failed to determine the unique values correctly (using nested-arrays)."
+    assert len(
+        res) == 1, "Failed to determine the unique values correctly (using nested-arrays)."
+    assert list(res)[
+        0] == "b", "Failed to determine the unique values correctly (using nested-arrays)."
 
     d = {
         "a": ["a", "b"],
@@ -52,7 +57,8 @@ def test_extractUniqueValues():
     }
 
     res = extractUniqueValues(d, "+")
-    assert len(res) == 2, "Failed to determine the unique values correctly (using flatted-arrays)."
+    assert len(
+        res) == 2, "Failed to determine the unique values correctly (using flatted-arrays)."
     assert ("a" in res and "b" in res), "Failed to determine the unique values correctly (using flatted-arrays)."
 
     d = {
@@ -65,7 +71,8 @@ def test_extractUniqueValues():
     }
 
     res = extractUniqueValues(d, "a/+")
-    assert len(res) == 2, "Failed to determine the unique values correctly (using flatted-arrays)."
+    assert len(
+        res) == 2, "Failed to determine the unique values correctly (using flatted-arrays)."
     assert ("a" in res and "b" in res), "Failed to determine the unique values correctly (using flatted-arrays)."
 
     d = {
@@ -95,6 +102,7 @@ def test_extractUniqueValues():
     }
     res = extractUniqueValues(d, "a/+/content", "a/+/id")
 
-    assert len(res) == 3, "Failed to determine the unique values correctly (using flatted-arrays)."
+    assert len(
+        res) == 3, "Failed to determine the unique values correctly (using flatted-arrays)."
     assert (
-                "a" in res and "b" in res and "d" in res), "Failed to determine the unique values correctly (using flatted-arrays)."
+        "a" in res and "b" in res and "d" in res), "Failed to determine the unique values correctly (using flatted-arrays)."

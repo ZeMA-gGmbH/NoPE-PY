@@ -1,6 +1,7 @@
 from asyncio import sleep
 
-import yappi, time
+import yappi
+import time
 
 import pytest
 
@@ -29,7 +30,7 @@ async def main():
         return await hello(name)
 
     manager.registerService(hello, {
-       "id": "hello"
+        "id": "hello"
     })
 
     manager.registerService(delayed, {
@@ -72,13 +73,21 @@ async def main():
             #delta = (time.process_time() - s) * 1000
             #print(i, "mainloop:", delta, "[ms]")
         end = time.process_time()
-        delta = end-start
+        delta = end - start
         print(delta, bench)
-        time_per_call = delta*1000 / bench
+        time_per_call = delta * 1000 / bench
         qps = 1000.0 / time_per_call
 
-        print("NOPE    ", round(time_per_call, 5), "[ms] ->", round(qps, 5), "[R/s]" )
-
+        print(
+            "NOPE    ",
+            round(
+                time_per_call,
+                5),
+            "[ms] ->",
+            round(
+                qps,
+                5),
+            "[R/s]")
 
         bench = 10
 
@@ -86,14 +95,22 @@ async def main():
         for i in range(bench):
             await hello("delayed")
         end = getTimestamp()
-        delta = end-start
+        delta = end - start
         time_per_call = delta / bench
         qps = 1000.0 / time_per_call
 
-        print("ORIGINAL", round(time_per_call, 5), "[ms] ->", round(qps, 5), "[R/s]" )
-    
+        print(
+            "ORIGINAL",
+            round(
+                time_per_call,
+                5),
+            "[ms] ->",
+            round(
+                qps,
+                5),
+            "[R/s]")
 
-    #await manager.dispose()
+    # await manager.dispose()
 
 EXECUTOR.loop.run_until_complete(main())
 EXECUTOR.loop.run_forever()
@@ -102,4 +119,3 @@ EXECUTOR.loop.run_forever()
 # with yappi.run():
 #     EXECUTOR.loop.run_until_complete(main())
 # yappi.get_func_stats().print_all()
-

@@ -16,7 +16,8 @@ LAYER_DEFAULT_PARAMETERS = DottedDict({
 
 async def getLayer(layer: str, parameter=None, logger=False):
     bridge = Bridge(generateId(), logger)
-    params = parameter if parameter is not None else LAYER_DEFAULT_PARAMETERS.get(layer, False)
+    params = parameter if parameter is not None else LAYER_DEFAULT_PARAMETERS.get(
+        layer, False)
     if layer == 'event':
         pass
     elif layer == 'io-client':

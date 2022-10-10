@@ -11,4 +11,4 @@ def event_loop():
 
 
 def test_comparePatternAndPath():
-    return type(getTimestamp()) is int
+    return isinstance(getTimestamp(), int)

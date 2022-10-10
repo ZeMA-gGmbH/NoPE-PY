@@ -11,7 +11,8 @@ from ..helpers import formatException, getNopeLogger
 
 
 class NopePackageLoader():
-    def __init__(self, dispatcher: NopeDispatcher, logger=None, level=logging.INFO):
+    def __init__(self, dispatcher: NopeDispatcher,
+                 logger=None, level=logging.INFO):
         self.packages = {}
         self.dispatcher = dispatcher
         self._instances = {}
@@ -21,7 +22,7 @@ class NopePackageLoader():
         if logger is not None:
             self._logger = logger
         else:
-            self._logger = getNopeLogger('NopePackageLoader',level)
+            self._logger = getNopeLogger('NopePackageLoader', level)
 
     async def addPackage(self, package):
         """ Loader Function. self function will register all provided functions,
@@ -42,7 +43,8 @@ class NopePackageLoader():
         # Store the Package:
         self.packages[package["nameOfPackage"]] = package
 
-        # Based on the provided settings register a generator Function for the Instances:
+        # Based on the provided settings register a generator Function for the
+        # Instances:
         for cl in package["provided_classes"]:
             # Get the Settings
             allow_instance_generation = cl.get(
@@ -115,7 +117,8 @@ class NopePackageLoader():
                     definition
                 )
 
-                # Store the Function, that the instance will be disposed on leaving.
+                # Store the Function, that the instance will be disposed on
+                # leaving.
                 async def _dispose():
                     await instance.dispose()
                 self._dispose_default_instance.append(_dispose)

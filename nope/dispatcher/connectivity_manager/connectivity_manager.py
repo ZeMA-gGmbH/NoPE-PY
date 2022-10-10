@@ -3,7 +3,7 @@ import os
 import platform
 import re
 import subprocess
-from enum import Enum
+from enum import IntEnum
 from socket import gethostname
 
 import psutil
@@ -15,7 +15,7 @@ from ...merging import DictBasedMergeData
 from ...observable import NopeObservable
 
 
-class ENopeDispatcherStatus(Enum):
+class ENopeDispatcherStatus(IntEnum):
     HEALTHY = 0
     SLOW = 1
     WARNING = 2
@@ -31,7 +31,8 @@ def _get_processor_name():
         return subprocess.check_output(command).strip()
     elif platform.system() == "Linux":
         command = "cat /proc/cpuinfo"
-        all_info = subprocess.check_output(command, shell=True).strip().decode()
+        all_info = subprocess.check_output(
+            command, shell=True).strip().decode()
         for line in all_info.split("\n"):
             if "model name" in line:
                 return re.sub(".*model name.*:", "", line, 1)
@@ -45,7 +46,7 @@ _VERSION = "1.4.1"
 try:
     _PATH = os.path.join(os.path.dirname(__file__), "..", "..", "VERSION")
     _VERSION = open(_PATH).read().strip()
-except:
+except BaseException:
     pass
 
 
@@ -65,9 +66,11 @@ class NopeConnectivityManager:
 
         self._communicator = options.communicator
         self._connectedSince = getTimestamp()
-        self._isMaster = options.isMaster if type(options.isMaster) is int else None
+        self._isMaster = options.isMaster if isinstance(
+            options.isMaster, int) else None
 
-        self._logger = defineNopeLogger(options.logger, 'core.connectivity-manager')
+        self._logger = defineNopeLogger(
+            options.logger, 'core.connectivity-manager')
 
         self.ready = NopeObservable()
         self.ready.setContent(False)
@@ -95,7 +98,7 @@ class NopeConnectivityManager:
             'env': 'python',
             'version': _VERSION,
             'isMaster': self.isMaster,
-            'isMasterForced': type(self._isMaster) is bool,
+            'isMasterForced': isinstance(self._isMaster, bool),
             'host': {
                 'cores': os.cpu_count(),
                 'cpu': {
@@ -194,7 +197,8 @@ class NopeConnectivityManager:
         def onBonjour(opts):
             if self.id != opts.dispatcherId:
                 if self._logger:
-                    self._logger.debug('Remote Dispatcher "' + opts.dispatcherId + '" went online')
+                    self._logger.debug(
+                        'Remote Dispatcher "' + opts.dispatcherId + '" went online')
                     self._asyncSendStatus()
 
         await self._communicator.on('bonjour', onBonjour)
@@ -210,7 +214,8 @@ class NopeConnectivityManager:
         await self._asyncSendStatus()
 
         if self._logger:
-            self._logger.info('core.connectivity-manager', self.id, 'initialized')
+            self._logger.info('core.connectivity-manager',
+                              self.id, 'initialized')
 
         await self.emitBonjour()
         await self._asyncSendStatus()
@@ -239,11 +244,11 @@ class NopeConnectivityManager:
                 status['status'] = ENopeDispatcherStatus.DEAD
                 changes = True
             elif self._timeouts['warn'] < diff <= self._timeouts['dead'] and status[
-                'status'] != ENopeDispatcherStatus.WARNING:
+                    'status'] != ENopeDispatcherStatus.WARNING:
                 status['status'] = ENopeDispatcherStatus.WARNING
                 changes = True
             elif self._timeouts['slow'] < diff <= self._timeouts['warn'] and status[
-                'status'] != ENopeDispatcherStatus.SLOW:
+                    'status'] != ENopeDispatcherStatus.SLOW:
                 status['status'] = ENopeDispatcherStatus.SLOW
                 changes = True
             elif diff <= self._timeouts['slow'] and status['status'] != ENopeDispatcherStatus.HEALTHY:

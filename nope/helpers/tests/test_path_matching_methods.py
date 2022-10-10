@@ -189,7 +189,7 @@ def test_comparePatternAndPath():
             raise err
         except KeyboardInterrupt:
             raise Exception("There should be an error!")
-        except:
+        except BaseException:
             pass
 
     function_tests_2 = [

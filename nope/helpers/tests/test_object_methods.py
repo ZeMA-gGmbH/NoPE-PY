@@ -26,7 +26,7 @@ def test_rgetattr():
     assert result == "default"
 
     result = rgetattr(data, "test", None)
-    assert result == None
+    assert result is None
 
     result = rgetattr(data, "hello_world", None)
     assert result == 1
@@ -35,7 +35,7 @@ def test_rgetattr():
     assert result == "world"
 
     result = rgetattr(data, "nested_data/hello2", None)
-    assert result == None
+    assert result is None
 
 
 def test_flattenObject():
@@ -109,7 +109,7 @@ def test_convert():
             "query": "array/+/data2",
         },
     ]
-                          )
+    )
     assert len(result) == 2, "we expected 2 entries"
     items = map(lambda item: item.a, result)
 
@@ -127,7 +127,7 @@ def test_convert():
             },
         ])
         raise Exception("This should not be happend")
-    except:
+    except BaseException:
         pass
 
 
@@ -151,7 +151,7 @@ def test_query():
 
     pathes = map(lambda item: item.path, result)
     assert (
-                "deep/nested_01" in pathes and "deep/nested_03" in pathes), 'we expected the "deep/nested_01" and "deep/nested_03" have been found'
+        "deep/nested_01" in pathes and "deep/nested_03" in pathes), 'we expected the "deep/nested_01" and "deep/nested_03" have been found'
 
     data = {
         "array": [
@@ -178,4 +178,4 @@ def test_query():
     assert len(result) == 3, "we expected 2 entries"
     pathes = map(lambda item: item.path, result)
     assert (
-                "deep/nested_01" in pathes and "deep/nested_01/nested_02" in pathes and "deep/nested_03" in pathes), 'we expected the "deep/nested_01", "deep/nested_01/nested_02" and "deep/nested_03" have been found'
+        "deep/nested_01" in pathes and "deep/nested_01/nested_02" in pathes and "deep/nested_03" in pathes), 'we expected the "deep/nested_01", "deep/nested_01/nested_02" and "deep/nested_03" have been found'

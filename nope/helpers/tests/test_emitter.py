@@ -77,7 +77,8 @@ def test_subscribe_with_eventname():
 
     assert emitter.hasSubscriptions(), "Failed to count recognize the listener"
     assert emitter.amountOfSubscriptions() == 2, "Failed to count recognize the listener"
-    assert emitter.amountOfSubscriptions("01") == 1, "Failed to count recognize the listener correctly"
+    assert emitter.amountOfSubscriptions(
+        "01") == 1, "Failed to count recognize the listener correctly"
 
     emitter.emit(event="01", data="test")
 

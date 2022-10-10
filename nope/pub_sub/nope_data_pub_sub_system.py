@@ -55,7 +55,7 @@ class DataPubSubSystem(PubSubSystem):
         return self._patternbasedPullData(pattern, default)
 
     def patternBasedPush(self, pattern: str, data, options=None, fast=False):
-        """ 
+        """
 
         Args:
             pattern (str): The P
@@ -77,7 +77,8 @@ class DataPubSubSystem(PubSubSystem):
         if not containsWildcards(pattern):
             return self.pushData(pattern, pattern, data, options)
         if MULTI_LEVEL_WILDCARD in pattern:
-            raise Exception('You can only use single-level wildcards in self action')
+            raise Exception(
+                'You can only use single-level wildcards in self action')
         flatten_data = flattenObject(self.data)
         options = self.updateOptions(options)
         for path in flatten_data.keys():
@@ -87,4 +88,5 @@ class DataPubSubSystem(PubSubSystem):
         if fast:
             # Its better for us, to just store the incremental changes
             # with the pattern
-            self.onIncrementalDataChange.emit(ensureDottedAccess({'path': pattern, 'data': data, **options}))
+            self.onIncrementalDataChange.emit(ensureDottedAccess(
+                {'path': pattern, 'data': data, **options}))

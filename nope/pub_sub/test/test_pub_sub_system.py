@@ -150,7 +150,8 @@ def test_pub_sub_multiple_wildcards():
 
     assert called == 4
 
-    # Now we will test, whether we receive an error on subscribing multiple times.
+    # Now we will test, whether we receive an error on subscribing multiple
+    # times.
 
     NOT_THROWN = True
     try:
@@ -160,7 +161,7 @@ def test_pub_sub_multiple_wildcards():
             "topic": "this/is/+/#",
         })
         NOT_THROWN = False
-    except:
+    except BaseException:
         pass
 
     assert NOT_THROWN, "Failed to raise an error"

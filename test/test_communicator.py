@@ -12,7 +12,10 @@ def event_loop():
 
 
 _mappingOfDispatchersAndServices = dict()
-services = DictBasedMergeData(_mappingOfDispatchersAndServices, 'services/+', 'services/+/id')
+services = DictBasedMergeData(
+    _mappingOfDispatchersAndServices,
+    'services/+',
+    'services/+/id')
 
 
 async def get_manager(_communicator=None, _id=None):

@@ -29,7 +29,7 @@ def generateResult(res=DottedDict({})):
     return defaultResult
 
 
-def comparePatternAndPath(pathPattern: str, contentPath: str, _options = None ):
+def comparePatternAndPath(pathPattern: str, contentPath: str, _options=None):
     """ Matches the given path, with the pattern and determines, if the path might affect the given pattern.
 
         example: path = "a/b/c"; pattern = "a/#"; => totalPath = "a/b/c"; diffPath = "b/c"
@@ -42,7 +42,7 @@ def comparePatternAndPath(pathPattern: str, contentPath: str, _options = None ):
     Returns:
         dotted_dict: The Result
     """
-    options= ensureDottedAccess({'matchTopicsWithoutWildcards': False})
+    options = ensureDottedAccess({'matchTopicsWithoutWildcards': False})
     options.update(ensureDottedAccess(_options))
 
     if containsWildcards(contentPath):
@@ -159,7 +159,7 @@ def comparePatternAndPath(pathPattern: str, contentPath: str, _options = None ):
         patternChar = currentPattern[0]
         currentPath = _contentPathSegments[i] if i < _contentPathLength else None
         i = i + 1
-        if currentPath == None:
+        if currentPath is None:
             # Our Pattern is larger then our contentPath.
             # So we dont know, whether we will get some
             # data. Therefore we have to perform a query
@@ -192,10 +192,12 @@ def comparePatternAndPath(pathPattern: str, contentPath: str, _options = None ):
             # b)   our length of the pattern is smaller then length as the content path
             #
             # Our statement before alread tested, that either case a) or b) fits. Otherwise
-            # another ifstatement is valid and we wont enter this statement here.
+            # another ifstatement is valid and we wont enter this statement
+            # here.
 
             # # We add the segment to testedCorrectPath
-            # testedCorrectPath = testedCorrectPath.length > 0 ? `{testedCorrectPath}{SPLITCHAR}{currentPath}` : currentPath;
+            # testedCorrectPath = testedCorrectPath.length > 0 ?
+            # `{testedCorrectPath}{SPLITCHAR}{currentPath}` : currentPath;
 
             if patternLengthComparedToPathLength == '=':
                 # Case a)

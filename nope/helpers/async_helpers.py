@@ -87,11 +87,12 @@ class NopeExecutor:
 
         setattr(future, 'cancelCallback', _cancel)
 
-        for k,v in kwargs.items():
+        for k, v in kwargs.items():
             if not hasattr(future, k):
                 setattr(future, k, v)
             else:
-                raise Exception(f"You cant use the name {k}. It is predefined by the original Future.")
+                raise Exception(
+                    f"You cant use the name {k}. It is predefined by the original Future.")
 
         return self.ensureExecution(future)
 
@@ -99,23 +100,24 @@ class NopeExecutor:
         if isinstance(todo, (asyncio.Task, asyncio.Future)):
             self._todos.add(todo)
 
-            def remove(*args,**kwargs):
+            def remove(*args, **kwargs):
                 self._todos.remove(todo)
 
             todo.add_done_callback(remove)
 
-        return todo    
+        return todo
 
     def setTimeout(self, func, timeout_ms: int, *args, **kwargs):
         function_to_use = self._wrapFuncIfRequired(func)
 
         async def timeout():
-            try:                
+            try:
                 await asyncio.sleep(timeout_ms / 1000.0)
                 await function_to_use(*args, **kwargs)
             except Exception as error:
                 if self.logger:
-                    self.logger.error("Exception raised during executing 'setTimeout'")
+                    self.logger.error(
+                        "Exception raised during executing 'setTimeout'")
                     self.logger.error(formatException(error))
                 else:
                     print(formatException(error))
@@ -134,7 +136,8 @@ class NopeExecutor:
                     await function_to_use(*args, **kwargs)
             except Exception as error:
                 if self.logger:
-                    self.logger.error("Exception raised during executing 'interval'")
+                    self.logger.error(
+                        "Exception raised during executing 'interval'")
                     self.logger.error(formatException(error))
                 else:
                     print(formatException(error))
@@ -143,7 +146,8 @@ class NopeExecutor:
 
         return self.ensureExecution(task)
 
-    def callParallel(self, func, *args, **kwargs) -> asyncio.Task | asyncio.Future:
+    def callParallel(self, func, *args, **
+                     kwargs) -> asyncio.Task | asyncio.Future:
         function_to_use = self._wrapFuncIfRequired(func)
         task = self.loop.create_task(function_to_use(*args, **kwargs))
         return self.ensureExecution(task)
@@ -159,7 +163,8 @@ class NopeExecutor:
                     return await self.loop.run_in_executor(self._executor, pfunc)
                 except Exception as error:
                     if self.logger:
-                        self.logger.error("Exception raised during executing a wrapped sync method '_wrapFuncIfRequired'")
+                        self.logger.error(
+                            "Exception raised during executing a wrapped sync method '_wrapFuncIfRequired'")
                         self.logger.error(formatException(error))
                     else:
                         print(formatException(error))

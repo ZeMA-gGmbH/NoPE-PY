@@ -1,5 +1,6 @@
 from .dotted_dict import DottedDict
 
+
 def determineDifference(iter01, iter02):
     """ Determines the difference between the two sets.
 
@@ -8,7 +9,7 @@ def determineDifference(iter01, iter02):
         iter02 (iterable): adapted set
 
     Returns:
-        DottedDict: containing `added` for the added elements and `removed` for the removed items. 
+        DottedDict: containing `added` for the added elements and `removed` for the removed items.
     """
     added = list()
     removed = list()
@@ -20,8 +21,10 @@ def determineDifference(iter01, iter02):
             added.append(item)
     return DottedDict({'added': added, 'removed': removed})
 
-def union(set01:set, set02:set):
+
+def union(set01: set, set02: set):
     return set01 | set02
 
-def difference(set01:set, set02:set):
+
+def difference(set01: set, set02: set):
     return set01 - set02

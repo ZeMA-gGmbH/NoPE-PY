@@ -6,10 +6,13 @@ from ...communication import getLayer
 
 from ...helpers import EXECUTOR
 import pytest
+
+
 @pytest.fixture
 def event_loop():
     loop = EXECUTOR.loop
     yield loop
+
 
 async def get_manager(_communicator=None, _id=None):
     if _communicator is None:

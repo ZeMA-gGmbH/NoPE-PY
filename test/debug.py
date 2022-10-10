@@ -75,7 +75,8 @@ class NopeExecutor:
 
         return task
 
-    def callParallel(self, func, *args, **kwargs) -> asyncio.Task | asyncio.Future:
+    def callParallel(self, func, *args, **
+                     kwargs) -> asyncio.Task | asyncio.Future:
         function_to_use = self._wrapFuncIfRequired(func)
 
         task = self.loop.create_task(function_to_use(*args, **kwargs))
@@ -89,7 +90,8 @@ class NopeExecutor:
             async def run(*args, **kwargs):
                 pfunc = partial(func, *args, **kwargs)
                 try:
-                    # return await asyncio.run_coroutine_threadsafe(func(*args,**kwargs),self.loop)
+                    # return await
+                    # asyncio.run_coroutine_threadsafe(func(*args,**kwargs),self.loop)
                     return await self.loop.run_in_executor(self._executor, pfunc)
                 except Exception as error:
                     print(error)
@@ -97,6 +99,7 @@ class NopeExecutor:
             return run
         else:
             return func
+
 
 EXECUTOR = NopeExecutor()
 EXECUTOR.useThreadPool()

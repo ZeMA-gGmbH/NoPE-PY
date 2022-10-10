@@ -113,7 +113,7 @@ class BaseModule(object):
         self.ui_links = []
 
     def export_property(self, name: str, observable, options):
-        """ Function to export an Property. This will provide the Property in the NoPE-Environment. This 
+        """ Function to export an Property. This will provide the Property in the NoPE-Environment. This
             can be used as decorator.
 
         Args:
@@ -138,32 +138,34 @@ class BaseModule(object):
         for data in self._registered_properties.values():
             if data["observable"] == prop_or_func:
                 # Extract the Topics, pipe and scope.
-                _subTopic = data["options"]['topic'] if type(
-                    data["options"]['topic']) == str else data["options"]['topic'].get(['subscribe'], None)
-                _pubTopic = data["options"]['topic'] if type(
-                    data["options"]['topic']) == str else data["options"]['topic'].get(['publish'], None)
+                _subTopic = data["options"]['topic'] if isinstance(
+                    data["options"]['topic'], str) else data["options"]['topic'].get(
+                    ['subscribe'], None)
+                _pubTopic = data["options"]['topic'] if isinstance(
+                    data["options"]['topic'], str) else data["options"]['topic'].get(
+                    ['publish'], None)
 
                 if type == "topic_to_subscribe":
-                    if _subTopic == None:
+                    if _subTopic is None:
                         raise Exception("No topic for subscribing defined")
 
                     return _subTopic
 
                 elif type == "topic_to_publish":
-                    if _pubTopic == None:
+                    if _pubTopic is None:
                         raise Exception("No topic for publishing defined")
 
                     return _pubTopic
 
                 elif type == "both":
-                    if type(data["options"]["topic"]) != str:
+                    if not isinstance(data["options"]["topic"], str):
                         return data["options"]["topic"]
 
                     raise Exception(
                         "Prop uses the Same Element")
 
                 else:
-                    if type(data["options"]["topic"]) == str:
+                    if isinstance(data["options"]["topic"], str):
                         return data["options"]["topic"]
 
                     raise Exception(
@@ -190,17 +192,18 @@ class BaseModule(object):
         await self.unregister_property(name)
 
         # Adapt the Topic:
-        if type(options['topic']) == str:
+        if isinstance(options['topic'], str):
             options['topic'] = self.identifier + '.prop.' + name
         else:
             if 'subscribe' in options['topic'] and not options['topic']['subscribe'].startswith(
                     self.identifier + '.prop.'):
                 options['topic']['subscribe'] = self.identifier + \
-                                                '.prop.' + options['topic']['subscribe']
+                    '.prop.' + options['topic']['subscribe']
 
-            if 'publish' in options['topic'] and not options['topic']['publish'].startswith(self.identifier + '.prop.'):
+            if 'publish' in options['topic'] and not options['topic']['publish'].startswith(
+                    self.identifier + '.prop.'):
                 options['topic']['publish'] = self.identifier + \
-                                              '.prop.' + options['topic']['publish']
+                    '.prop.' + options['topic']['publish']
 
         observable = await self._dispatcher.register_observable(observable, options)
 
@@ -227,9 +230,10 @@ class BaseModule(object):
         options['id'] = self.identifier + '.method.' + name
 
         # Adapt the Topic:
-        if type(options['id']) == str and not options['id'].startswith(self.identifier + '.method.'):
+        if isinstance(options['id'], str) and not options['id'].startswith(
+                self.identifier + '.method.'):
             options['id'] = self.identifier + '.method.' + name
-        elif not type(options['id']) == str:
+        elif not isinstance(options['id'], str):
             raise TypeError("Id must be provided")
 
         func = await self._dispatcher.register_function(func, options)
