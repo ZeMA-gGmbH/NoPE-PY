@@ -78,7 +78,6 @@ class NopeConnectivityManager:
             self._logger.info('core.connectivity-manager', self.id, 'is ready')
 
         self.reset()
-        # asyncio.ensure_future(self.init())
         EXECUTOR.callParallel(self.init)
 
     @property

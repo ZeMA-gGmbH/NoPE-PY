@@ -44,6 +44,7 @@ class NopeExecutor:
             self._loop = getOrCreateEventloop()
 
         self.logger = None
+        self._todos = set()
 
         asyncio.set_event_loop(self._loop)
 
@@ -70,6 +71,41 @@ class NopeExecutor:
         except KeyboardInterrupt:
             self.dispose()
 
+    def generatePromise(self, **kwargs):
+        """ Helper to create an Future.
+
+            The keys and values of the future are df
+
+        Returns:
+            asyncio.Future: A Future
+        """
+
+        future = self.loop.create_future()
+
+        def _cancel():
+            pass
+
+        setattr(future, 'cancelCallback', _cancel)
+
+        for k,v in kwargs.items():
+            if not hasattr(future, k):
+                setattr(future, k, v)
+            else:
+                raise Exception(f"You cant use the name {k}. It is predefined by the original Future.")
+
+        return self.ensureExecution(future)
+
+    def ensureExecution(self, todo):
+        if isinstance(todo, (asyncio.Task, asyncio.Future)):
+            self._todos.add(todo)
+
+            def remove(*args,**kwargs):
+                self._todos.remove(todo)
+
+            todo.add_done_callback(remove)
+
+        return todo    
+
     def setTimeout(self, func, timeout_ms: int, *args, **kwargs):
         function_to_use = self._wrapFuncIfRequired(func)
 
@@ -86,7 +122,7 @@ class NopeExecutor:
 
         task = self.loop.create_task(timeout())
 
-        return task
+        return self.ensureExecution(task)
 
     def setInterval(self, func, timeout_ms: int, *args, **kwargs):
         function_to_use = self._wrapFuncIfRequired(func)
@@ -105,12 +141,12 @@ class NopeExecutor:
 
         task = self.loop.create_task(interval())
 
-        return task
+        return self.ensureExecution(task)
 
     def callParallel(self, func, *args, **kwargs) -> asyncio.Task | asyncio.Future:
         function_to_use = self._wrapFuncIfRequired(func)
         task = self.loop.create_task(function_to_use(*args, **kwargs))
-        return task
+        return self.ensureExecution(task)
 
     def _wrapFuncIfRequired(self, func):
         if not callable(func):

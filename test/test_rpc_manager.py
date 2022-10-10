@@ -15,7 +15,7 @@ def event_loop():
 
 async def main():
     manager = NopeRpcManager({
-        "communicator": await getLayer("event"),
+        "communicator": await getLayer("io-client"),
         "logger": False,
     }, lambda *args: "test", "test")
 
@@ -36,13 +36,12 @@ async def main():
         "id": "delayed"
     })
 
-    await sleep(2.5)
+    await sleep(1.5)
 
     assert "hello" in manager.services.extracted_key, "Failed to register the services"
     assert "delayed" in manager.services.extracted_key, "Failed to register the services"
 
     # Try calling the Service
-    res = await manager.performCall("hello", ["Pytest"])
     res = await manager.performCall("hello", ["Pytest"])
     assert res == "Hello Pytest!"
 
@@ -62,39 +61,42 @@ async def main():
     res = await manager.performCall(["delayed"] * 5, ["Pytest"])
     end = getTimestamp()
 
-    delta = []
-    bench = 1000
+    if False:
+        delta = []
+        bench = 10
 
-    start = time.process_time()
-    for i in range(bench):
-        # s = time.process_time()
-        await manager.performCall("hello", ["Benchmark"])
-        # delta = (time.process_time() - s) * 1000
-        # print(i, "mainloop:", delta, "[ms]")
-    end = time.process_time()
-    delta = end-start
-    print(delta, bench)
-    time_per_call = delta*1000 / bench
-    qps = 1000.0 / time_per_call
+        start = time.process_time()
+        for i in range(bench):
+            #s = time.process_time()
+            await manager.performCall("hello", ["Benchmark"])
+            #delta = (time.process_time() - s) * 1000
+            #print(i, "mainloop:", delta, "[ms]")
+        end = time.process_time()
+        delta = end-start
+        print(delta, bench)
+        time_per_call = delta*1000 / bench
+        qps = 1000.0 / time_per_call
 
-    print("NOPE    ", round(time_per_call, 5), "[ms] ->", round(qps, 5), "[R/s]" )
+        print("NOPE    ", round(time_per_call, 5), "[ms] ->", round(qps, 5), "[R/s]" )
 
 
-    bench = 100000
+        bench = 10
 
-    start = getTimestamp()
-    for i in range(bench):
-        await hello("delayed")
-    end = getTimestamp()
-    delta = end-start
-    time_per_call = delta / bench
-    qps = 1000.0 / time_per_call
+        start = getTimestamp()
+        for i in range(bench):
+            await hello("delayed")
+        end = getTimestamp()
+        delta = end-start
+        time_per_call = delta / bench
+        qps = 1000.0 / time_per_call
 
-    print("ORIGINAL", round(time_per_call, 5), "[ms] ->", round(qps, 5), "[R/s]" )
+        print("ORIGINAL", round(time_per_call, 5), "[ms] ->", round(qps, 5), "[R/s]" )
+    
 
     #await manager.dispose()
 
 EXECUTOR.loop.run_until_complete(main())
+EXECUTOR.loop.run_forever()
 
 # yappi.set_clock_type("CPU")
 # with yappi.run():

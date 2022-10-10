@@ -71,25 +71,6 @@ class NopeRpcManager:
     def id(self):
         return self._id
 
-    def _generatePromise(self, taskId: str):
-        """Function to create a Nope Promise (This is cancelable).
-
-
-        Returns:
-            Observable: A new Nope Promise.
-        """
-
-        future = EXECUTOR.loop.create_future()
-        setattr(future, 'taskId', taskId)
-        future.taskId = taskId
-
-        def _cancel():
-            pass
-
-        setattr(future, 'cancelCallback', _cancel)
-
-        return future
-
     def updateDispatcher(self, msg):
         self._mappingOfDispatchersAndServices[msg.dispatcher] = msg
         self.services.update()
@@ -177,7 +158,7 @@ class NopeRpcManager:
                         data['functionId'] + '\". Sending result on ' + data['resultSink'])
 
                 # Use the communicator to publish the result.
-                await self._communicator.emit("rpc_response", result)
+                await self._communicator.emit("rpcResponse", result)
 
         except Exception as error:
 
@@ -199,7 +180,7 @@ class NopeRpcManager:
             }
 
             # Use the communicator to publish the result.
-            await self._communicator.emit("rpc_response", result)
+            await self._communicator.emit("rpcResponse", result)
 
     async def _handle_external_response(self, data):
         try:
@@ -265,7 +246,7 @@ class NopeRpcManager:
         if self._logger:
             self._logger.debug("sending available services")
 
-        EXECUTOR.callParallel(self._communicator.emit,"services_changed", message)
+        EXECUTOR.callParallel(self._communicator.emit,"servicesChanged", message)
 
     async def _init(self):
         self.ready.setContent(False)
@@ -283,21 +264,21 @@ class NopeRpcManager:
                 else:
                     print(formatException(error))
 
-        await self._communicator.on("services_changed", onServicesChanged)
-        await self._communicator.on("rpc_request", lambda data: EXECUTOR.callParallel(self._handleExternalRequest,data))
-        await self._communicator.on("rpc_response", lambda data: EXECUTOR.callParallel(self._handle_external_response,data))
+        await self._communicator.on("servicesChanged", onServicesChanged)
+        await self._communicator.on("rpcRequest", lambda data: EXECUTOR.callParallel(self._handleExternalRequest,data))
+        await self._communicator.on("rpcResponse", lambda data: EXECUTOR.callParallel(self._handle_external_response,data))
 
         def on_cancelation(msg):
             if msg.dispatcher == self._id:
                 self.onCancelTask.emit(msg)
 
-        await self._communicator.on("task_cancelation", on_cancelation)
+        await self._communicator.on("taskCancelation", on_cancelation)
 
         def on_unregister(msg):
             if msg.identifier in self._registeredServices:
                 self.unregisterService(msg.identifier)
 
-        await self._communicator.on("rpc_unregister", on_unregister)
+        await self._communicator.on("rpcUnregister", on_unregister)
 
         def onDispatchersChanged(changes, *args):
             if len(changes.added):
@@ -339,7 +320,7 @@ class NopeRpcManager:
 
             # Propagate the Cancellation externally.
             # Therefore use the desired Mode.
-            await self._communicator.emit("task_cancelation", ensureDottedAccess({
+            await self._communicator.emit("taskCancelation", ensureDottedAccess({
                 "dispatcher": self._id,
                 "reason": str(reason),
                 "taskId": taskId,
@@ -477,7 +458,7 @@ class NopeRpcManager:
         taskId = generateId()
 
         # Create a Future of the Loop.
-        future = self._generatePromise(taskId)
+        future = EXECUTOR.generatePromise(taskId=taskId)
 
         def clear():
             if taskId in self._runningInternalRequestedTasks:
@@ -550,7 +531,7 @@ class NopeRpcManager:
 
             packet["target"] = tastRequest.target
 
-            await self._communicator.emit("rpc_request", packet)
+            await self._communicator.emit("rpcRequest", packet)
 
             if self._logger:
                 self._logger.debug(

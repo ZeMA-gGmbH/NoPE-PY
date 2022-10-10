@@ -41,14 +41,13 @@ class Bridge:
         return self._id
 
     async def on(self, eventName: str, cb):
-
         return self._on(eventName, lambda data: cb(ensureDottedAccess(data)))
 
     async def emit(self, eventName: str, data):
-        return self._emit(eventName, None, data)
+        return self._emit(eventName, None, ensureDottedAccess(data))
 
     def detailListeners(self, t, listeners):
-        pass
+        raise Exception('Method not implemented.')
 
     async def dispose(self):
         for item in self._layers.values():
