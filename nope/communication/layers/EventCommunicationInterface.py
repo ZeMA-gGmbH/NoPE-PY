@@ -3,8 +3,9 @@ from ...observable import NopeObservable
 
 import time
 
-PROFILE = True
+PROFILE = False
 OPEN_REQUESTS = {}
+
 
 def profile_task(mode: str, data):
     try:
@@ -16,9 +17,14 @@ def profile_task(mode: str, data):
                 end = time.process_time()
                 delta = end - start
 
-                print("Bearbeitung hat", round(delta*1000,2), "[ms] gedauert")
-    except:
-        print(f"Failed in 'profile_task' mode={mode}, data={data}, type={type(data)}")
+                print(
+                    "Bearbeitung hat",
+                    round(
+                        delta * 1000,
+                        2),
+                    "[ms] gedauert")
+    except BaseException as e:
+        print(f"Failed with mdoe= {mode}, data={data} cause: '{str(e)}'")
 
 
 class EventCommunicationInterface:
@@ -32,22 +38,21 @@ class EventCommunicationInterface:
         self.id = generateId()
 
     async def on(self, eventName: str, cb):
-        
 
         if PROFILE:
-            if eventName == "rpcRequest":     
-                def req(data,*args):
+            if eventName == "rpcRequest":
+                def req(data, *args):
                     profile_task("new", data)
-                    cb(data)           
+                    cb(data)
                 self._emitter.on(eventName, req)
-            elif eventName == "rpcResponse":  
+            elif eventName == "rpcResponse":
                 def res(data, *args):
                     profile_task("done", data)
-                    cb(data)                 
+                    cb(data)
                 self._emitter.on(eventName, res)
             else:
                 self._emitter.on(eventName, cb)
-        else: 
+        else:
             self._emitter.on(eventName, cb)
 
         if eventName != 'statusChanged' and self._logger:
@@ -61,7 +66,7 @@ class EventCommunicationInterface:
         if PROFILE:
             if eventName == "rpcRequest":
                 profile_task("new", data)
-            if eventName == "rpcResponse":                
+            if eventName == "rpcResponse":
                 profile_task("done", data)
 
         self._emitter.emit(eventName, data)
