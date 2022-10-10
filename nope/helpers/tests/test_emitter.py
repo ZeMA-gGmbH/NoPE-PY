@@ -4,10 +4,15 @@ from ..emitter import Emitter
 from ...helpers import EXECUTOR
 
 
+import asyncio
+
+
 @pytest.fixture
 def event_loop():
-    loop = EXECUTOR.loop
+    loop = asyncio.new_event_loop()
+    EXECUTOR.assignLoop(loop)
     yield loop
+    loop.close()
 
 
 def test_subscribe_without_eventname():

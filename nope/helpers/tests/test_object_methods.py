@@ -1,13 +1,18 @@
 import pytest
 
-from ..object_methods import (convertData, flattenObject, rgetattr, rqueryAttr)
+from ..objectMethods import (convertData, flattenObject, rgetattr, rqueryAttr)
 from ...helpers import EXECUTOR
+
+
+import asyncio
 
 
 @pytest.fixture
 def event_loop():
-    loop = EXECUTOR.loop
+    loop = asyncio.new_event_loop()
+    EXECUTOR.assignLoop(loop)
     yield loop
+    loop.close()
 
 
 def generate_dict():

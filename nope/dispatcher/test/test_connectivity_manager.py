@@ -1,17 +1,20 @@
 import time
 from asyncio import sleep
 
-from ..connectivity_manager import NopeConnectivityManager
+from ..connectivityManager import NopeConnectivityManager
 from ...communication import getLayer
-
 from ...helpers import EXECUTOR
+
 import pytest
+import asyncio
 
 
 @pytest.fixture
 def event_loop():
-    loop = EXECUTOR.loop
+    loop = asyncio.new_event_loop()
+    EXECUTOR.assignLoop(loop)
     yield loop
+    loop.close()
 
 
 async def get_manager(_communicator=None, _id=None):

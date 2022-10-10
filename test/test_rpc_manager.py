@@ -1,3 +1,4 @@
+import asyncio
 from asyncio import sleep
 
 import yappi
@@ -7,16 +8,22 @@ import pytest
 
 from nope import getLayer, NopeRpcManager, formatException, getTimestamp, EXECUTOR
 
+IN_PY_TEST = False
+
 
 @pytest.fixture
 def event_loop():
-    loop = EXECUTOR.loop
+    global IN_PY_TEST
+    IN_PY_TEST = True
+    loop = asyncio.new_event_loop()
+    EXECUTOR.assignLoop(loop)
     yield loop
+    loop.close()
 
 
 async def main():
     manager = NopeRpcManager({
-        "communicator": await getLayer("io-client"),
+        "communicator": await getLayer("event"),
         "logger": False,
     }, lambda *args: "test", "test")
 
@@ -62,9 +69,9 @@ async def main():
     res = await manager.performCall(["delayed"] * 5, ["Pytest"])
     end = getTimestamp()
 
-    if False:
+    if not IN_PY_TEST:
         delta = []
-        bench = 10
+        bench = 100000
 
         start = time.process_time()
         for i in range(bench):
@@ -89,8 +96,6 @@ async def main():
                 5),
             "[R/s]")
 
-        bench = 10
-
         start = getTimestamp()
         for i in range(bench):
             await hello("delayed")
@@ -112,8 +117,9 @@ async def main():
 
     # await manager.dispose()
 
-EXECUTOR.loop.run_until_complete(main())
-EXECUTOR.loop.run_forever()
+if not IN_PY_TEST:
+    EXECUTOR.loop.run_until_complete(main())
+    EXECUTOR.loop.run_forever()
 
 # yappi.set_clock_type("CPU")
 # with yappi.run():

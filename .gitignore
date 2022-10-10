@@ -95,3 +95,6 @@ config
 
 # Pystes
 .pytest_cache
+
+# Performance Values
+.prof

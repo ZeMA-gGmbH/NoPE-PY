@@ -1,1 +1,1 @@
-from .merge_data import DictBasedMergeData, MergeData
+from .mergeData import DictBasedMergeData, MergeData

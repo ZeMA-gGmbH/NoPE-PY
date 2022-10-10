@@ -2,9 +2,9 @@
 # @author Martin Karkowski
 # @email m.karkowski@zema.de
 
-from .get_package_loader import get_package_loader
-from .load_packages import loadConfig, loadDesiredPackages
-from .nope_packkage_loader import NopePackageLoader
+from .getPackageLoader import get_package_loader
+from .loadPackages import loadConfig, loadDesiredPackages
+from .nopePackkageLoader import NopePackageLoader
 
-__all__ = ['get_package_loader', 'loadConfig',
+__all__ = ['getPackageLoader', 'loadConfig',
            "loadDesiredPackages", "NopePackageLoader"]

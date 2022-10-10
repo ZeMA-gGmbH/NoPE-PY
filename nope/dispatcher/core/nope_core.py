@@ -5,7 +5,7 @@
 from ...helpers import ensureDottedAccess, generateId
 from ...logger import getNopeLogger
 from ...observable import NopeObservable
-from ...pub_sub import DataPubSubSystem, PubSubSystem
+from ...pubSub import DataPubSubSystem, PubSubSystem
 from ..connectivityManager import NopeConnectivityManager
 
 

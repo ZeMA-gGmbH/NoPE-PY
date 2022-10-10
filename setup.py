@@ -30,14 +30,14 @@ if __name__ == "__main__":
                     "nope.communication",
                     "nope.communication.layers",
                     "nope.dispatcher",
-                    "nope.dispatcher.connectivity_manager",
-                    "nope.dispatcher.rpc_manager",
-                    "nope.event_emitter",
+                    "nope.dispatcher.connectivityManager",
+                    "nope.dispatcher.rpcManager",
+                    "nope.eventEmitter",
                     "nope.helpers",
                     "nope.observable",
                     "nope.logger",
                     "nope.merging",
-                    "nope.pub_sub"
+                    "nope.pubSub"
                     ],
           package_data={'': ['VERSION']},
           include_package_data=True,

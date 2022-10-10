@@ -1,14 +1,19 @@
 import pytest
 
-from ..merge_data import DictBasedMergeData, MergeData
+from ..mergeData import DictBasedMergeData, MergeData
 from ...helpers import EXECUTOR
-from ...helpers.dict_methods import extractUniqueValues
+from ...helpers.dictMethods import extractUniqueValues
+
+
+import asyncio
 
 
 @pytest.fixture
 def event_loop():
-    loop = EXECUTOR.loop
+    loop = asyncio.new_event_loop()
+    EXECUTOR.assignLoop(loop)
     yield loop
+    loop.close()
 
 
 def test_merge_data_general():

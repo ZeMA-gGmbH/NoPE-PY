@@ -1,4 +1,4 @@
-from .dotted_dict import ensureDottedAccess
+from .dottedDict import ensureDottedAccess
 
 
 class Emitter:

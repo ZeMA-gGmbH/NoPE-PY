@@ -1,14 +1,19 @@
 import pytest
 
-from ..nope_observable import NopeObservable
+from ..nopeObservable import NopeObservable
 from ...helpers import EXECUTOR
 from ...helpers import formatException
 
 
+import asyncio
+
+
 @pytest.fixture
 def event_loop():
-    loop = EXECUTOR.loop
+    loop = asyncio.new_event_loop()
+    EXECUTOR.assignLoop(loop)
     yield loop
+    loop.close()
 
 
 def test_once():

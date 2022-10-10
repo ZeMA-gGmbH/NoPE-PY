@@ -1,5 +1,5 @@
-from .dotted_dict import DottedDict
-from .string_methods import replaceAll, camelToSnake, snakeToCamel
+from .dottedDict import DottedDict
+from .stringMethods import replaceAll, camelToSnake, snakeToCamel
 
 SPLITCHAR = '/'
 SINGLE_LEVEL_WILDCARD = '+'

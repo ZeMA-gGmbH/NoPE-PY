@@ -1,5 +1,5 @@
 from nope.helpers import getTimestamp, formatException, getOrCreateEventloop, offload_function_to_event_loop
-from nope.event_emitter import NopeEventEmitter
+from nope.eventEmitter import NopeEventEmitter
 from asyncio import ensure_future, to_thread
 from time import sleep
 

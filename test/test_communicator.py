@@ -5,10 +5,15 @@ import pytest
 from nope import getLayer, EXECUTOR, NopeConnectivityManager, DictBasedMergeData
 
 
+import asyncio
+
+
 @pytest.fixture
 def event_loop():
-    loop = EXECUTOR.loop
+    loop = asyncio.new_event_loop()
+    EXECUTOR.assignLoop(loop)
     yield loop
+    loop.close()
 
 
 _mappingOfDispatchersAndServices = dict()
