@@ -58,7 +58,8 @@ class Bridge:
           for plugin in self._plugins:
             if hasattr(plugin, "transformData"):
               eventName, data, promise = await plugin.transformData(eventName, data, **kwargs)
-              promises.append(promise)
+              if promise is not None:
+                promises.append(promise)
               
         result = self._emit(eventName, None, ensureDottedAccess(data))
         
