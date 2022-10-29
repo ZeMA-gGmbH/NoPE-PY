@@ -30,16 +30,16 @@ class WrappedFunction:
 
 class NopeRpcManager:
 
-    def __init__(self, options, defaultSelector, _id=None,
-                 _connectivityManager=None):
+    def __init__(self, options, defaultSelector, id=None,
+                 connectivityManager=None):
 
         options = ensureDottedAccess(options)
 
         self.options = options
         self._defaultSelector = defaultSelector
-        self._id = _id
+        self._id = id
         self._communicator: Bridge = options.communicator
-        self._connectivityManager: NopeConnectivityManager = _connectivityManager
+        self._connectivityManager: NopeConnectivityManager = connectivityManager
 
         self._runningInternalRequestedTasks = dict()
         self._registeredServices = dict()

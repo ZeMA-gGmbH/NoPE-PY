@@ -1,8 +1,9 @@
 import imp
-from . import communication, dispatcher, eventEmitter, helpers, logger, merging, observable, pubSub
 
-
+from . import (communication, decorators, dispatcher, eventEmitter, helpers,
+               logger, merging, observable, pubSub)
 from .communication import *
+from .decorators import *
 from .dispatcher import *
 from .eventEmitter import *
 from .helpers import *

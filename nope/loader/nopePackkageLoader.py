@@ -82,7 +82,7 @@ class NopePackageLoader():
                 )
 
         for func in package["provided_functions"]:
-            await self.dispatcher.register_function(func["function"], func["options"])
+            await self.dispatcher.registerMethod(func["function"], func["options"])
 
     async def generateInstances(self, test_requirements=True):
         """ Function to initialize all the instances.

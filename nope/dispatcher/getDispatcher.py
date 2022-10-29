@@ -1,41 +1,61 @@
 #!/usr/bin/env python
 # @author Martin Karkowski
 # @email m.karkowski@zema.de
-# @create date 2021-01-22 09:22:55
-# @modify date 2021-01-26 17:22:03
-# @desc [description]
 
-import asyncio
-import logging
-
+from ..helpers import ensureDottedAccess
 from ..modules import NopeGenericModule
-from .nope_dispatcher import NopeDispatcher
+from .nopeDispatcher import NopeDispatcher
+from .baseServices import addAllBaseServices
+
+
+def _perform_init(dispatcher: NopeDispatcher, options, dispatcherOptions):
+    """ Helper Function to initiaize the Dispatcher.
+
+    Args:
+        dispatcher (NopeDispatcher): The Dispatcher to initalize
+        dispatcherOptions (dict-like): The Options of the Dispatcher.
+    """
+
+    async def creator(core, description):
+        mod = NopeGenericModule(core)
+        await mod.fromDescription(description, "overwrite")
+        return mod
+
+    # Register a default instance generator:
+    # Defaultly generate a NopeGenericModule
+    dispatcher.instanceManager.registerInternalWrapperGenerator(
+        "*",
+        creator
+    )
+
+    if (options.useBaseServices):
+        addAllBaseServices(dispatcher)
+
+    return dispatcher
 
 
 class NopeDispatcherSingleton(object):
     _instance = None
 
-    def __new__(cls, communicator, options={}, loop=None,
-                logger: logging.Logger = None, level=logging.INFO):
+    def __new__(cls, options):
         if cls._instance is None:
-            # Create an Event Loop.
-            if loop is None:
-                loop = asyncio.get_event_loop()
-
             # Assign a Class
-            cls._instance = NopeDispatcher(
-                communicator, loop, options, logger, level)
+            cls._instance = _perform_init(NopeDispatcher(options))
 
             # Put any initialization here.
         return cls._instance
 
 
-def get_dispatcher(communicator, options={}, loop=None,
-                   logger: logging.Logger = None, level=logging.INFO):
+def getDispatcher(
+        dispatcherOptions,
+        options=None):
     """Function, which woll return a nope-dispatcher
     """
 
+    options = ensureDottedAccess(options)
+
+    if options.singleton:
+        return NopeDispatcherSingleton(dispatcherOptions)
+
     # Create the Dispatcher Instance.
-    dispatcher = NopeDispatcherSingleton(
-        communicator, options, loop, logger, level)
-    return dispatcher
+    return _perform_init(NopeDispatcher(options))

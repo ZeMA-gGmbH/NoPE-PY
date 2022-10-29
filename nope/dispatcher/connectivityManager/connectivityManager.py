@@ -52,12 +52,12 @@ except BaseException:
 
 class NopeConnectivityManager:
 
-    def __init__(self, options, _id=None):
+    def __init__(self, options, id=None):
 
         options = ensureDottedAccess(options, False)
 
         self.options = options
-        self._id = _id if _id is not None else generateId()
+        self._id = id if id is not None else generateId()
         self._deltaTime = 0
         self._checkStatusTask = None
         self._sendStatusTask = None
