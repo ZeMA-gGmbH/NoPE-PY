@@ -7,11 +7,12 @@ from ...logger import getNopeLogger
 from ...observable import NopeObservable
 from ...pubSub import DataPubSubSystem, PubSubSystem
 from ..connectivityManager import NopeConnectivityManager
-
+from ..rpcManager import generateSelector, NopeRpcManager
+from ..instanceManager import generateAssignmentChecker, NopeInstanceManager
 
 class NopeCore:
 
-    def __init__(self, _options, _id=None):
+    def __init__(self, _options, id=None):
 
         _options = ensureDottedAccess(_options)
 
@@ -25,11 +26,11 @@ class NopeCore:
                 self.communicator.emit('DataChanged', ensureDottedAccess(
                     {**item, 'sender': self._id}))
 
-        def is_ready():
+        def isReady():
             return self.connectivityManager.ready.getContent(
             ) and self.rpcManager.ready.getContent() and self.instanceManager.ready.getContent()
 
-        def on_event(msg):
+        def onEvent(msg):
             msg = ensureDottedAccess(msg)
             if msg.sender != self._id:
                 data = msg.get("data")
@@ -37,7 +38,7 @@ class NopeCore:
                 msg.sender = rcvExternally
                 self.eventDistributor.emit(path, data, msg)
 
-        def on_data(msg):
+        def onData(msg):
             msg = ensureDottedAccess(msg)
             if msg.sender != self._id:
                 data = msg.get("data")
@@ -46,11 +47,11 @@ class NopeCore:
                 self.dataDistributor.pushData(name, data, msg)
 
         self._options = _options
-        self._id = _id
+        self._id = id
 
         self.communicator = _options.communicator
 
-        if _id is None:
+        if self.id is None:
             if _options.id:
                 self._id = _options.id
             else:
@@ -62,29 +63,36 @@ class NopeCore:
         self.eventDistributor = PubSubSystem()
         self.dataDistributor = DataPubSubSystem()
 
-        # TODO: Ab hier:
+        defaultSelector = generateSelector(_options.get("defaultSelector", "first"), self)
 
-        defaultSelector = generateSelector(
-            _options.get("defaultSelector", "first"), self)
-
-        self.connectivityManager = NopeConnectivityManager(_options, self._id)
-        self.rpcManager = nope_rpcManager(
-            _options, defaultSelector, self._id, self.connectivityManager)
-        self.instanceManager = nope_instanceManager(_options,
-                                                    defaultSelector, self._id, self.
-                                                    connectivityManager, self.rpcManager, self)
-
-        # TODO: bishier!
+        self.connectivityManager = NopeConnectivityManager(
+            _options,
+            self._id
+        )
+        self.rpcManager = NopeRpcManager(
+            _options,
+            defaultSelector,
+            self._id,
+            self.connectivityManager
+        )
+        self.instanceManager = NopeInstanceManager(
+            _options,
+            defaultSelector,
+            self._id,
+            self.connectivityManager,
+            self.rpcManager,
+            self
+        )
 
         self.ready = NopeObservable()
 
-        self.ready.getter = is_ready
+        self.ready.getter = isReady
         rcvExternally = generateId()
 
-        self.communicator.on('Event', on_event)
+        self.communicator.on('Event', onEvent)
         self.eventDistributor.onIncrementalDataChange.subscribe(
             forwardEvent)
-        self.communicator.on('DataChanged', on_data)
+        self.communicator.on('DataChanged', onData)
         self.dataDistributor.onIncrementalDataChange.subscribe(
             forwardData)
 
