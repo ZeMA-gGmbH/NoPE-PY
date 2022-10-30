@@ -3,7 +3,7 @@
 # @email m.karkowski@zema.de
 
 from ...helpers import ensureDottedAccess, generateId
-from ...logger import getNopeLogger
+from ...logger import getNopeLogger, defineNopeLogger
 from ...observable import NopeObservable
 from ...pubSub import DataPubSubSystem, PubSubSystem
 from ..connectivityManager import NopeConnectivityManager
@@ -27,7 +27,7 @@ class NopeCore:
                 self.communicator.emit('DataChanged', ensureDottedAccess(
                     {**item, 'sender': self._id}))
 
-        def isReady():
+        def isReady(_):
             return self.connectivityManager.ready.getContent(
             ) and self.rpcManager.ready.getContent() and self.instanceManager.ready.getContent()
 
@@ -52,14 +52,15 @@ class NopeCore:
 
         self.communicator = _options.communicator
 
-        if self.id is None:
+        if self._id is None:
             if _options.id:
                 self._id = _options.id
             else:
                 self._id = generateId()
 
-        self.logger = getNopeLogger(_options.logger, 'core.rpc-manager')
-        self.logger.info('setting up sub-systems.')
+        self.logger = defineNopeLogger(_options.logger, 'core')
+        if self.logger:
+            self.logger.info('setting up sub-systems.')
 
         self.eventDistributor = PubSubSystem()
         self.dataDistributor = DataPubSubSystem()

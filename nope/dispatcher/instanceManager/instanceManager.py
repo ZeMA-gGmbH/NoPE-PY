@@ -61,6 +61,15 @@ class NopeInstanceManager:
         self.instances = DictBasedMergeData(
             self._mappingOfRemoteDispatchersAndInstances, 'instances/+', 'instances/+/identifier')
 
+        
+        self._internalWrapperGenerators = dict()
+        self._registeredConstructors = dict()
+        self._instances = dict()
+        self._externalInstances = dict()
+        self._internalInstances = set()
+        self._initializingInstance = dict()
+        self._externalInstancesNames = set()
+
         # Contains the identifiers of the instances, which are hosted in the
         # provided dispatcher.
         self.internalInstances = NopeObservable()
@@ -91,6 +100,19 @@ class NopeInstanceManager:
             self._logger.info('core.instance-manager online')
 
         self.reset()
+
+    def _sendAvailableInstances(self):
+        # Update the Instances provided by this module.
+        self._communicator.emit("instancesChanged", {
+            "dispatcher": self._id,
+            # We will send the descriptions.
+            # Generate the Module Description for every identifier:
+            "instances": list(map(lambda item: self._instances[item]["instance"].toDescription(), self._internalInstances))
+        })
+
+        # Update the Instances
+        self.internalInstances.setContent(list(self._internalInstances))
+
 
     async def _init(self):
 
@@ -378,7 +400,7 @@ class NopeInstanceManager:
             self._logger.debug('Adding instance generator for "' + identifier +
                                '" as internal Generator. This Generator wont be used externally.')
 
-        self._internalWrapperGenerators.set(identifier, cb)
+        self._internalWrapperGenerators[identifier] = cb
 
     def unregisterInternalWrapperGenerator(self, identifier: str):
         """ Removes a specific generator for for a wrapper.

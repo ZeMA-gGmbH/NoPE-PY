@@ -201,7 +201,7 @@ class NopeConnectivityManager:
                         'Remote Dispatcher "' + opts.dispatcherId + '" went online')
                 # Ensure Sending our Message
                 EXECUTOR.callParallel(self._asyncSendStatus)
-                
+
         await self._communicator.on('bonjour', onBonjour)
 
         def onAurevoir(msg):

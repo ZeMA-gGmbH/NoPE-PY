@@ -8,7 +8,7 @@ from .nopeDispatcher import NopeDispatcher
 from .baseServices import addAllBaseServices
 
 
-def _perform_init(dispatcher: NopeDispatcher, options, dispatcherOptions):
+def _perform_init(dispatcher: NopeDispatcher, options):
     """ Helper Function to initiaize the Dispatcher.
 
     Args:
@@ -58,4 +58,4 @@ def getDispatcher(
         return NopeDispatcherSingleton(dispatcherOptions)
 
     # Create the Dispatcher Instance.
-    return _perform_init(NopeDispatcher(options))
+    return _perform_init(NopeDispatcher(dispatcherOptions), options)

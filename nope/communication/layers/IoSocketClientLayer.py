@@ -75,7 +75,7 @@ class IoSocketClientLayer:
             self._client.on(eventName, cb)
 
     async def off(self, eventName: str, cb):
-        pass
+        self._client.handlers['/'].pop(eventName)
 
     async def emit(self, eventName: str, data):
 

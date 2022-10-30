@@ -41,6 +41,8 @@ if __name__ == "__main__":
                     "nope.observable",
                     "nope.logger",
                     "nope.merging",
+                    "nope.modules",
+                    "nope.plugins",
                     "nope.pubSub"
                     ],
           package_data={'': ['VERSION']},
