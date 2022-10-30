@@ -6,7 +6,7 @@ import asyncio
 
 class Bridge:
 
-    def __init__(self, _id=generateId(), logger=False):
+    def __init__(self, _id=generateId(), logger=False, plugins=[]):
 
         def getter(storedValue):
             for data in self._layers.values():
@@ -27,6 +27,9 @@ class Bridge:
         self.connected = NopeObservable()
         self.connected.setContent(False)
         self.connected.getter = getter
+        
+        # Create a container holding plugins
+        self._plugins = plugins if plugins is not None else []
 
     @property
     def receivesOwnMessages(self):
@@ -38,12 +41,34 @@ class Bridge:
     @property
     def id(self):
         return self._id
+        
+    def addPlugin(self, plugin):
+        self._plugins.append(plugin)
 
     async def on(self, eventName: str, cb):
+        if self._plugins:
+          for plugin in self._plugins:
+            if hasattr(plugin, "transformCallback"):
+              eventName, cb = await plugin.transformCallback(eventName, cb)
         return self._on(eventName, lambda data: cb(ensureDottedAccess(data)))
 
-    async def emit(self, eventName: str, data):
-        return self._emit(eventName, None, ensureDottedAccess(data))
+    async def emit(self, eventName: str, data, **kwargs):
+        promises = []
+        if self._plugins:
+          for plugin in self._plugins:
+            if hasattr(plugin, "transformData"):
+              eventName, data, promise = await plugin.transformData(eventName, data, **kwargs)
+              if promise is not None:
+                promises.append(promise)
+              
+        result = self._emit(eventName, None, ensureDottedAccess(data))
+        
+        # if we contain some data in the promises,
+        # we wait for them to finish
+        if promises:
+           asyncio.gather(promises)
+           
+        return result
 
     def detailListeners(self, t, listeners):
         raise Exception('Method not implemented.')

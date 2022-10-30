@@ -199,8 +199,9 @@ class NopeConnectivityManager:
                 if self._logger:
                     self._logger.debug(
                         'Remote Dispatcher "' + opts.dispatcherId + '" went online')
-                    self._asyncSendStatus()
-
+                # Ensure Sending our Message
+                EXECUTOR.callParallel(self._asyncSendStatus)
+                
         await self._communicator.on('bonjour', onBonjour)
 
         def onAurevoir(msg):
@@ -283,7 +284,7 @@ class NopeConnectivityManager:
                 else:
                     print(formatException(e))
 
-    def sync_time(self, timestamp, delay=0):
+    def syncTime(self, timestamp, delay=0):
         internalTimestamp = getTimestamp()
         self._deltaTime = internalTimestamp - (timestamp - delay)
 
@@ -334,7 +335,7 @@ class NopeConnectivityManager:
             )
 
     @property
-    def all_hosts(self):
+    def allHosts(self):
         hosts = set()
         for info in self.dispatchers.originalData.values():
             hosts.add(info.host.name)
