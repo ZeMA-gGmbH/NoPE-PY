@@ -28,6 +28,8 @@ import sys
 import inspect
 from functools import wraps
 
+from nope.helpers import rsetattr
+
 # apidoc skip
 
 
@@ -47,7 +49,7 @@ def update(module, objects):
             raise ValueError("cannot plug '%r'" % obj)
 
 
-def load(plugins, base, name=None):
+def load(lib, name:str, plugins, new_pkg_name: str = None):
     """Load plugins, `plugins` can be a single plugin name, a module
     or a list of such values. If `name` is not `None`, the extended
     module is loaded as `name` in `sys.modules` as well as in the
@@ -62,10 +64,25 @@ def load(plugins, base, name=None):
     @return: the extended module
     @rtype: `module`
     """
-    if isinstance(base, str):
-        result = __import__(base, fromlist=["__name__"])
+    result = None
+    mainLib = None
+    mainLibName = None
+    deltaPath = None
+
+    if isinstance(lib, str):
+        mainLibName = __import__(lib, fromlist=["__name__"])
     else:
-        result = base
+        mainLib = lib
+
+    deltaPath = ".".join(name.split(".")[1:])
+    mainLibName = name.split(".")[0]
+
+
+    if isinstance(name, str):
+        
+        result = __import__(name, fromlist=["__name__"])
+    else:
+        raise Exception("Please work with a for the module!")
     if isinstance(plugins, str):
         plugins = [plugins]
     else:
@@ -82,12 +99,18 @@ def load(plugins, base, name=None):
     for plug in plugins:
         if isinstance(plug, str):
             plug = __import__(plug, fromlist=["__name__"])
-        result = plug.extend(result)
-    if name is not None:
-        result.__name__ = name
-        sys.modules[name] = result
-        inspect.stack()[1][0].f_globals[name] = result
-    return result
+        
+        # Now we need to 
+        mainLib, result = plug.extend(mainLib, deltaPath, result)
+
+    sys.modules[mainLibName] = mainLib
+    
+    if new_pkg_name is not None:
+        result.__name__ = new_pkg_name
+        sys.modules[new_pkg_name] = result
+        inspect.stack()[1][0].f_globals[new_pkg_name] = result
+        
+    return mainLib
 
 
 """## Creating plugins ###
@@ -115,7 +138,7 @@ need to call it (which is usually the case). """
 
 
 def plugin(base, depends=[], conflicts=[]):
-    """Decorator for extension functions
+    """ Decorator for extension functions
     @param base: name of base module (usually 'nope') that the
         plugin extends
     @type base: `str`
@@ -130,7 +153,8 @@ def plugin(base, depends=[], conflicts=[]):
     """
     def wrapper(fun):
         @wraps(fun)
-        def extend(module):
+        def extend(mainModule, deltaPath, module):
+            print(mainModule, module)
             try:
                 loaded = set(module.__plugins__)
             except AttributeError:
@@ -145,7 +169,14 @@ def plugin(base, depends=[], conflicts=[]):
             objects = fun(module)
             if not isinstance(objects, tuple):
                 objects = (objects,)
-            return build(fun.__module__, module, *objects)
+
+            # Now we use the buid function to update the Module.
+            adaptedModule = build(fun.__module__, module, *objects)
+
+            # We now have to update the main lib.
+            rsetattr(mainModule, deltaPath, adaptedModule, splitchar=".")
+
+            return mainModule, adaptedModule
         module = sys.modules[fun.__module__]
         module.__test__ = {"extend": extend}
         objects = fun(__import__(base, fromlist=["__name__"]))
