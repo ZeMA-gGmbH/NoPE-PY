@@ -1,6 +1,7 @@
 from ..helpers.pathMatchingMethods import comparePatternAndPath, ensureDottedAccess
 from .core import NopeCore
 
+
 class NopeDispatcher(NopeCore):
     """  A Dispatcher to perform a function on a Remote Dispatcher. Therefore a Task is created and forwarded to the remote.
     """
@@ -50,7 +51,7 @@ class NopeDispatcher(NopeCore):
             event (str): Name of the event to emii.
             data (any): The data to emit.
             options (dict-like): will be added to the event (for instance timestamp, sender, etc.)
-        """    
+        """
         options = ensureDottedAccess(options)
         self.eventDistributor.emit(eventName, data, options)
 
@@ -72,7 +73,7 @@ class NopeDispatcher(NopeCore):
             def callback_0(item):
                 return item.identifier
             items = map(callback_0, self.instanceManager.
-                instances.data.getContent())
+                        instances.data.getContent())
         elif type == 'services':
             items = list(self.rpcManager.services.simplified.keys())
         elif type == 'properties':
@@ -82,8 +83,9 @@ class NopeDispatcher(NopeCore):
         else:
             raise Exception('Invalid Type-Parameter')
 
-        return list(filter(lambda item:  comparePatternAndPath(pattern, item).affected, items))
-    
+        return list(filter(lambda item: comparePatternAndPath(
+            pattern, item).affected, items))
+
     def getAllHosts(self):
         hosts = set()
         for info in self.connectivityManager.dispatchers.originalData.values():
@@ -95,12 +97,12 @@ class NopeDispatcher(NopeCore):
         ret = self.connectivityManager.info.copy()
         ret.update(
             ensureDottedAccess({
-                'isMaster': self.connectivityManager.isMaster, 
+                'isMaster': self.connectivityManager.isMaster,
                 'instances': self.instanceManager.instances.data.getContent(),
                 'services': self.rpcManager.services.data.getContent(),
                 'events': self.eventDistributor.emitters,
                 'properties': self.dataDistributor.emitters,
-                'data':self.dataDistributor.pullData('', dict())
+                'data': self.dataDistributor.pullData('', dict())
             })
         )
 

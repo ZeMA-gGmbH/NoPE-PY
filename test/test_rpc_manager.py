@@ -119,7 +119,7 @@ async def main():
 
 if not IN_PY_TEST:
     EXECUTOR.loop.run_until_complete(main())
-    EXECUTOR.loop.run_forever()
+    # EXECUTOR.loop.run_forever()
 
 # yappi.set_clock_type("CPU")
 # with yappi.run():

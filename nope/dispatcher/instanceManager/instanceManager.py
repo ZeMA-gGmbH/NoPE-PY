@@ -16,7 +16,8 @@ from ..rpcManager import NopeRpcManager
 
 class NopeInstanceManager:
 
-    def __init__(self, options, _defaultSelector, _id=None, _connectivityManager=None, _rpcManager=None, _core=None):
+    def __init__(self, options, _defaultSelector, _id=None,
+                 _connectivityManager=None, _rpcManager=None, _core=None):
 
         self.options = options
         self._defaultSelector = _defaultSelector
@@ -26,12 +27,12 @@ class NopeInstanceManager:
         self._core = _core
         self._communicator: Bridge = options.communicator
 
-        if _id == None:
+        if _id is None:
             self._id = generateId()
-        if _connectivityManager == None:
+        if _connectivityManager is None:
             self._connectivityManager = NopeConnectivityManager(
                 options, id=self._id)
-        if _rpcManager == None:
+        if _rpcManager is None:
             self._rpcManager = NopeRpcManager(
                 options,
                 self._defaultSelector,
@@ -60,7 +61,8 @@ class NopeInstanceManager:
         self.instances = DictBasedMergeData(
             self._mappingOfRemoteDispatchersAndInstances, 'instances/+', 'instances/+/identifier')
 
-        # Contains the identifiers of the instances, which are hosted in the provided dispatcher.
+        # Contains the identifiers of the instances, which are hosted in the
+        # provided dispatcher.
         self.internalInstances = NopeObservable()
         self.internalInstances.setContent([])
 
@@ -68,7 +70,8 @@ class NopeInstanceManager:
             self._mappingOfRemoteDispatchersAndGenerators.clear()
             for dispatcher, services in self._rpcManager.services.originalData.items():
                 def _filterMatchingServices(svc):
-                    if "id" in svc and svc["id"].startswith(f'nope{SPLITCHAR}core{SPLITCHAR}constructor{SPLITCHAR}'):
+                    if "id" in svc and svc["id"].startswith(
+                            f'nope{SPLITCHAR}core{SPLITCHAR}constructor{SPLITCHAR}'):
                         return True
                     return False
 
@@ -258,7 +261,8 @@ class NopeInstanceManager:
                             if idx > 1:
                                 self._instances.get(
                                     data.identifier).usedBy.splice(idx, 1)
-                            if len(self._instances.get(data.identifier).usedBy) == 0:
+                            if len(self._instances.get(
+                                    data.identifier).usedBy) == 0:
                                 self._internalInstances.delete(data.identifier)
                                 await _instance.dispose()
                                 self._instances.delete(data.identifier)
@@ -421,7 +425,8 @@ class NopeInstanceManager:
         if self._internalInstances.has(identifier):
             return self._connectivityManager.info
 
-        # If that isnt the case, we will check all dispatchers and search the instance.
+        # If that isnt the case, we will check all dispatchers and search the
+        # instance.
         for iter_item in self._mappingOfRemoteDispatchersAndInstances.entries():
             dispatcher = iter_item[0]
             msg = iter_item[1]
@@ -431,7 +436,7 @@ class NopeInstanceManager:
         return None
 
     def getInstanceDescription(self, instanceIdentifier: str):
-        """ Returns the instance Description for a specific instance. It is just a simplified wrapper 
+        """ Returns the instance Description for a specific instance. It is just a simplified wrapper
             for the "instances"-property.
 
         Args:
@@ -441,7 +446,8 @@ class NopeInstanceManager:
             INopeModuleDescription | False: The Description or False if not found.
         """
         if self._instances.has(instanceIdentifier):
-            return self._instances.get(instanceIdentifier).instance.toDescription()
+            return self._instances.get(
+                instanceIdentifier).instance.toDescription()
         return False
 
     def constructorExists(self, typeIdentifier: str) -> bool:
@@ -461,7 +467,7 @@ class NopeInstanceManager:
             on the same element. Only a wrapper is returned, which communicates with a
             dispatcher, because we dont know where the element is provided. You can use the
             method "getDispatcherForInstance" to determine the dispatcher running the instance.
-            
+
             The returned wrapper acts like a normal "internal" class.
 
         Args:
@@ -532,7 +538,8 @@ class NopeInstanceManager:
                 if usedDispatcher and options.assignmentValid:
 
                     # If we have an dispatcher, which was been used to create the instance,
-                    # we have to check, the selected Dispatcher Matches our criteria.
+                    # we have to check, the selected Dispatcher Matches our
+                    # criteria.
 
                     if not await options.assignmentValid(_instanceDetails.description, _instanceDetails.dispatcher):
                         raise Exception('Assignment is invalid.')
@@ -579,7 +586,7 @@ class NopeInstanceManager:
             raise e
 
     async def registerInstance(self, instance):
-        """ Option, to statically register an instance, without using an specific generator etc. 
+        """ Option, to statically register an instance, without using an specific generator etc.
             This instance is just present in the network.
 
         Args:
@@ -615,7 +622,7 @@ class NopeInstanceManager:
 
         _instance = None
 
-        if type(instance) == 'string':
+        if isinstance(instance, 'string'):
             _instance = self._instances.get(instance)
         else:
             for data in self._instances.values():

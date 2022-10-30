@@ -1,5 +1,6 @@
 from ..helpers import ensureDottedAccess
 
+
 def _class_decorator_factory(storing_type: str):
 
     def func(options):
@@ -19,7 +20,7 @@ def _class_decorator_factory(storing_type: str):
                 self._type = storing_type
 
             def __set_name__(self, owner, name):
-                # We want to store the item.                
+                # We want to store the item.
                 if not hasattr(owner, "decoratedItems"):
                     setattr(owner, "decoratedItems", [])
 
@@ -31,11 +32,12 @@ def _class_decorator_factory(storing_type: str):
                         "type": self._type,
                     })
                 )
-        
+
         return class_decorator
 
     return func
 
-exportAsNopeService     = _class_decorator_factory("method")
-exportAsNopeProperty    = _class_decorator_factory("property")
-exportAsNopeEvent       = _class_decorator_factory("event")
+
+exportAsNopeService = _class_decorator_factory("method")
+exportAsNopeProperty = _class_decorator_factory("property")
+exportAsNopeEvent = _class_decorator_factory("event")

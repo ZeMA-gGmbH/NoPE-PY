@@ -10,6 +10,7 @@ from ..connectivityManager import NopeConnectivityManager
 from ..rpcManager import generateSelector, NopeRpcManager
 from ..instanceManager import generateAssignmentChecker, NopeInstanceManager
 
+
 class NopeCore:
 
     def __init__(self, _options, id=None):
@@ -63,7 +64,8 @@ class NopeCore:
         self.eventDistributor = PubSubSystem()
         self.dataDistributor = DataPubSubSystem()
 
-        defaultSelector = generateSelector(_options.get("defaultSelector", "first"), self)
+        defaultSelector = generateSelector(
+            _options.get("defaultSelector", "first"), self)
 
         self.connectivityManager = NopeConnectivityManager(
             _options,

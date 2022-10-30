@@ -6,7 +6,6 @@ from ..helpers import keysToCamelNested, getPropertyPath, isPropertyPathCorrect,
 from ..logger import getNopeLogger
 
 
-
 class BaseModule(object):
     """A Base Class Describing a Module.
     """
@@ -113,7 +112,7 @@ class BaseModule(object):
 
     def __init__(self, core):
         super().__init__()
-        
+
         if not hasattr(owner, "decoratedItems"):
             setattr(owner, "decoratedItems", [])
 
@@ -135,7 +134,6 @@ class BaseModule(object):
         # Helper for the Decorator
         self._markedElements = dict()
 
-
     async def registerProperty(self, name: str, observable, options):
         """ Function to register a property. This will provide the property in the NoPE-Environment.
 
@@ -154,19 +152,22 @@ class BaseModule(object):
         await self.unregisterProperty(name)
 
         # Adapt the Topic:
-        if not "topic" in options: 
+        if not "topic" in options:
             # Raise an error, because we expect and dict or an string
             raise Exception("Topic must be provided in the options")
         elif isinstance(options.topic, str) and not isPropertyPathCorrect(self.identifier, options.topic):
             # Adapt the name.
             options.topic = getPropertyPath(self.identifier, options.topic)
         else:
-            if 'subscribe' in options.topic and not isPropertyPathCorrect(self.identifier, options.topic.subscribe):
-                options.topic.subscribe = getPropertyPath(self.identifier, options.topic.subscribe)
+            if 'subscribe' in options.topic and not isPropertyPathCorrect(
+                    self.identifier, options.topic.subscribe):
+                options.topic.subscribe = getPropertyPath(
+                    self.identifier, options.topic.subscribe)
 
-            if 'publish' in options.topic and not isPropertyPathCorrect(self.identifier, options.topic.publish):
-                options.topic.publish = getPropertyPath(self.identifier, options.topic.publish)
-        
+            if 'publish' in options.topic and not isPropertyPathCorrect(
+                    self.identifier, options.topic.publish):
+                options.topic.publish = getPropertyPath(
+                    self.identifier, options.topic.publish)
 
         observable = await self._core.dataDistributor.register(observable, options)
 
@@ -193,19 +194,22 @@ class BaseModule(object):
         await self.unregisterEvent(name)
 
         # Adapt the Topic:
-        if not "topic" in options: 
+        if not "topic" in options:
             # Raise an error, because we expect and dict or an string
             raise Exception("Topic must be provided in the options")
         elif isinstance(options.topic, str) and not isEmitterPathCorrect(self.identifier, options.topic):
             # Adapt the name.
             options.topic = getEmitterPath(self.identifier, options.topic)
         else:
-            if 'subscribe' in options.topic and not isEmitterPathCorrect(self.identifier, options.topic.subscribe):
-                options.topic.subscribe = getEmitterPath(self.identifier, options.topic.subscribe)
+            if 'subscribe' in options.topic and not isEmitterPathCorrect(
+                    self.identifier, options.topic.subscribe):
+                options.topic.subscribe = getEmitterPath(
+                    self.identifier, options.topic.subscribe)
 
-            if 'publish' in options.topic and not isEmitterPathCorrect(self.identifier, options.topic.publish):
-                options.topic.publish = getEmitterPath(self.identifier, options.topic.publish)
-        
+            if 'publish' in options.topic and not isEmitterPathCorrect(
+                    self.identifier, options.topic.publish):
+                options.topic.publish = getEmitterPath(
+                    self.identifier, options.topic.publish)
 
         emitter = await self._core.eventDistributor.register(emitter, options)
 
@@ -217,7 +221,6 @@ class BaseModule(object):
 
     async def registerMethod(self, name: str, method, options):
 
-        
         options = ensureDottedAccess(options)
 
         # Unregister the Function
@@ -230,7 +233,6 @@ class BaseModule(object):
         else:
             options.id = getMethodPath(self.identifier, name)
 
-        
         method = await self._core.rpcManager.registerService(method, options)
 
         # Register the new Function.
@@ -278,7 +280,7 @@ class BaseModule(object):
 
     async def listProperties(self):
         return list(self._registeredProperties.values())
-    
+
     async def listEvents(self):
         return list(self._registeredEvents.values())
 
@@ -318,10 +320,9 @@ class BaseModule(object):
                 elif item.type == "event":
                     await self.registerEvent(item.accessor, getattr(self, item.accessor), item.options)
 
-
     def exportProperty(self, name: str, observable, options):
-        """ Function to export an Property. This will provide the Property (emits and receives events on change, and contains the current value.) 
-            in the NoPE-Environment. 
+        """ Function to export an Property. This will provide the Property (emits and receives events on change, and contains the current value.)
+            in the NoPE-Environment.
 
         Args:
             name (str): Name of the property, which should be used to forward the data
@@ -333,7 +334,7 @@ class BaseModule(object):
 
     def exportMethod(self, name: str, func, options):
         """ Helper Function, to export method and provided it in the NoPE-Environment. Executes "registerMethod" in the background
-        
+
         Args:
             name (str): Name of the property, which should be used as service name.
             func (callable): The method itself
@@ -351,7 +352,6 @@ class BaseModule(object):
         """
         # Create a Factory of the Element
         EXECUTOR.callParallel(self.registerProperty, name, emitter, options)
-    
 
     async def dispose(self):
         """ Disposes the instance. This results in unregistering the properties, functions etc.
@@ -463,8 +463,6 @@ class BaseModule(object):
                 return data["options"]["id"]
 
         raise Exception("Item not found. Is it registered?")
-
-    
 
     def toDescription(self):
         ret = {

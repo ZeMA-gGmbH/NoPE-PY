@@ -3,10 +3,10 @@ from .connectivy import generatePingServices
 from ..nopeDispatcher import NopeDispatcher
 
 SERVICES_NAME = {
-    #"defineMaster": generateDefineMaster,
+    # "defineMaster": generateDefineMaster,
     "pingService": generatePingServices,
-    #"timeSyncingService": enableTimeSyncing,
-    #"syncingDataService": enablingSyncingData,
+    # "timeSyncingService": enableTimeSyncing,
+    # "syncingDataService": enablingSyncingData,
 }
 
 

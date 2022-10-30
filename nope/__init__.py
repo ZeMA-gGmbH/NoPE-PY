@@ -1,5 +1,3 @@
-import imp
-
 from . import (communication, decorators, dispatcher, eventEmitter, helpers,
                logger, merging, observable, pubSub)
 from .communication import *
