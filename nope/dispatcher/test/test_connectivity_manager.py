@@ -102,7 +102,7 @@ async def test_sync():
     # thats our delay. Now if we use that delay,
     # we are able sync our time.
     diff = end - start
-    _first.sync_time(start, diff)
+    _first.syncTime(start, diff)
 
     adapted_time = _first.now
 

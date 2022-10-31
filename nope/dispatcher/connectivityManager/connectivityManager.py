@@ -8,11 +8,11 @@ from socket import gethostname
 
 import psutil
 
-from ...helpers import getTimestamp, ensureDottedAccess, generateId, DottedDict, minOfArray, formatException, \
+from nope.helpers import getTimestamp, ensureDottedAccess, generateId, DottedDict, minOfArray, formatException, \
     EXECUTOR
-from ...logger import defineNopeLogger
-from ...merging import DictBasedMergeData
-from ...observable import NopeObservable
+from nope.logger import defineNopeLogger
+from nope.merging import DictBasedMergeData
+from nope.observable import NopeObservable
 
 
 class ENopeDispatcherStatus(IntEnum):
@@ -200,7 +200,7 @@ class NopeConnectivityManager:
                     self._logger.debug(
                         'Remote Dispatcher "' + opts.dispatcherId + '" went online')
                 # Ensure Sending our Message
-                EXECUTOR.callParallel(self._asyncSendStatus)
+                EXECUTOR.callParallel(self._asyncSendStatus,forced = True)
 
         await self._communicator.on('bonjour', onBonjour)
 
@@ -219,7 +219,7 @@ class NopeConnectivityManager:
                               self.id, 'initialized')
 
         await self.emitBonjour()
-        await self._asyncSendStatus()
+        await self._asyncSendStatus(forced=True)
         self.ready.setContent(True)
 
     def _checkDispachterHealth(self):
@@ -227,6 +227,10 @@ class NopeConnectivityManager:
             are determined, an update is transmitted via the attribute `dispatchers`
 
         """
+
+        if len(self._externalDispatchers) <= 1:
+            return
+
         currentTime = self.now
 
         changes = False
@@ -270,12 +274,14 @@ class NopeConnectivityManager:
             self._logger.warn(
                 f'a dispatcher on {dispatcherInfo.host.name} went offline. ID of the Dispatcher: "{dispatcher}"')
 
-    async def _asyncSendStatus(self):
+    async def _asyncSendStatus(self, forced=False):
         if self._communicator.connected.getContent():
             try:
                 info = self.info
                 self._externalDispatchers[self.id] = info
-                await self._communicator.emit('statusChanged', info)
+
+                if forced or len(self._externalDispatchers) > 1:
+                    await self._communicator.emit('statusChanged', info)
             except Exception as e:
                 if self._logger:
                     self._logger.error('Failled to send the status')

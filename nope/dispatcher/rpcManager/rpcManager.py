@@ -4,14 +4,14 @@
 
 import asyncio
 
-from ..connectivityManager import NopeConnectivityManager
-from ...communication import Bridge
-from ...eventEmitter import NopeEventEmitter
-from ...helpers import generateId, ensureDottedAccess, isAsyncFunction, \
+from nope.dispatcher.connectivityManager import NopeConnectivityManager
+from nope.communication.bridge import Bridge
+from nope.eventEmitter import NopeEventEmitter
+from nope.helpers import generateId, ensureDottedAccess, isAsyncFunction, \
     formatException, DottedDict, SPLITCHAR, isIterable, getOrCreateEventloop, isList, EXECUTOR
-from ...logger import defineNopeLogger
-from ...merging import DictBasedMergeData
-from ...observable import NopeObservable
+from nope.logger import defineNopeLogger
+from nope.merging import DictBasedMergeData
+from nope.observable import NopeObservable
 
 _DEFAULT_RESULT = object()
 
@@ -409,7 +409,7 @@ class NopeRpcManager:
         if self._logger:
             self._logger.debug(
                 f'Dispatcher "{self._id}" unregistered: "{idOfFunc}"')
-        return self._registeredServices.pop(id)
+        return self._registeredServices.pop(idOfFunc)
 
     def _adaptServiceId(self, serviceName: str):
         if serviceName.startswith(f'nope{SPLITCHAR}service{SPLITCHAR}'):
@@ -632,3 +632,8 @@ class NopeRpcManager:
         self.clearTasks()
         self.unregisterAll()
         self._sendAvailableServices()
+
+    async def dispose(self):
+        self.clearTasks()
+        self.ready.dispose()
+        self.unregisterAll()

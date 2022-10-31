@@ -1,4 +1,5 @@
 import nope
+from asyncio import sleep
 from nope import getLayer, EXECUTOR, getDispatcher
 from nope.plugins import install, plugin
 
@@ -11,7 +12,7 @@ the loaded class or function. We have to decorate the function with the
 ’plugin' decorator (which receives the path as parameter).
 
 Inside of the function we are able to access the original class using the
-module.*ACCESSOR*. In the example below we create an extra function
+`module.*ACCESSOR*`. In the example below we create an extra function
 "hello_dynamic" which will just give us a simple hello world response.
 
 Additional you are able to "store" functions into the module (see our
@@ -43,38 +44,32 @@ def extend_1(module):
     return NopeRpcManager, hello_dynamic, hello_dynamic_vars
 
 
+# Now install our plugin
 install(nope, extend_1, plugin_dest="nope.dispatcher.rpcManager")
 
-
-@plugin("nope.dispatcher.rpcManager")
-def extend_2(module):
-    "Extends `module` - rpcManager"
-    class NopeRpcManager(module.NopeRpcManager):
-        async def performCall(self, *args, **kwargs):
-            """ Extend the original behavior """
-            print("calling perform call - extend 2")
-            try:
-                return await module.NopeRpcManager.performCall(self, *args, **kwargs)
-            except BaseException:
-                print("Failed but we got the error")
-
-    return NopeRpcManager
-
-
-install(nope, [extend_1, extend_2], plugin_dest="nope.dispatcher.rpcManager")
+# The following main is just for clearification
 
 
 async def main():
 
+    # Create our dispatcher
     dispatcher = getDispatcher({
         "communicator": await getLayer("event"),
         "logger": False,
     })
+
     manager = dispatcher.rpcManager
+
+    async def hello_srv(greetings):
+        print("Hello", greetings, "!")
+
     await dispatcher.ready.waitFor()
+    dispatcher.rpcManager.registerService(hello_srv, {"id": "hello_srv"})
+
+    await sleep(0.1)
 
     manager.hello_dynamic()
-    await manager.performCall("test", ["should be logged"])
+    await manager.performCall("hello_srv", ["reader"])
 
     # Now we are able to access our variable
     print(nope.dispatcher.rpcManager.hello)

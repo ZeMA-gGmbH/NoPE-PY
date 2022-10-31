@@ -3,9 +3,9 @@ from logging import Logger
 
 import paho.mqtt.client as mqtt
 from socket import gethostname
-from ...helpers import replaceAll, generateId, formatException, SPLITCHAR
-from ...logger import getNopeLogger, DEBUG, INFO
-from ...observable import NopeObservable
+from nope.helpers import replaceAll, generateId, formatException, SPLITCHAR
+from nope.logger import getNopeLogger, DEBUG, INFO
+from nope.observable import NopeObservable
 
 HOSTNAME = gethostname()
 

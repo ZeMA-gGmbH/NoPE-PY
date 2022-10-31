@@ -1,9 +1,8 @@
 
 import time
-from .EventCommunicationInterface import EventCommunicationInterface
-from ...logger import defineNopeLogger
-from ...observable import NopeObservable
-from ...helpers import generateId, EXECUTOR
+from nope.logger import defineNopeLogger
+from nope.observable import NopeObservable
+from nope.helpers import generateId, EXECUTOR
 
 
 class AbstractLayer:

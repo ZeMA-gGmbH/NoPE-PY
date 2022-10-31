@@ -2,13 +2,13 @@
 # @author Martin Karkowski
 # @email m.karkowski@zema.de
 
-from ...helpers import ensureDottedAccess, generateId
-from ...logger import getNopeLogger, defineNopeLogger
-from ...observable import NopeObservable
-from ...pubSub import DataPubSubSystem, PubSubSystem
-from ..connectivityManager import NopeConnectivityManager
-from ..rpcManager import generateSelector, NopeRpcManager
-from ..instanceManager import generateAssignmentChecker, NopeInstanceManager
+from nope.helpers import ensureDottedAccess, generateId, EXECUTOR
+from nope.logger import getNopeLogger, defineNopeLogger
+from nope.observable import NopeObservable
+from nope.pubSub import DataPubSubSystem, PubSubSystem
+from nope.dispatcher.connectivityManager import NopeConnectivityManager
+from nope.dispatcher.rpcManager import generateSelector, NopeRpcManager
+from nope.dispatcher.instanceManager import generateAssignmentChecker, NopeInstanceManager
 
 
 class NopeCore:
@@ -92,10 +92,10 @@ class NopeCore:
         self.ready.getter = isReady
         rcvExternally = generateId()
 
-        self.communicator.on('Event', onEvent)
+        EXECUTOR.callParallel(self.communicator.on, 'Event', onEvent)
         self.eventDistributor.onIncrementalDataChange.subscribe(
             forwardEvent)
-        self.communicator.on('DataChanged', onData)
+        EXECUTOR.callParallel(self.communicator.on, 'DataChanged', onData)
         self.dataDistributor.onIncrementalDataChange.subscribe(
             forwardData)
 
@@ -111,7 +111,7 @@ class NopeCore:
 
     async def dispose(self):
         self.disposing = True
-        await self.ready.dispose()
+        self.ready.dispose()
         await self.eventDistributor.dispose()
         await self.dataDistributor.dispose()
         await self.connectivityManager.dispose()

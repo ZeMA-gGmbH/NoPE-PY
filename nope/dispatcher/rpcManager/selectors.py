@@ -2,7 +2,7 @@
 # @author Martin Karkowski
 # @email m.karkowski@zema.de
 
-from ...helpers import maxOfArray, minOfArray
+from nope.helpers import maxOfArray, minOfArray
 
 
 def generateSelector(selector, core):

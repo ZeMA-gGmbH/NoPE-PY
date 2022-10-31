@@ -1,6 +1,6 @@
 from asyncio import Future
 
-from ..helpers import generateId, DottedDict, Emitter, ensureDottedAccess, isAsyncFunction, getTimestamp, Promise
+from ..helpers import generateId, DottedDict, Emitter, ensureDottedAccess, isAsyncFunction, getTimestamp, Promise, EXECUTOR
 
 
 # from ..logger.getLogger import getNopeLogger
@@ -95,12 +95,15 @@ class NopeEventEmitter:
         ret = self.subscribe(adaptedCallback, options)
         return ret
 
-    def waitFor(self, testCallback=None, _options=None):
+    def waitFor(self, testCallback=None, options=None):
 
         # Convert our Options.
 
-        options = ensureDottedAccess({'testCurrent': True})
-        options.update(ensureDottedAccess(_options))
+        _options = ensureDottedAccess({
+            'testCurrent': True, 
+            "timeout": 0
+        })
+        _options.update(ensureDottedAccess(options))
 
         if testCallback is None:
             # Define a Test Callback
@@ -110,20 +113,31 @@ class NopeEventEmitter:
             testCallback = test
 
         subscription = None
+        timeout = None
 
         def callback(resolve, reject):
             nonlocal subscription
+            nonlocal timeout
 
             first = True
             resolved = False
 
-            def finish(err, sucessfull, data):
+            def finish(err, sucessfull, data, timedout = False):
                 nonlocal first
                 nonlocal resolved
                 nonlocal subscription
+                nonlocal timeout
+
 
                 if err:
                     reject(err)
+
+                    if subscription:
+                        subscription.unsubscribe()
+                        subscription = None
+                    
+                    if timeout and not timedout:
+                        timeout.cancel()
                 elif sucessfull:
                     if subscription:
                         subscription.unsubscribe()
@@ -132,32 +146,40 @@ class NopeEventEmitter:
                         resolved = True
                         resolve(data)
 
+                    if timeout and not timedout:
+                        timeout.cancel()
+
             def check_data(value, rest):
                 nonlocal first
                 nonlocal resolved
                 nonlocal subscription
 
-                if (first and options.testCurrent) or not first:
+                if (first and _options.testCurrent) or not first:
                     if isAsyncFunction(testCallback):
                         # Try to offload the Function
                         prom: Future = Promise.cast(testCallback(value, rest))
 
                         def done(p: Future):
+                            nonlocal first
+                            first = False
+                            
                             if p.done():
-                                print("HERE")
+                                finish(False, True, p.result())
                             if p.exception():
-                                print("Error")
+                                finish(p.exception(), False, False)
 
-                        # prom.add_done_callback(lambda result: finish(False, result.result(), value))
+
                         prom.add_done_callback(done)
-                        # prom.catch(lambda err: finish(err, None, None))
                     else:
                         result = testCallback(value, rest)
                         finish(False, result, value)
 
-                first = False
+                        first = False
 
             try:
+                if _options.timeout > 0:
+                    timeout = EXECUTOR.setTimeout(finish, _options.timeout, TimeoutError("Time elapsed"), False, False, True)
+
                 subscription = self.subscribe(check_data)
             except BaseException:
                 reject(Exception("Failed to subscribe"))

@@ -1,5 +1,5 @@
-from ..helpers.pathMatchingMethods import comparePatternAndPath, ensureDottedAccess
-from .core import NopeCore
+from nope.helpers.pathMatchingMethods import comparePatternAndPath, ensureDottedAccess
+from nope.dispatcher.core import NopeCore
 
 
 class NopeDispatcher(NopeCore):

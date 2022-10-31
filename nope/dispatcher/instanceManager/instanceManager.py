@@ -4,14 +4,14 @@
 
 import asyncio
 
-from ...communication import Bridge
-from ...helpers import SPLITCHAR, ensureDottedAccess, generateId, isIterable
-from ...logger import defineNopeLogger
-from ...merging import DictBasedMergeData
-from ...modules import NopeGenericModule
-from ...observable import NopeObservable
-from ..connectivityManager import NopeConnectivityManager
-from ..rpcManager import NopeRpcManager
+from nope.communication.bridge import Bridge
+from nope.helpers import SPLITCHAR, ensureDottedAccess, generateId, isIterable, EXECUTOR
+from nope.logger import defineNopeLogger
+from nope.merging import DictBasedMergeData
+from nope.modules import NopeGenericModule
+from nope.observable import NopeObservable
+from nope.dispatcher.connectivityManager import NopeConnectivityManager
+from nope.dispatcher.rpcManager import NopeRpcManager
 
 
 class NopeInstanceManager:
@@ -61,7 +61,6 @@ class NopeInstanceManager:
         self.instances = DictBasedMergeData(
             self._mappingOfRemoteDispatchersAndInstances, 'instances/+', 'instances/+/identifier')
 
-        
         self._internalWrapperGenerators = dict()
         self._registeredConstructors = dict()
         self._instances = dict()
@@ -84,12 +83,18 @@ class NopeInstanceManager:
                         return True
                     return False
 
-                generators = map(lambda item: item.id, filter(
-                    _filterMatchingServices, services.services))
+                generators = list(
+                    map(
+                        lambda item: item.id,
+                        filter(
+                            _filterMatchingServices,
+                            services.services
+                        )
+                    )
+                )
 
                 if len(generators):
-                    self._mappingOfRemoteDispatchersAndGenerators[dispatcher] = list(
-                        generators)
+                    self._mappingOfRemoteDispatchersAndGenerators[dispatcher] = generators
 
             self.constructors.update()
 
@@ -100,19 +105,23 @@ class NopeInstanceManager:
             self._logger.info('core.instance-manager online')
 
         self.reset()
+        EXECUTOR.callParallel(self._init)
 
     def _sendAvailableInstances(self):
         # Update the Instances provided by this module.
-        self._communicator.emit("instancesChanged", {
-            "dispatcher": self._id,
-            # We will send the descriptions.
-            # Generate the Module Description for every identifier:
-            "instances": list(map(lambda item: self._instances[item]["instance"].toDescription(), self._internalInstances))
-        })
+        EXECUTOR.callParallel(
+            self._communicator.emit,
+            "instancesChanged",
+            {
+                "dispatcher": self._id,
+                # We will send the descriptions.
+                # Generate the Module Description for every identifier:
+                "instances": list(map(lambda item: self._instances[item]["instance"].toDescription(), self._internalInstances))
+            }
+        )
 
         # Update the Instances
         self.internalInstances.setContent(list(self._internalInstances))
-
 
     async def _init(self):
 
@@ -708,7 +717,8 @@ class NopeInstanceManager:
             )
 
         # Wait to generate all Instances.
-        result = await asyncio.gather(promises)
+        if promises:
+            result = await asyncio.gather(*promises)
         return result
 
     def reset(self):

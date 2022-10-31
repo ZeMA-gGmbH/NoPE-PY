@@ -2,8 +2,8 @@
 
 import asyncio
 
-from ...helpers import avgOfArray, ensureDottedAccess, maxOfArray, minOfArray
-from ...logger import getNopeLogger
+from nope.helpers import avgOfArray, ensureDottedAccess, maxOfArray, minOfArray
+from nope.logger import getNopeLogger
 
 logger = getNopeLogger('baseService')
 
@@ -76,7 +76,8 @@ async def generatePingAccessors(dispatcher):
         for target in dispatchers:
             promises.append(determinePing(target))
 
-        pings = await asyncio.gather(promises)
+        if promises:
+            pings = await asyncio.gather(*promises)
 
         avg = avgOfArray(pings, "ping")
         max = maxOfArray(pings, "ping")

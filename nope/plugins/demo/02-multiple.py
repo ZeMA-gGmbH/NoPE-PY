@@ -3,22 +3,12 @@ from nope import getLayer, EXECUTOR, getDispatcher
 from nope.plugins import install, plugin
 
 """
-This is an Example how to extend the behavior of any class inside of Nope.
+You can although combine different plugins for 1 element.
 
-Therefore we define a function (extend) which receives one Parameter, the
-module which is located under the given path. This module must contain
-the loaded class or function. We have to decorate the function with the
-’plugin' decorator (which receives the path as parameter).
+Therefore the install method will receive instead of a plugin
+a list of plugins. The tool will apply the installation using
+the provided order.
 
-Inside of the function we are able to access the original class using the
-module.*ACCESSOR*. In the example below we create an extra function
-"hello_dynamic" which will just give us a simple hello world response.
-
-Additional you are able to "store" functions into the module (see our
-extend function).
-
-If you want to manipulate specific vars --> please use a dict. for the
-key use the name of the variable you want to edit.
 """
 
 
@@ -43,9 +33,6 @@ def extend_1(module):
     return NopeRpcManager, hello_dynamic, hello_dynamic_vars
 
 
-install(nope, extend_1, plugin_dest="nope.dispatcher.rpcManager")
-
-
 @plugin("nope.dispatcher.rpcManager")
 def extend_2(module):
     "Extends `module` - rpcManager"
@@ -55,26 +42,50 @@ def extend_2(module):
             print("calling perform call - extend 2")
             try:
                 return await module.NopeRpcManager.performCall(self, *args, **kwargs)
-            except BaseException:
+            except:
                 print("Failed but we got the error")
 
     return NopeRpcManager
 
 
+    
+"""
+In our case the plugin 1 is loaded first and then the second (extend_2)
+In the method 'performCall' of the 'NopeRpcManager' this results in loading
+the latest plugin first (extend_2) accessing the 'module.NopeRpcManager' inside
+of 'extend_2' returns you the already modified 'NopeRpcManager' with plugin 1
+(extend 1)
+
+If we call the method
+>>> await manager.performCall("hello_srv", ["reader"])
+calling perform call - extend 2
+calling perform call - extend 1
+Failed but we got the error
+"""
+
 install(nope, [extend_1, extend_2], plugin_dest="nope.dispatcher.rpcManager")
+
+# The following main is just for clearification
 
 
 async def main():
 
+    # Create our dispatcher
     dispatcher = getDispatcher({
         "communicator": await getLayer("event"),
         "logger": False,
     })
+
     manager = dispatcher.rpcManager
     await dispatcher.ready.waitFor()
 
     manager.hello_dynamic()
-    await manager.performCall("test", ["should be logged"])
+    await manager.performCall("hello_srv", ["reader"])
+    # If we call the method
+    # >>> await manager.performCall("hello_srv", ["reader"])
+    # calling perform call - extend 2
+    # calling perform call - extend 1
+    # Failed but we got the error
 
     # Now we are able to access our variable
     print(nope.dispatcher.rpcManager.hello)

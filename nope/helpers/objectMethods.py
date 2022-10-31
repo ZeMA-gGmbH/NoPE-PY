@@ -186,7 +186,29 @@ def convertData(data, props):
     return list(helper.values())
 
 
-def rsetattr(data, path: str, value, _SPLITCHAR: str = SPLITCHAR):
+def _set(obj, accessor: str, value):
+    try:
+        obj[accessor] = value
+    except BaseException as E:
+        try:
+            setattr(obj, accessor, value)
+        except BaseException as E:
+            raise E
+
+
+def _get(obj, accessor, return_none=False):
+    try:
+        return obj[accessor]
+    except BaseException as E:
+        try:
+            return getattr(obj, accessor)
+        except BaseException as E:
+            if return_none:
+                return None
+            raise E
+
+
+def _rsetattr(data, path: str, value, splitchar: str = SPLITCHAR):
     """ unction to Set recursely a Attribute of an Object
 
     Args:
@@ -198,18 +220,14 @@ def rsetattr(data, path: str, value, _SPLITCHAR: str = SPLITCHAR):
 
     obj = data
 
-    ptrs = path.split(_SPLITCHAR)
+    ptrs = path.split(splitchar)
 
     for idx, attr in enumerate(ptrs[0:-1]):
         # Adapt the Object by going through a loop
-        sub = None
 
         accessor = int(attr) if isInt(attr) else attr
 
-        try:
-            sub = obj[accessor]
-        except BaseException:
-            pass
+        sub = _get(obj, accessor, return_none=True)
 
         if isinstance(obj, list):
             length = len(obj)
@@ -224,22 +242,22 @@ def rsetattr(data, path: str, value, _SPLITCHAR: str = SPLITCHAR):
 
             nextIsInt = isInt(nextAccessor)
 
-            if isinstance(obj, list):
-                if nextIsInt:
-                    obj[accessor] = [None] * (int(nextAccessor) + 1)
-                else:
-                    obj[accessor] = DottedDict({})
+            if nextIsInt:
+                _set(obj, accessor, [None] * (int(nextAccessor) + 1))
             else:
-                if nextIsInt:
-                    obj[accessor] = [None] * (int(nextAccessor) + 1)
-                else:
-                    obj[accessor] = DottedDict({})
+                _set(obj, accessor, DottedDict({}))
 
-            sub = obj[accessor]
+            sub = _get(obj, accessor)
 
         obj = sub
 
-    obj[ptrs[len(ptrs) - 1]] = value
+    try:
+        obj[ptrs[len(ptrs) - 1]] = value
+    except BaseException as E:
+        try:
+            sub = setattr(obj, ptrs[len(ptrs) - 1], value)
+        except BaseException as E:
+            raise E
 
 
 def isInt(value) -> bool:
@@ -360,7 +378,7 @@ def deflattenObject(flattenObject, options=None):
     for key, val in flattenObject.items():
         if _options.prefix != '':
             key = key[len(_options.prefix):]
-        rsetattr(ret, key, val, _options.splitchar)
+        _rsetattr(ret, key, val, _options.splitchar)
 
     return ret
 
@@ -408,7 +426,7 @@ def deepAssign(target, source):
     for iter_item in flattend.entries():
         path = iter_item[0]
         value = iter_item[1]
-        rsetattr(target, path, value)
+        _rsetattr(target, path, value)
     return target
 
 
@@ -487,7 +505,7 @@ def keepProperties(obj, properties):
                 valueToAssign = copy(value)
             else:
                 valueToAssign = properties[key]()
-            rsetattr(ret, key, valueToAssign)
+            _rsetattr(ret, key, valueToAssign)
 
         return ret
     raise Exception('Function can only create Objects')

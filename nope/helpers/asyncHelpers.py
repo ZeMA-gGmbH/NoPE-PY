@@ -132,6 +132,7 @@ class NopeExecutor:
             Future | Task: The item.
         """
         if isinstance(todo, (asyncio.Task, asyncio.Future)):
+            
             self._todos.add(todo)
 
             def remove(*args, **kwargs):
@@ -154,7 +155,7 @@ class NopeExecutor:
         function_to_use = self.wrapFuncIfRequired(func)
 
         async def timeout():
-            try:
+            try:                
                 await asyncio.sleep(timeout_ms / 1000.0)
                 await function_to_use(*args, **kwargs)
             except Exception as error:
@@ -246,7 +247,7 @@ class NopeExecutor:
 
 
 EXECUTOR = NopeExecutor()
-EXECUTOR.useThreadPool()
+# EXECUTOR.useThreadPool()
 
 
 def Promise(callback):
@@ -258,7 +259,7 @@ def Promise(callback):
     Returns:
         Future: The awaitable Future.
     """
-    future = EXECUTOR.loop.create_future()
+    future = EXECUTOR.generatePromise()
 
     def reject(error):
         if future.done():

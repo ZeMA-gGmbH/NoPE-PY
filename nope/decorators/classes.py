@@ -1,4 +1,4 @@
-from ..helpers import ensureDottedAccess
+from nope.helpers import ensureDottedAccess
 
 
 def _class_decorator_factory(storing_type: str):

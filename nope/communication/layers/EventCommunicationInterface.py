@@ -1,5 +1,5 @@
-from ...helpers import Emitter, generateId
-from ...observable import NopeObservable
+from nope.helpers import Emitter, generateId
+from nope.observable import NopeObservable
 
 import time
 

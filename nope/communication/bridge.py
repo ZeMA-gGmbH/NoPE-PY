@@ -1,14 +1,14 @@
-from ..helpers import Emitter, generateId, keysToCamelNested, formatException, keysToSnakeNested, ensureDottedAccess, snakeToCamel, camelToSnake, pathToCamelCase, EXECUTOR, pathToSnakeCase
-from ..logger import defineNopeLogger
-from ..observable import NopeObservable
-from .layers import AbstractLayer
-from .abstractBridgePlugin import AbstractBridgePlugin
+from nope.helpers import Emitter, generateId, keysToCamelNested, formatException, keysToSnakeNested, ensureDottedAccess, snakeToCamel, camelToSnake, pathToCamelCase, EXECUTOR, pathToSnakeCase
+from nope.logger import defineNopeLogger
+from nope.observable import NopeObservable
+from nope.communication.layers import AbstractLayer
+from nope.communication.abstractBridgePlugin import AbstractBridgePlugin
 import asyncio
 
 
 class Bridge:
 
-    def __init__(self, _id=generateId(), logger=False, plugins=[]):
+    def __init__(self, _id=generateId(), logger=False):
 
         def getter(storedValue):
             for data in self._layers.values():
@@ -28,10 +28,7 @@ class Bridge:
 
         self.connected = NopeObservable()
         self.connected.setContent(False)
-        self.connected.getter = getter
-
-        # Create a container holding plugins
-        self._plugins = plugins if plugins is not None else []
+        self.connected.getter = getter        
 
         self._subscribedEvents = dict()
 
@@ -46,65 +43,11 @@ class Bridge:
     def id(self):
         return self._id
 
-    async def addPlugin(self, plugin: AbstractBridgePlugin):
-        """ Helperfunction, to add an plugin during runtime.
-
-        Args:
-            plugin (AbstractBridgePlugin): A Plugin implementing the defined interface.
-        """
-
-        # Wait until our plugin is ready.
-        await plugin.ready.waitFor()
-
-        # Now we have to readapt our subscriptions.
-        subscription = self._subscribedEvents.copy()
-
-        promises = []
-        # Therefore we will firstly remove them:
-        for event in subscription:
-            original = subscription[event]["original"]
-            adapted = subscription[event]["adapted"]
-
-            for layer in self._layers:
-                promises.append(layer.off())
-
-            self._internalEmitter.off(event, adapted)
-
-        await asyncio.gather(promises)
-
-        # Now we will add the plugin and resubscribe again
-        self._plugins.append(plugin)
-
-        # Therefore we will firstly remove them:
-        for event in subscription:
-            original = subscription[event]["original"]
-
-            await self.on(event, original)
-
     async def on(self, eventName: str, cb):
-        if self._plugins:
-            for plugin in self._plugins:
-                if hasattr(plugin, "transformCallback"):
-                    eventName, cb = await plugin.transformCallback(eventName, cb)
         return await self._on(eventName, lambda data: cb(ensureDottedAccess(data)))
 
     async def emit(self, eventName: str, data, **kwargs):
-        promises = []
-        if self._plugins:
-            for plugin in self._plugins:
-                if hasattr(plugin, "transformData"):
-                    eventName, data, promise = await plugin.transformData(eventName, data, **kwargs)
-                    if promise is not None:
-                        promises.append(promise)
-
-        result = await self._emit(eventName, None, ensureDottedAccess(data))
-
-        # if we contain some data in the promises,
-        # we wait for them to finish
-        if promises:
-            asyncio.gather(promises)
-
-        return result
+        return await self._emit(eventName, None, ensureDottedAccess(data))
 
     def detailListeners(self, t, listeners):
         raise Exception('Method not implemented.')
@@ -155,7 +98,8 @@ class Bridge:
                         data.layer, event, data.forwardData))
 
         # Now wait for every Layer.
-        await asyncio.gather(promises)
+        if promises:
+            await asyncio.gather(*promises)
 
     async def _emit(self, event, toExclude, dataToSend=None, force=False):
         if self._logger and event != 'StatusChanged':
@@ -183,7 +127,8 @@ class Bridge:
                 promises.append(emitOnLayer())
 
         # Now wait for all Layers to emit
-        await asyncio.gather(promises)
+        if promises:
+            await asyncio.gather(*promises)
 
     async def addCommunicationLayer(self, layer, forwardData=False, considerConnection=False):
         if layer.id not in self._layers:
