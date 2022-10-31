@@ -132,7 +132,7 @@ class NopeExecutor:
             Future | Task: The item.
         """
         if isinstance(todo, (asyncio.Task, asyncio.Future)):
-            
+
             self._todos.add(todo)
 
             def remove(*args, **kwargs):
@@ -155,7 +155,7 @@ class NopeExecutor:
         function_to_use = self.wrapFuncIfRequired(func)
 
         async def timeout():
-            try:                
+            try:
                 await asyncio.sleep(timeout_ms / 1000.0)
                 await function_to_use(*args, **kwargs)
             except Exception as error:
@@ -274,7 +274,7 @@ def Promise(callback):
         future.set_result(value)
 
     # Now we want call the callback in an extra thread.
-    EXECUTOR.callParallel(callback, resolve, reject)
+    callback(resolve, reject)    
 
     return future
 

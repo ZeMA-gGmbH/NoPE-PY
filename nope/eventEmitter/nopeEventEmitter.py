@@ -100,7 +100,7 @@ class NopeEventEmitter:
         # Convert our Options.
 
         _options = ensureDottedAccess({
-            'testCurrent': True, 
+            'testCurrent': True,
             "timeout": 0
         })
         _options.update(ensureDottedAccess(options))
@@ -122,12 +122,11 @@ class NopeEventEmitter:
             first = True
             resolved = False
 
-            def finish(err, sucessfull, data, timedout = False):
+            def finish(err, sucessfull, data, timedout):
                 nonlocal first
                 nonlocal resolved
                 nonlocal subscription
                 nonlocal timeout
-
 
                 if err:
                     reject(err)
@@ -135,7 +134,7 @@ class NopeEventEmitter:
                     if subscription:
                         subscription.unsubscribe()
                         subscription = None
-                    
+
                     if timeout and not timedout:
                         timeout.cancel()
                 elif sucessfull:
@@ -162,23 +161,23 @@ class NopeEventEmitter:
                         def done(p: Future):
                             nonlocal first
                             first = False
-                            
-                            if p.done():
-                                finish(False, True, p.result())
-                            if p.exception():
-                                finish(p.exception(), False, False)
 
+                            if p.done():
+                                finish(False, True, p.result(), False)
+                            if p.exception():
+                                finish(p.exception(), False, False, False)
 
                         prom.add_done_callback(done)
                     else:
                         result = testCallback(value, rest)
-                        finish(False, result, value)
+                        finish(False, result, value, False)
 
                         first = False
 
             try:
                 if _options.timeout > 0:
-                    timeout = EXECUTOR.setTimeout(finish, _options.timeout, TimeoutError("Time elapsed"), False, False, True)
+                    timeout = EXECUTOR.setTimeout(
+                        finish, _options.timeout, TimeoutError("Time elapsed"), False, False, True)
 
                 subscription = self.subscribe(check_data)
             except BaseException:

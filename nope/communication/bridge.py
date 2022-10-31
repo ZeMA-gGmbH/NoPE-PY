@@ -28,7 +28,7 @@ class Bridge:
 
         self.connected = NopeObservable()
         self.connected.setContent(False)
-        self.connected.getter = getter        
+        self.connected.getter = getter
 
         self._subscribedEvents = dict()
 

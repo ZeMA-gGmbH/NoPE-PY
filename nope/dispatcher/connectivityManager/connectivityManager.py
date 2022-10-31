@@ -200,7 +200,7 @@ class NopeConnectivityManager:
                     self._logger.debug(
                         'Remote Dispatcher "' + opts.dispatcherId + '" went online')
                 # Ensure Sending our Message
-                EXECUTOR.callParallel(self._asyncSendStatus,forced = True)
+                EXECUTOR.callParallel(self._asyncSendStatus, forced=True)
 
         await self._communicator.on('bonjour', onBonjour)
 

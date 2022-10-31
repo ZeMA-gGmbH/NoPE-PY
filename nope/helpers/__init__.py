@@ -87,4 +87,3 @@ from .stringMethods import (camelToSnake, insert, insert_new_lines,
 from .timers import setInterval, setTimeout
 
 from .timestamp import getTimestamp
-

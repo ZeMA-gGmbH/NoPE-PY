@@ -1,10 +1,11 @@
 
-""" An example how to modify the 
+""" An example how to modify the
 """
 
 from nope.plugins import plugin
 from nope.helpers import generateId, Promise, EXECUTOR, ensureDottedAccess
 from nope.eventEmitter import NopeEventEmitter
+
 
 @plugin("nope.communication.bridge")
 def extend(module):
@@ -13,7 +14,7 @@ def extend(module):
         def __init__(self, *args, **kwargs):
             module.Bridge.__init__(self, *args, **kwargs)
 
-            # Define 
+            # Define
             self.onTransportError = NopeEventEmitter()
             self._onMessageReceived = NopeEventEmitter()
 
@@ -22,7 +23,10 @@ def extend(module):
             self._openMessages = {}
 
             # Make shure to forward ackknowledge messages.
-            EXECUTOR.callParallel(self.on, "ackMessage", lambda msg: self._onMessageReceived.emit(msg))
+            EXECUTOR.callParallel(
+                self.on,
+                "ackMessage",
+                lambda msg: self._onMessageReceived.emit(msg))
 
         async def emit(self, eventName, data, target=None, timeout=0, **kwargs):
             promise = None
@@ -41,30 +45,33 @@ def extend(module):
                     else:
                         target = set(target)
 
-                # Only if we expect a target, 
+                # Only if we expect a target,
                 # we will wait for the message.
                 if len(target) > 0:
 
                     def callback(msg, *args):
                         nonlocal messageId
 
-                        if msg.get("messageId", False) == messageId and messageId in self._onMessageReceived:
-                            
-                            data = self._onMessageReceived.get(messageId, False)
-                            
+                        if msg.get(
+                                "messageId", False) == messageId and messageId in self._openMessages:
+
+                            data = self._openMessages.get(
+                                messageId, False)
+
                             # Mark the Dispatcher as ready:
                             data["received"].add(msg["dispatcher"])
 
                             if len(data["target"] - data["received"]) == 0:
 
                                 # Remove the Message, becaus it is finished
-                                self._onMessageReceived.pop(messageId)
+                                self._openMessages.pop(messageId)
 
                                 return True
 
                         return False
 
-                    promise = self._onMessageReceived.waitFor(callback, options={"timeout": timeout})
+                    promise = self._onMessageReceived.waitFor(
+                        callback, options={"timeout": timeout})
 
                     # Store the Message
                     self._openMessages[messageId] = {
@@ -76,13 +83,13 @@ def extend(module):
             res = await module.Bridge.emit(self, eventName, data, **kwargs)
 
             if promise:
-                await promise0
+                await promise
 
             return eventName, data, None
 
         async def on(self, eventName, cb):
             # In here we will define a custom callback,
-            # which will send an "ackMessage" after 
+            # which will send an "ackMessage" after
             # performing the original callback.
 
             if eventName == "ackMessage":

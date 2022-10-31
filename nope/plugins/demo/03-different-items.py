@@ -1,3 +1,4 @@
+from nope import getLayer, EXECUTOR, getDispatcher
 import nope
 from asyncio import sleep
 from nope.plugins import install, plugin
@@ -42,13 +43,12 @@ def extend_2(module):
             print("calling perform call - from ")
             try:
                 return await self.rpcManager.performCall(self, *args, **kwargs)
-            except:
+            except BaseException:
                 print("Failed but we got the error")
 
     return NopeDispatcher
 
 
-    
 """
 In our case the plugin 1 is loaded first and then the second (extend_2)
 In the method 'performCall' of the 'NopeRpcManager' this results in loading
@@ -62,12 +62,13 @@ calling perform call - extend 1
 Failed but we got the error
 """
 
-nope, updated, skipped = install(nope, extend_1, plugin_dest="nope.dispatcher.rpcManager")
-nope, updated, skipped = install(nope, extend_2, plugin_dest="nope.dispatcher.nopeDispatcher")
+nope, updated, skipped = install(
+    nope, extend_1, plugin_dest="nope.dispatcher.rpcManager")
+nope, updated, skipped = install(
+    nope, extend_2, plugin_dest="nope.dispatcher.nopeDispatcher")
 
 # The following main is just for clearification
 
-from nope import getLayer, EXECUTOR, getDispatcher
 
 async def main():
 

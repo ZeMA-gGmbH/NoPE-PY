@@ -26,7 +26,7 @@ key use the name of the variable you want to edit.
 def extend(module):
     "Extends `module` - rpcManager"
     def getTimestamp(options=None) -> str:
-        return module.getTimestamp()+500
+        return module.getTimestamp() + 500
     return getTimestamp
 
 

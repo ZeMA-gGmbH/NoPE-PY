@@ -24,13 +24,25 @@ our plugin (`nope.plugins.hello`).
 """
 
 import imp
-import sys, importlib
+import sys
+import importlib
 import inspect
 from functools import wraps
 
 from nope.helpers import flattenObject
+from nope.logger import getNopeLogger
+
+_LOGGER = getNopeLogger("plugin-system")
+
 
 def _set(obj, accessor: str, value):
+    """ Helper to set items.
+
+    Args:
+        obj: Object to manipulate
+        accessor (str): The Attribute to change
+        value (_type_): The value to use.
+    """
     try:
         obj[accessor] = value
     except BaseException as E:
@@ -40,7 +52,7 @@ def _set(obj, accessor: str, value):
             raise E
 
 
-def _get(obj, accessor: str, prevent_to_load: str):    
+def _get(obj, accessor: str, prevent_to_load: str):
     ret = None
     additional_module = False
     try:
@@ -60,19 +72,20 @@ def _get(obj, accessor: str, prevent_to_load: str):
 
         if src == prevent_to_load:
             # Wir laden unser addon.
-            # Das wenn wir dies erneut laden ==> 
-            # wir können den File öfters. 
-            return ret, additional_module 
+            # Das wenn wir dies erneut laden ==>
+            # wir können den File öfters.
+            return ret, additional_module
 
         spec = importlib.util.spec_from_file_location(ret.__module__, src)
-        ret = importlib.util.module_from_spec(spec)                
+        ret = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(ret)
 
-        # Wir geben jetzt noch an, dass wir 
+        # Wir geben jetzt noch an, dass wir
         # ein zusätzl. modul manipulieren.
         additional_module = True
 
     return ret, additional_module
+
 
 def _rsetattr(data, path: str, value, prevent_to_load: str):
     """ Function to Set recursely a Attribute of an Object/Module
@@ -95,7 +108,7 @@ def _rsetattr(data, path: str, value, prevent_to_load: str):
     # werden, dass diese Anpassungen dabei auch erfolgen.
     loaded_extra = []
 
-    # Schleife die über die einzlenen Segmente iteriert.    
+    # Schleife die über die einzlenen Segmente iteriert.
     for idx, accessor in enumerate(ptrs[0:-1]):
 
         # Wir bekommen das submodul. Wenn der accessor
@@ -103,7 +116,6 @@ def _rsetattr(data, path: str, value, prevent_to_load: str):
         # das modul geladen, welches die funktion enthält.
         # Diese wird dann über "loaded_module" angezeigt
         sub, loaded_module = _get(obj, accessor, prevent_to_load)
-
 
         if loaded_module:
             # Wenn wir dyn. das modul welches die funktion
@@ -120,21 +132,23 @@ def _rsetattr(data, path: str, value, prevent_to_load: str):
             _set(obj, accessor, DottedDict({}))
             # Now extract the dict.
             sub = obj[accessor]
-            print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Impelemnation Error")
+            _LOGGER.warn(
+                "Watchout. You are using the plugin-system. The code reached an untested code-sections. Please contact m.karkowski@zema.de")
 
         # Nun gehen wir mit dem nächsten segment des pfades
-        # genau so vor. 
+        # genau so vor.
         obj = sub
 
-    # Wir haben unser ziel erreicht und weisen nur noch 
+    # Wir haben unser ziel erreicht und weisen nur noch
     # das element zu.
     _set(obj, last_path_segment, value)
 
     # Falls wir funktionen geändert haben nehmen wir dann die neue
     # definition der methode und weisen sie den aktuellen modulen zu.
     # Sicherheitshalber machen wir dies in negativer reihenfolge.
-    for o,a,v in reversed(loaded_extra):
-        _set(o,a,getattr(v, a))
+    for o, a, v in reversed(loaded_extra):
+        _set(o, a, getattr(v, a))
+
 
 def _update(module, objects):
     """ Update the module based on the given adapted items. This might be
@@ -198,7 +212,7 @@ def _getOccurence(lib, lib_name: str, occurence=None, orignal_srcs=None, refs=No
 
     if not libName.startswith(lib_name):
         return occurence, orignal_srcs, refs
-    
+
     l = inspect.getmembers(lib)
 
     for name, obj in inspect.getmembers(lib):
@@ -206,36 +220,37 @@ def _getOccurence(lib, lib_name: str, occurence=None, orignal_srcs=None, refs=No
         if name == "getTimestamp":
             pass
 
-
         if name.startswith("_"):
             continue
-    
+
         elif inspect.ismodule(obj) or inspect.isfunction(obj):
 
             obj_to_use = obj
             _is_func = False
 
-            if inspect.isfunction(obj) and obj.__module__.startswith(lib_name):    
-                
+            if inspect.isfunction(obj) and obj.__module__.startswith(lib_name):
+
                 if obj.__module__ != libName:
 
                     # Magic:
-                    # Wenn wir mit einer funktion arbeiten -> 
+                    # Wenn wir mit einer funktion arbeiten ->
                     # dann müssen wir das dazu gehörige module laden
-                    # in dem die funktion definiert wird. 
+                    # in dem die funktion definiert wird.
 
                     # Dies ist aber nur erforderlich, falls wir nicht
                     # schon das selbe modul betrachten, ansonsten werden
                     # die darin definierten Funktionen erkannt und das modul
-                    # wieder geladen --> Endlos schleife. (Dies fangen wir 
+                    # wieder geladen --> Endlos schleife. (Dies fangen wir
                     # über die If-condition ab)
 
                     src = inspect.getsourcefile(obj)
-                    spec = importlib.util.spec_from_file_location(obj.__module__, src)
-                    mod = importlib.util.module_from_spec(spec)                
+                    spec = importlib.util.spec_from_file_location(
+                        obj.__module__, src)
+                    mod = importlib.util.module_from_spec(spec)
                     spec.loader.exec_module(mod)
 
-                    # Das modul ist nun geladen -> wir werden dieses analysieren.
+                    # Das modul ist nun geladen -> wir werden dieses
+                    # analysieren.
                     obj_to_use = mod
 
                     _is_func = True
@@ -246,27 +261,27 @@ def _getOccurence(lib, lib_name: str, occurence=None, orignal_srcs=None, refs=No
 
                 # Wir speichern noch das vorkommen der Nutzung.
                 if name not in occurence:
-                    occurence[name] = set()                
+                    occurence[name] = set()
                 occurence[name].add(pre_path)
 
-                # Wir stellen zudem sicher, dass wir das original gespeicher haben.
-                orignal_srcs[name] = obj.__module__            
+                # Wir stellen zudem sicher, dass wir das original gespeicher
+                # haben.
+                orignal_srcs[name] = obj.__module__
 
             if not obj_to_use or inspect.isbuiltin(obj_to_use):
                 # Falls es sich um ein builtin handel oder
                 # wir vorher gesagt haben dass das modul
-                # uninteressant ist --> Wir skippen den nächsten 
+                # uninteressant ist --> Wir skippen den nächsten
                 # schritt
                 continue
             try:
                 src = inspect.getsourcefile(obj_to_use)
 
                 if lib_name not in src:
-                    # Mit dieser Funktion fangen wir 
+                    # Mit dieser Funktion fangen wir
                     # andere Libraries ab, die wir hier
                     # nicht betrachten wollen
                     continue
-                
 
                 # Wir haben nun eine relevante library analysiere diese
                 # rekursiv.
@@ -280,11 +295,11 @@ def _getOccurence(lib, lib_name: str, occurence=None, orignal_srcs=None, refs=No
                     path_segment + name,
                     max_recursion,
                     current_depth + 1
-                )                   
+                )
             except BaseException:
                 # Wenn dabei was schief läuft
                 # logge den error.
-                pass   
+                pass
 
         else:
             if name not in occurence:
@@ -307,18 +322,19 @@ def install(lib, plugins, plugin_dest: str = None, new_pkg_name: str = None):
         new_pkg_name (str, optional): Name unterdem das Update gespeicher werden soll (nur partial die Änderung). Defaults to None.
 
     Returns:
-        (module, list(str), list(str)): Die angepasste lib (Inline edit -> wird nicht benötigt), Liste mit geupdaten Referenzen, Liste mir dem originalen Elementen. 
+        (module, list(str), list(str)): Die angepasste lib (Inline edit -> wird nicht benötigt), Liste mit geupdaten Referenzen, Liste mir dem originalen Elementen.
     """
-
 
     to_be_plugged = None
     mainLib = None
     mainLibName = None
     deltaPath = None
 
-    # Damit wir nicht unseren eigene datei laden, 
+    # Damit wir nicht unseren eigene datei laden,
     # extrahieren wir diese.
-    prevent_to_load =inspect.stack()[1].filename
+    prevent_to_load = inspect.stack()[1].filename
+
+    _LOGGER.warn(f"Using plugin installed started at '{prevent_to_load}'")
 
     if isinstance(lib, str):
         mainLib = __import__(lib, fromlist=["__name__"])
@@ -351,16 +367,18 @@ def install(lib, plugins, plugin_dest: str = None, new_pkg_name: str = None):
     # Dict, welches die Änderungen speichert, die uns vorliegen.
     changed = dict()
 
-    # Wir iterieren über die Plugins und wenden diese auf die 
+    # Wir iterieren über die Plugins und wenden diese auf die
     # Quelle an.
     for plugin in plugins:
+
         if isinstance(plugin, str):
             plugin = __import__(plugin, fromlist=["__name__"])
 
-        # Wir wenn (basierend auf dem Typ (dynamisch / statisch)) 
+        # Wir wenn (basierend auf dem Typ (dynamisch / statisch))
         # an. Damit ändern wir die Libary und die quelle
         if inspect.isfunction(plugin):
-            mainLib, to_be_plugged, changed = plugin(mainLib, deltaPath, to_be_plugged, changed)
+            mainLib, to_be_plugged, changed = plugin(
+                mainLib, deltaPath, to_be_plugged, changed)
         else:
             mainLib, to_be_plugged, changed = plugin.extend(
                 mainLib, deltaPath, to_be_plugged, changed)
@@ -373,7 +391,7 @@ def install(lib, plugins, plugin_dest: str = None, new_pkg_name: str = None):
     updated = []
     skipped = []
 
-    # Nun wissen wir was sich geändert hat und wir müssen diese 
+    # Nun wissen wir was sich geändert hat und wir müssen diese
     # Änderungen im Modul implementieren:
     for name, adapted in changed.items():
 
@@ -385,14 +403,10 @@ def install(lib, plugins, plugin_dest: str = None, new_pkg_name: str = None):
             if destPath != mainLibName:
                 set_path = destPath[len(mainLibName) + 1:] + "." + name
 
-        
             _rsetattr(mainLib, set_path, adapted, prevent_to_load)
 
         else:
             # We are adding an alread existing item.
-
-            a = occourenceDict.get("getDispatcher",False)
-
             occourence = occourenceDict.get(name, set())
 
             for path in occourence:
@@ -414,7 +428,7 @@ def install(lib, plugins, plugin_dest: str = None, new_pkg_name: str = None):
                     skipped.append(set_path)
                     continue
 
-                # We now update the lib item.                
+                # We now update the lib item.
                 _rsetattr(mainLib, set_path, adapted, prevent_to_load)
                 updated.append(set_path)
 

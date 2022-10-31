@@ -37,10 +37,10 @@ def _perform_init(dispatcher: NopeDispatcher, options):
 class NopeDispatcherSingleton(object):
     _instance = None
 
-    def __new__(cls, options):
+    def __new__(cls, options, id=None):
         if cls._instance is None:
             # Assign a Class
-            cls._instance = _perform_init(NopeDispatcher(options))
+            cls._instance = _perform_init(NopeDispatcher(options, id=id))
 
             # Put any initialization here.
         return cls._instance
@@ -52,10 +52,13 @@ def getDispatcher(
     """Function, which woll return a nope-dispatcher
     """
 
-    options = ensureDottedAccess(options)
+    options = ensureDottedAccess(options, useNoneAsDefaultValue=True)
+    dispatcherOptions = ensureDottedAccess(dispatcherOptions)
+
+    id = dispatcherOptions.communicator.id
 
     if options.singleton:
-        return NopeDispatcherSingleton(dispatcherOptions)
+        return NopeDispatcherSingleton(dispatcherOptions, id)
 
     # Create the Dispatcher Instance.
-    return _perform_init(NopeDispatcher(dispatcherOptions), options)
+    return _perform_init(NopeDispatcher(dispatcherOptions, id=id), options)

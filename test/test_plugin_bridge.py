@@ -1,4 +1,6 @@
 import nope
+import pytest
+import asyncio
 from asyncio import sleep
 from nope.plugins import install, plugin
 
@@ -10,26 +12,40 @@ Therefore we know
 """
 
 #install(nope, "nope.plugins.hello", plugin_dest="nope.dispatcher.rpcManager")
-nope, _, __ = install(nope, "nope.plugins.ack_messages", plugin_dest="nope.communication.bridge")
+nope, _, __ = install(nope, "nope.plugins.ack_messages",
+                      plugin_dest="nope.communication.bridge")
 
 
-from nope import getLayer, EXECUTOR, getDispatcher
+@pytest.fixture
+def event_loop():
+    loop = asyncio.new_event_loop()
+    nope.EXECUTOR.assignLoop(loop)
+    yield loop
+    loop.close()
 
-async def main():
+async def test_bridge_plugin():
 
-    dispatcher = getDispatcher({
-        "communicator": await getLayer("event"),
+    dispatcher = nope.getDispatcher({
+        "communicator": await nope.getLayer("event"),
         "logger": False,
     })
 
     await dispatcher.ready.waitFor()
 
-    await dispatcher.communicator.emit("test", {"data":"test-data"} ,target="will never be there", timeout = 1000.0 )
-    print("Failed")
+    def sub(*args):
+        print(*args)
+
+    print(dispatcher.id)
+
+    await dispatcher.communicator.on("test", sub)
+    await dispatcher.communicator.emit("test", {"data": "test-data-1"}, target=dispatcher.id, timeout=1.0)
     await sleep(1)
-    pass
+    ex = Exception("Failed")
+    try:
+        await dispatcher.communicator.emit("test", {"data": "test-data-2"}, target="Wont possible", timeout=1.0)
+        raise ex
+    except Exception as e:
+        if e == ex:
+            raise ex
 
-    
-
-
-EXECUTOR.loop.run_until_complete(main())
+nope.EXECUTOR.loop.run_until_complete(test_bridge_plugin())

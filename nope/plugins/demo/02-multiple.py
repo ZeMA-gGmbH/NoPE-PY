@@ -42,13 +42,12 @@ def extend_2(module):
             print("calling perform call - extend 2")
             try:
                 return await module.NopeRpcManager.performCall(self, *args, **kwargs)
-            except:
+            except BaseException:
                 print("Failed but we got the error")
 
     return NopeRpcManager
 
 
-    
 """
 In our case the plugin 1 is loaded first and then the second (extend_2)
 In the method 'performCall' of the 'NopeRpcManager' this results in loading

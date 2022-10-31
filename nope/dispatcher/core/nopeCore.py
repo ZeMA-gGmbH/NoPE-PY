@@ -63,7 +63,9 @@ class NopeCore:
             self.logger.info('setting up sub-systems.')
 
         self.eventDistributor = PubSubSystem()
+        self.eventDistributor.id = self._id
         self.dataDistributor = DataPubSubSystem()
+        self.dataDistributor.id = self._id
 
         defaultSelector = generateSelector(
             _options.get("defaultSelector", "first"), self)
@@ -108,6 +110,10 @@ class NopeCore:
             lambda *args: self.ready.forcePublish())
 
         self.disposing = False
+
+    @property
+    def id(self):
+        return self._id
 
     async def dispose(self):
         self.disposing = True
