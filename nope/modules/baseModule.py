@@ -113,8 +113,8 @@ class BaseModule(object):
     def __init__(self, core):
         super().__init__()
 
-        if not hasattr(owner, "decoratedItems"):
-            setattr(owner, "decoratedItems", [])
+        if not hasattr(self, "decoratedItems"):
+            setattr(self, "decoratedItems", [])
 
         self._logger = getNopeLogger(self.__class__.__name__)
 

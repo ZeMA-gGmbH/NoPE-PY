@@ -187,7 +187,7 @@ class NopeInstanceManager:
 
         self.ready.setContent(True)
 
-    def getServiceName(name: str, type: str) -> str:
+    def getServiceName(self, name: str, type: str) -> str:
         """ Helper to get the corresponding Service name
 
         Args:
@@ -732,18 +732,24 @@ class NopeInstanceManager:
         # If Instances Exists => Delete them.
         if self._instances:
 
+            promises = []
+
             # Dispose all Instances.
-            for iter_item in self._instances.items():
-                name = iter_item[0]
-                instance = iter_item[1]
+            for name, instance in self._instances.items():
 
-                def callback_14(e):
-                    if self._logger:
-                        self._logger.error(
-                            'Failed Removing Instance "' + name + '"')
+                def onDone(p):
+                    if p.exception() and self._logger:
+                        self._logger.error('Failed Removing Instance "' + name + '"')
                         self._logger.error(e)
+                
+                promise: asyncio.Future = self.deleteInstance(name, True)
+                promise.add_done_callback(onDone)
 
-                    self.deleteInstance(name, True).catch(callback_14)
+
+                promises.append(promise)
+
+            EXECUTOR.callParallel(asyncio.gather,* promises)
+
         self._instances = dict()
         self._externalInstances = dict()
         self._internalInstances = set()
@@ -755,4 +761,6 @@ class NopeInstanceManager:
             self._sendAvailableInstances()
 
     async def dispose(self):
+        self.reset()
         self.instances.dispose()
+        

@@ -241,7 +241,7 @@ class NopeRpcManager:
 
         return False
 
-    def _sendAvailableServices(self):
+    async def _sendAvailableServices(self):
         """ Function used to update the Available Services.
         """
 
@@ -253,8 +253,7 @@ class NopeRpcManager:
         if self._logger:
             self._logger.debug("sending available services")
 
-        EXECUTOR.callParallel(self._communicator.emit,
-                              "servicesChanged", message)
+        await self._communicator.emit("servicesChanged", message)
 
     async def _init(self):
         self.ready.setContent(False)
@@ -292,7 +291,7 @@ class NopeRpcManager:
             if len(changes.added):
                 # If there are dispatchers online,
                 # We will emit our available services.
-                self._sendAvailableServices()
+                EXECUTOR.callParallel(self._sendAvailableServices)
             if len(changes.removed):
                 for rm in changes.removed:
                     self.removeDispatcher(rm)
@@ -394,7 +393,7 @@ class NopeRpcManager:
         raise Exception(
             "For the parameter 'type' the values: 'request' and 'response' are allowed!")
 
-    def unregisterService(self, func):
+    async def unregisterService(self, func):
         idOfFunc: str = ""
         if isinstance(func, str):
             if self.options.forceUsingValidVarNames:
@@ -404,19 +403,24 @@ class NopeRpcManager:
         else:
             idOfFunc = func.id
 
-        self._sendAvailableServices()
+        promise = self._sendAvailableServices()
 
         if self._logger:
             self._logger.debug(
                 f'Dispatcher "{self._id}" unregistered: "{idOfFunc}"')
-        return self._registeredServices.pop(idOfFunc)
+
+        ret = self._registeredServices.pop(idOfFunc, False)
+
+        await promise
+
+        return ret != False
 
     def _adaptServiceId(self, serviceName: str):
         if serviceName.startswith(f'nope{SPLITCHAR}service{SPLITCHAR}'):
             return serviceName
         return f'nope{SPLITCHAR}service{SPLITCHAR}{serviceName}'
 
-    def registerService(self, func, options):
+    async def registerService(self, func, options):
         options = ensureDottedAccess(options)
 
         # Define / Use the ID of the Function.
@@ -452,7 +456,7 @@ class NopeRpcManager:
             "func": wrapped
         })
 
-        self._sendAvailableServices()
+        await self._sendAvailableServices()
 
         if self._logger:
             self._logger.debug(
@@ -631,7 +635,7 @@ class NopeRpcManager:
     def reset(self):
         self.clearTasks()
         self.unregisterAll()
-        self._sendAvailableServices()
+        EXECUTOR.callParallel(self._sendAvailableServices)
 
     async def dispose(self):
         self.clearTasks()

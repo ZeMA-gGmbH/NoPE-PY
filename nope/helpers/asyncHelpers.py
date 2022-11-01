@@ -247,7 +247,7 @@ class NopeExecutor:
 
 
 EXECUTOR = NopeExecutor()
-# EXECUTOR.useThreadPool()
+EXECUTOR.useThreadPool()
 
 
 def Promise(callback):

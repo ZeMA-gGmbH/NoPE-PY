@@ -117,7 +117,7 @@ async def main():
 
     # await manager.dispose()
 
-if not IN_PY_TEST:
+if __name__ == "__main__":
     EXECUTOR.loop.run_until_complete(main())
     # EXECUTOR.loop.run_forever()
 
