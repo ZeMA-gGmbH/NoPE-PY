@@ -227,7 +227,9 @@ class NopeConnectivityManager:
             are determined, an update is transmitted via the attribute `dispatchers`
 
         """
-
+        
+        # If no other Dispatcher is present,
+        # This test is Obsolete
         if len(self._externalDispatchers) <= 1:
             return
 

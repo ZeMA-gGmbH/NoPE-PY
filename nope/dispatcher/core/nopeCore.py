@@ -17,19 +17,32 @@ class NopeCore:
 
         _options = ensureDottedAccess(_options)
 
-        def forwardEvent(item):
+        def forwardEvent(item, rest):
             if item.sender != rcvExternally:
-                self.communicator.emit('Event', ensureDottedAccess(
-                    {**item, 'sender': self._id}))
+                EXECUTOR.callParallel(
+                    self.communicator.emit,
+                    'event',
+                    ensureDottedAccess({
+                        **item,
+                        'sender': self._id
+                    })
+                )
 
-        def forwardData(item):
+        def forwardData(item, rest):
             if item.sender != rcvExternally:
-                self.communicator.emit('DataChanged', ensureDottedAccess(
-                    {**item, 'sender': self._id}))
+                EXECUTOR.callParallel(
+                    self.communicator.emit,
+                    'dataChanged',
+                    ensureDottedAccess({
+                        **item,
+                        'sender': self._id
+                    })
+                )
 
         def isReady(_):
-            return self.connectivityManager.ready.getContent(
-            ) and self.rpcManager.ready.getContent() and self.instanceManager.ready.getContent()
+            return self.connectivityManager.ready.getContent() \
+                and self.rpcManager.ready.getContent() \
+                and self.instanceManager.ready.getContent()
 
         def onEvent(msg):
             msg = ensureDottedAccess(msg)
@@ -94,10 +107,21 @@ class NopeCore:
         self.ready.getter = isReady
         rcvExternally = generateId()
 
-        EXECUTOR.callParallel(self.communicator.on, 'Event', onEvent)
+        EXECUTOR.callParallel(
+            self.communicator.on,
+            'event', 
+            onEvent
+        )
+
         self.eventDistributor.onIncrementalDataChange.subscribe(
             forwardEvent)
-        EXECUTOR.callParallel(self.communicator.on, 'DataChanged', onData)
+
+        EXECUTOR.callParallel(
+            self.communicator.on,
+            'dataChanged',
+            onData
+        )
+
         self.dataDistributor.onIncrementalDataChange.subscribe(
             forwardData)
 

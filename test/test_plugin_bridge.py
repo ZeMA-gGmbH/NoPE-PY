@@ -23,12 +23,16 @@ def event_loop():
     yield loop
     loop.close()
 
+
 async def test_bridge_plugin():
 
     dispatcher = nope.getDispatcher({
         "communicator": await nope.getLayer("event"),
         "logger": False,
     })
+
+    # To make our Plugin work -> we have to manually assign the id
+    dispatcher.communicator.ackReplyId = dispatcher.id
 
     await dispatcher.ready.waitFor()
 
@@ -48,4 +52,6 @@ async def test_bridge_plugin():
         if e == ex:
             raise ex
 
-nope.EXECUTOR.loop.run_until_complete(test_bridge_plugin())
+
+if __name__ == "__main__":
+    nope.EXECUTOR.loop.run_until_complete(test_bridge_plugin())

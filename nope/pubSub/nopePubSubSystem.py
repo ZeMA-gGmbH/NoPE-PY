@@ -208,7 +208,7 @@ class PubSubSystem:
             return True
         return False
 
-    def register_subscription(self, topic, subscription):
+    def registerSubscription(self, topic, subscription):
         emitter = NopeEventEmitter()
         observer = emitter.subscribe(subscription)
         self.register(emitter, {'mode': 'subscribe',
@@ -220,7 +220,7 @@ class PubSubSystem:
         # TODO:
         pass
 
-    def update_matching(self):
+    def updateMatching(self):
         self._matched.clear()
         for emitter, item in self._emitters.items():
             # Extract the topic

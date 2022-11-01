@@ -34,6 +34,9 @@ class DottedDict(hdict):
         # use that to create a copy.
         return DottedDict(cp)
 
+    def __repr__(self):
+        return dict.__repr__(self)
+
 
 #DottedDict = hashable(DottedDict)
 

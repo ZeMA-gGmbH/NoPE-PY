@@ -274,7 +274,7 @@ def Promise(callback):
         future.set_result(value)
 
     # Now we want call the callback in an extra thread.
-    callback(resolve, reject)    
+    callback(resolve, reject)
 
     return future
 

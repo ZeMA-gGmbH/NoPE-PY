@@ -55,7 +55,8 @@ def getDispatcher(
     options = ensureDottedAccess(options, useNoneAsDefaultValue=True)
     dispatcherOptions = ensureDottedAccess(dispatcherOptions)
 
-    id = dispatcherOptions.communicator.id
+    # id = dispatcherOptions.communicator.id
+    id = None
 
     if options.singleton:
         return NopeDispatcherSingleton(dispatcherOptions, id)

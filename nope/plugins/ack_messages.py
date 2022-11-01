@@ -15,6 +15,7 @@ def extend(module):
             module.Bridge.__init__(self, *args, **kwargs)
 
             # Define
+            self.ackReplyId = kwargs.get("id", None)
             self.onTransportError = NopeEventEmitter()
             self._onMessageReceived = NopeEventEmitter()
 
@@ -31,7 +32,7 @@ def extend(module):
         async def emit(self, eventName, data, target=None, timeout=0, **kwargs):
             promise = None
 
-            if eventName != "ackMessage":
+            if eventName != "ackMessage" and self.ackReplyId is not None:
                 messageId = generateId()
                 data["messageId"] = messageId
 
@@ -98,14 +99,14 @@ def extend(module):
             def callback(msg):
                 cb(msg)
 
-                if "messageId" in msg:
+                if "messageId" in msg and self.ackReplyId is not None:
 
                     EXECUTOR.callParallel(
                         self.emit,
                         "ackMessage",
                         ensureDottedAccess({
                             "messageId": msg["messageId"],
-                            "dispatcher": self._id
+                            "dispatcher": self.ackReplyId
                         })
                     )
 

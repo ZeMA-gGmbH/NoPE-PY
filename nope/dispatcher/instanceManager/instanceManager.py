@@ -187,7 +187,7 @@ class NopeInstanceManager:
 
         self.ready.setContent(True)
 
-    def _getServiceName(name: str, _type: str) -> str:
+    def getServiceName(name: str, type: str) -> str:
         """ Helper to get the corresponding Service name
 
         Args:
@@ -197,9 +197,9 @@ class NopeInstanceManager:
         Returns:
             str: The Adapted Name
         """
-        if _type == "constructor":
+        if type == "constructor":
             return f"nope{SPLITCHAR}core{SPLITCHAR}constructor{SPLITCHAR}{name}"
-        elif _type == "dispose":
+        elif type == "dispose":
             return f"nope{SPLITCHAR}core{SPLITCHAR}destructor{SPLITCHAR}{name}"
         else:
             raise Exception("The given type is not correct.")
@@ -249,7 +249,7 @@ class NopeInstanceManager:
 
         Args:
             identifier (str): The identifier for the Constructor (Like a service)
-            cb (function): The callback used, to create an instance.
+            cb (function): The callback used, to create an instance. The Callback receives the following parameters (NopeCore, identifier:str)
         """
 
         if self._logger:
@@ -298,14 +298,14 @@ class NopeInstanceManager:
                                 await _instance.dispose()
                                 self._instances.delete(data.identifier)
                                 self._rpcManager.unregisterService(
-                                    self._getServiceName(data.identifier, 'dispose'))
+                                    self.getServiceName(data.identifier, 'dispose'))
 
                     # A Function is registered, taking care of removing
                     # an instances, if it isnt needed any more.
                     self._rpcManager.registerService(
                         disposeInstance,
                         ensureDottedAccess({
-                            'id': self._getServiceName(data.identifier, 'dispose'),
+                            'id': self.getServiceName(data.identifier, 'dispose'),
                             'schema': ensureDottedAccess({
                                 'description': f'Service, which will destructor for the instance "{data.identifier}". This function will be called internal only.',
                                 'type': 'function'})
@@ -367,7 +367,7 @@ class NopeInstanceManager:
             createInstance,
             ensureDottedAccess({
                 # We will add the Name to our service.
-                'id': self._getServiceName(identifier, 'constructor'),
+                'id': self.getServiceName(identifier, 'constructor'),
                 # We dont want to have a Prefix for construcors
                 'addNopeServiceIdPrefix': False,
                 'schema': ensureDottedAccess({
@@ -490,7 +490,7 @@ class NopeInstanceManager:
         Returns:
             bool: _description_
         """
-        ctorName = self._getServiceName(typeIdentifier, 'constructor')
+        ctorName = self.getServiceName(typeIdentifier, 'constructor')
         return self.constructors.data.getContent().includes(ctorName)
 
     async def createInstance(self, description, options=None):
@@ -576,7 +576,7 @@ class NopeInstanceManager:
                         raise Exception('Assignment is invalid.')
 
                 definedInstance = await self._rpcManager.performCall(
-                    self._getServiceName(_description.type, 'constructor'),
+                    self.getServiceName(_description.type, 'constructor'),
                     [
                         _description
                     ],

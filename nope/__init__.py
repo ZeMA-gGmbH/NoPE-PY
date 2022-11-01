@@ -1,4 +1,4 @@
-from . import (communication, decorators, dispatcher, eventEmitter, helpers,
+from . import (communication, decorators, dispatcher, eventEmitter, helpers, demo,
 
                logger, merging, observable, pubSub, plugins, modules)
 from .communication import *

@@ -30,6 +30,7 @@ if __name__ == "__main__":
                     "nope.communication",
                     "nope.communication.layers",
                     "nope.decorators",
+                    "nope.demo",
                     "nope.dispatcher",
                     "nope.dispatcher.baseServices",
                     "nope.dispatcher.connectivityManager",

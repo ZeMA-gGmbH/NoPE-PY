@@ -1,0 +1,2 @@
+from .DecoratedHelloWorld import DecoratedHelloWorldModule
+from .HelloWorld import HelloWorldModule
