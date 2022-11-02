@@ -31,6 +31,8 @@ if __name__ == "__main__":
                     "nope.communication.layers",
                     "nope.decorators",
                     "nope.demo",
+                    "nope.demo.instances",
+                    "nope.demo.plugins",
                     "nope.dispatcher",
                     "nope.dispatcher.baseServices",
                     "nope.dispatcher.connectivityManager",

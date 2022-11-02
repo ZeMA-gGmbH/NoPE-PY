@@ -18,6 +18,7 @@ def event_loop():
     yield loop
     loop.close()
 
+
 async def test_register_instance():
 
     communicator = await getLayer("event")
@@ -36,18 +37,15 @@ async def test_register_instance():
         return HelloWorldModule(core)
     # Create an instance on the Server
     instance = HelloWorldModule(srv)
-    
+
     await srv.ready.waitFor()
     await client.ready.waitFor()
 
-    await srv.instanceManager.registerConstructor("hello_word",create_instance)
+    await srv.instanceManager.registerConstructor("hello_word", create_instance)
 
     await sleep(0.1)
 
-    assert srv.instanceManager.getServiceName("hello_word","constructor") in client.instanceManager.constructors.data.getContent()
+    assert srv.instanceManager.getServiceName(
+        "hello_word",
+        "constructor") in client.instanceManager.constructors.data.getContent()
     assert len(client.instanceManager.constructors.data.getContent()) == 1
-    
-
-
-
-    

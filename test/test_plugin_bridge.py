@@ -12,8 +12,7 @@ Therefore we know
 """
 
 #install(nope, "nope.plugins.hello", plugin_dest="nope.dispatcher.rpcManager")
-nope, _, __ = install(nope, "nope.plugins.ack_messages",
-                      plugin_dest="nope.communication.bridge")
+nope, _, __ = install(nope, "nope.plugins.ack_messages")
 
 
 @pytest.fixture
@@ -32,16 +31,15 @@ async def test_bridge_plugin():
     })
 
     # To make our Plugin work -> we have to manually assign the id
-    dispatcher.communicator.ackReplyId = dispatcher.id
+    # dispatcher.communicator.ackReplyId = dispatcher.id
 
     await dispatcher.ready.waitFor()
 
     def sub(*args):
         print(*args)
 
-    print(dispatcher.id)
-
     await dispatcher.communicator.on("test", sub)
+    dispatcher.dataDistributor.patternbasedPullData("test/+/a/#")
     await dispatcher.communicator.emit("test", {"data": "test-data-1"}, target=dispatcher.id, timeout=1.0)
     await sleep(1)
     ex = Exception("Failed")
@@ -51,6 +49,8 @@ async def test_bridge_plugin():
     except Exception as e:
         if e == ex:
             raise ex
+
+    print(dispatcher.connectivityManager.info)
 
 
 if __name__ == "__main__":

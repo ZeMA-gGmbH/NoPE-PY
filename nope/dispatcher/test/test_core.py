@@ -18,6 +18,7 @@ def event_loop():
     yield loop
     loop.close()
 
+
 async def test_dispose():
     communicator = await getLayer("event")
 
@@ -28,6 +29,7 @@ async def test_dispose():
 
     await srv.ready.waitFor()
     await srv.dispose()
+
 
 async def test_events():
     communicator = await getLayer("event")
@@ -41,7 +43,7 @@ async def test_events():
         "communicator": communicator,
         "logger": False,
     })
-    
+
     await srv.ready.waitFor()
     await client.ready.waitFor()
 
@@ -57,14 +59,14 @@ async def test_events():
         await srv.dispose()
         await client.dispose()
 
-    def callback(data,rest):
-        nonlocal called 
+    def callback(data, rest):
+        nonlocal called
         called += 1
 
         assert data == "test"
-        
+
         done()
-    
+
     sub = client.eventDistributor.registerSubscription("event", callback)
 
     await sleep(0.1)
@@ -89,7 +91,7 @@ async def test_properties_clean():
         "communicator": communicator,
         "logger": False,
     })
-    
+
     await srv.ready.waitFor()
     await client.ready.waitFor()
 
@@ -97,11 +99,12 @@ async def test_properties_clean():
 
     srv.dataDistributor.pushData("data", "test")
     await sleep(1)
-    
+
     assert client.dataDistributor.pullData("data", False) == "test"
-    
+
     await srv.dispose()
     await client.dispose()
+
 
 async def test_properties_dirty():
     communicator = await getLayer("event")
@@ -111,8 +114,6 @@ async def test_properties_dirty():
         "logger": False,
     })
 
-    
-    
     await srv.ready.waitFor()
     srv.dataDistributor.pushData("data", "test")
 
@@ -121,11 +122,11 @@ async def test_properties_dirty():
         "logger": False,
     })
 
-    await client.ready.waitFor()    
+    await client.ready.waitFor()
     await sleep(1)
-    
+
     assert client.dataDistributor.pullData("data", False) == False
-    
+
     await srv.dispose()
     await client.dispose()
 
@@ -149,8 +150,6 @@ if __name__ == "__main__":
 #     # Create an instance on the Server
 #     instance = HelloWorldModule(srv)
 
-
-    
 
 #     srv.instanceManager.registerInstance(instance)
 

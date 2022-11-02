@@ -739,16 +739,16 @@ class NopeInstanceManager:
 
                 def onDone(p):
                     if p.exception() and self._logger:
-                        self._logger.error('Failed Removing Instance "' + name + '"')
+                        self._logger.error(
+                            'Failed Removing Instance "' + name + '"')
                         self._logger.error(e)
-                
+
                 promise: asyncio.Future = self.deleteInstance(name, True)
                 promise.add_done_callback(onDone)
 
-
                 promises.append(promise)
 
-            EXECUTOR.callParallel(asyncio.gather,* promises)
+            EXECUTOR.callParallel(asyncio.gather, * promises)
 
         self._instances = dict()
         self._externalInstances = dict()
@@ -763,4 +763,3 @@ class NopeInstanceManager:
     async def dispose(self):
         self.reset()
         self.instances.dispose()
-        

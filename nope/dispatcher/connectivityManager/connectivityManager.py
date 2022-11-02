@@ -89,6 +89,9 @@ class NopeConnectivityManager:
 
     @property
     def info(self):
+        return self._info()
+
+    def _info(self):
 
         # Helper for the Memory.
         _virtual_memory = psutil.virtual_memory()
@@ -227,7 +230,7 @@ class NopeConnectivityManager:
             are determined, an update is transmitted via the attribute `dispatchers`
 
         """
-        
+
         # If no other Dispatcher is present,
         # This test is Obsolete
         if len(self._externalDispatchers) <= 1:

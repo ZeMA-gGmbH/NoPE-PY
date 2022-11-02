@@ -24,7 +24,7 @@ class DecoratedHelloWorldModule(BaseModule):
 
         await super().init()
 
-        await self.register_property('prop', self.prop, {
+        await self.registerProperty('prop', self.prop, {
             'topic': 'prop',
             'mode': ['publish', 'subscribe']
         })

@@ -109,7 +109,7 @@ class NopeCore:
 
         EXECUTOR.callParallel(
             self.communicator.on,
-            'event', 
+            'event',
             onEvent
         )
 
