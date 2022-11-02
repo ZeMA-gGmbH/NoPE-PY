@@ -62,7 +62,7 @@ from .objectMethods import (convertData, copy, deepAssign, deflattenObject,
                             keepProperties, objectToDict,
 
                             recursiveForEach, rgetattr, rqueryAttr,
-                            _rsetattr)
+                            rsetattr)
 
 from .path import (MULTI_LEVEL_WILDCARD, SINGLE_LEVEL_WILDCARD, SPLITCHAR,
 

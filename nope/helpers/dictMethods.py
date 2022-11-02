@@ -1,7 +1,7 @@
 from collections.abc import Iterable
 
 from .dottedDict import DottedDict, ensureDottedAccess
-from .objectMethods import convertData, rgetattr, rqueryAttr, flattenObject, _rsetattr
+from .objectMethods import convertData, rgetattr, rqueryAttr, flattenObject, rsetattr
 from .path import SPLITCHAR, getLeastCommonPathSegment, pathToCamelCase, pathToSnakeCase
 from .stringMethods import camelToSnake, snakeToCamel
 from .prints import formatException
@@ -34,9 +34,9 @@ def keysToSnakeNested(d: dict, adaptStrValues=False):
 
     for k, v in flatten.items():
         if adaptStrValues and isinstance(v, str):
-            _rsetattr(ret, pathToSnakeCase(k), camelToSnake(v))
+            rsetattr(ret, pathToSnakeCase(k), camelToSnake(v))
         else:
-            _rsetattr(ret, pathToSnakeCase(k), v)
+            rsetattr(ret, pathToSnakeCase(k), v)
 
     return ret
 
@@ -66,9 +66,9 @@ def keysToCamelNested(d: dict, adaptStrValues=False):
 
     for k, v in flatten.items():
         if adaptStrValues and isinstance(v, str):
-            _rsetattr(ret, pathToCamelCase(k), snakeToCamel(v))
+            rsetattr(ret, pathToCamelCase(k), snakeToCamel(v))
         else:
-            _rsetattr(ret, pathToCamelCase(k), v)
+            rsetattr(ret, pathToCamelCase(k), v)
 
     return ret
 

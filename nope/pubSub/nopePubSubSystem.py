@@ -1,6 +1,6 @@
 from ..eventEmitter import NopeEventEmitter
 from ..helpers import comparePatternAndPath, copy, generateId, DottedDict, ensureDottedAccess, rgetattr, \
-    containsWildcards, getTimestamp, isIterable, _rsetattr, flattenObject
+    containsWildcards, getTimestamp, isIterable, rsetattr, flattenObject
 from ..merging import DictBasedMergeData
 
 DEFAULT_OBJ = object()
@@ -431,7 +431,7 @@ class PubSubSystem:
             self._data = copy(data)
             self._notify(pathOfContent, pathOfChange, options, emitter)
         else:
-            _rsetattr(self._data, pathOfContent, copy(data))
+            rsetattr(self._data, pathOfContent, copy(data))
             self._notify(pathOfContent, pathOfChange, options, emitter)
         if not quiet:
             self.onIncrementalDataChange.emit(ensureDottedAccess({

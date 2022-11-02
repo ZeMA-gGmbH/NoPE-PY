@@ -208,7 +208,7 @@ def _get(obj, accessor, return_none=False):
             raise E
 
 
-def _rsetattr(data, path: str, value, splitchar: str = SPLITCHAR):
+def rsetattr(data, path: str, value, splitchar: str = SPLITCHAR):
     """ unction to Set recursely a Attribute of an Object
 
     Args:
@@ -378,7 +378,7 @@ def deflattenObject(flattenObject, options=None):
     for key, val in flattenObject.items():
         if _options.prefix != '':
             key = key[len(_options.prefix):]
-        _rsetattr(ret, key, val, _options.splitchar)
+        rsetattr(ret, key, val, _options.splitchar)
 
     return ret
 
@@ -426,7 +426,7 @@ def deepAssign(target, source):
     for iter_item in flattend.entries():
         path = iter_item[0]
         value = iter_item[1]
-        _rsetattr(target, path, value)
+        rsetattr(target, path, value)
     return target
 
 
@@ -505,7 +505,7 @@ def keepProperties(obj, properties):
                 valueToAssign = copy(value)
             else:
                 valueToAssign = properties[key]()
-            _rsetattr(ret, key, valueToAssign)
+            rsetattr(ret, key, valueToAssign)
 
         return ret
     raise Exception('Function can only create Objects')
