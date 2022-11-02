@@ -1,4 +1,3 @@
-from nope import getLayer, EXECUTOR, getDispatcher
 import nope
 from asyncio import sleep
 from nope.plugins import install, plugin
@@ -62,10 +61,10 @@ calling perform call - extend 1
 Failed but we got the error
 """
 
-nope, updated, skipped = install(
-    nope, extend_1, plugin_dest="nope.dispatcher.rpcManager")
-nope, updated, skipped = install(
-    nope, extend_2, plugin_dest="nope.dispatcher.nopeDispatcher")
+nope, updated, skipped = install(nope, extend_1)
+nope, updated, skipped = install(nope, extend_2)
+
+print(updated, skipped)
 
 # The following main is just for clearification
 
@@ -73,8 +72,8 @@ nope, updated, skipped = install(
 async def main():
 
     # Create our dispatcher
-    dispatcher = getDispatcher({
-        "communicator": await getLayer("event"),
+    dispatcher = nope.getDispatcher({
+        "communicator": await nope.getLayer("event"),
         "logger": False,
     })
 
@@ -84,7 +83,7 @@ async def main():
         print("Hello", greetings, "!")
 
     await dispatcher.ready.waitFor()
-    dispatcher.rpcManager.registerService(hello_srv, {"id": "hello_srv"})
+    await dispatcher.rpcManager.registerService(hello_srv, {"id": "hello_srv"})
 
     await sleep(0.1)
 
@@ -103,4 +102,4 @@ async def main():
     nope.dispatcher.rpcManager.hello_dynamic()
 
 
-EXECUTOR.loop.run_until_complete(main())
+nope.EXECUTOR.loop.run_until_complete(main())

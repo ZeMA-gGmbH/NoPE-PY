@@ -29,10 +29,13 @@ import importlib
 import inspect
 from functools import wraps
 
-from nope.helpers import flattenObject
 from nope.logger import getNopeLogger
 
 _LOGGER = getNopeLogger("plugin-system")
+
+_PLUGIN_COUNTER = 0
+_PLUGINS = dict()
+_LOADED = list()
 
 
 def _set(obj, accessor: str, value):
@@ -129,7 +132,7 @@ def _rsetattr(data, path: str, value, prevent_to_load: str):
         # darüber können wir dann darauf zugreifen.
         if sub is None:
             # Define a dict.
-            _set(obj, accessor, DottedDict({}))
+            _set(obj, accessor, dict())
             # Now extract the dict.
             sub = obj[accessor]
             _LOGGER.warn(
@@ -312,209 +315,252 @@ def _getOccurence(lib, lib_name: str, occurence=None, orignal_srcs=None, refs=No
     return occurence, orignal_srcs, refs
 
 
-def install(lib, plugins, plugin_dest: str = None, new_pkg_name: str = None):
+def _getPluginInfo(plugin):
+    if isinstance(plugin, str):
+        plugin = __import__(plugin, fromlist=["__name__"])
+
+    return plugin.name, plugin.base, plugin.depends, plugin.conflicts
+
+
+def install(lib, plugins, new_pkg_name: str = None):
     """ installiert ein Plugin in der Library.
 
     Args:
         lib (module): Die Library die betrachtet wird
         plugins (str | list<str> | func | list<func>): Die Plugins die geladen werden sollen. Siehe Beispiele.
-        plugin_dest (str, optional): Pfad unter dem das Plugin initial Platziert werden muss. Defaults to None.
         new_pkg_name (str, optional): Name unterdem das Update gespeicher werden soll (nur partial die Änderung). Defaults to None.
 
     Returns:
         (module, list(str), list(str)): Die angepasste lib (Inline edit -> wird nicht benötigt), Liste mit geupdaten Referenzen, Liste mir dem originalen Elementen.
     """
-
-    to_be_plugged = None
-    mainLib = None
-    mainLibName = None
-    deltaPath = None
-
     # Damit wir nicht unseren eigene datei laden,
     # extrahieren wir diese.
     prevent_to_load = inspect.stack()[1].filename
 
     _LOGGER.warn(f"Using plugin installed started at '{prevent_to_load}'")
 
+    # Nun laden wir das main module was wir anpassen werden.
     if isinstance(lib, str):
-        mainLib = __import__(lib, fromlist=["__name__"])
+        mainModule = __import__(lib, fromlist=["__name__"])
     else:
-        mainLib = lib
+        mainModule = lib
 
-    deltaPath = "" if plugin_dest is None else (
-        ".").join(plugin_dest.split(".")[1:])
+    mainModuleName = mainModule.__name__
 
-    mainLibName = mainLib.__name__
-    occourenceDict, srcs, refs = _getOccurence(mainLib, mainLibName)
+    # Wir ermitteln das Auftreten aller Klassen.
+    occourenceDict, srcs, refs = _getOccurence(mainModule, mainModuleName)
 
-    # Wenn wir einen plugin als pfad angeben, versuchen wir dies zu laden
-    if isinstance(plugin_dest, str):
-        to_be_plugged = __import__(plugin_dest, fromlist=["__name__"])
-    else:
-        to_be_plugged = mainLib
+    plugins_to_use = []
+    to_be_plugged = dict()
 
-    # Nun laden wir die Plugins
-    # Dabei stellen wir sicher, dass wir immer mit
-    # einer Liste arbeiten.
-    if isinstance(plugins, str):
+    # Wir stellen sicher, dass wir immer eine liste von Plugins
+    # betrachten.
+    if not isinstance(plugins, (list, tuple)):
         plugins = [plugins]
-    else:
-        try:
-            plugins = list(plugins)
-        except TypeError:
-            plugins = [plugins]
 
-    # Dict, welches die Änderungen speichert, die uns vorliegen.
-    changed = dict()
-
-    # Wir iterieren über die Plugins und wenden diese auf die
-    # Quelle an.
+    # In dieser schleife stellen wir sicher, dass wir immer
+    # die funktion des Plugin ladens und später verwenden.
     for plugin in plugins:
-
         if isinstance(plugin, str):
-            plugin = __import__(plugin, fromlist=["__name__"])
+            if plugin not in _PLUGINS:
+                # Unser Plugin muss "nachgeladen werden"
+                plugin = __import__(plugin, fromlist=["__name__"])
 
-        # Wir wenn (basierend auf dem Typ (dynamisch / statisch))
-        # an. Damit ändern wir die Libary und die quelle
-        if inspect.isfunction(plugin):
-            mainLib, to_be_plugged, changed = plugin(
-                mainLib, deltaPath, to_be_plugged, changed)
-        else:
-            mainLib, to_be_plugged, changed = plugin.extend(
-                mainLib, deltaPath, to_be_plugged, changed)
+        # Basierend auf dem Typ (dynamisch / statisch)
+        # speichern wir das Plugin / die Methode.
+        if hasattr(plugin, "extend"):
+            plugin = plugin.extend
 
-    # Wir speichern noch den Namen des originalen Element
-    # Dieses darf NICHT überschrieben werden, das sonst die
-    # Vererbung nicht klappt.
-    destPath = to_be_plugged.__name__
+        if not inspect.isfunction(plugin):
+            raise Exception("Failed to load the Plugin")
+
+        # Wir speicher das Plugin.
+        plugins_to_use.append(plugin)
+
+    # In dieser schleife ermitteln wir nun, welche
+    # Basis module für die Plugins benötigt werden.
+    # Dazu unterscheiden wir in einfache Strings
+    # und listen. Je nachdem laden wir die Basis module
+    # und speichern diese in "to_be_plugged"
+    for plugin in plugins_to_use:
+        if isinstance(plugin.base, str):
+            if plugin.base not in to_be_plugged:
+                to_be_plugged[plugin.base] = __import__(
+                    plugin.base, fromlist=["__name__"])
+
+            # Sicherstellen, dass wir mit einer Liste arbeiten
+            plugin.base = [plugin.base]
+
+        elif isinstance(plugin.base, (list, tuple)):
+            for item in plugin.base:
+                if item not in to_be_plugged:
+                    to_be_plugged[item] = __import__(
+                        item, fromlist=["__name__"])
+
+    changes = dict()
+
+    # In dieser schleife nehmen wir nun die plugins und wenden diese an.
+    # Durch die Anwendung dieser in einer schleife können wir verschiedene
+    # Plugins kombinieren.
+    for plugin in plugins_to_use:
+
+        modules = [to_be_plugged[item] for item in plugin.base]
+
+        mainModule, adapted_modules, changes = plugin(
+            mainModule, modules, changes)
+
+        # Jetzt spiegeln wir die Änderungen zurück in die module.
+        for idx, item in enumerate(plugin.base):
+            to_be_plugged[item] = adapted_modules[idx]
 
     updated = []
     skipped = []
 
-    # Nun wissen wir was sich geändert hat und wir müssen diese
-    # Änderungen im Modul implementieren:
-    for name, adapted in changed.items():
+    for module, changed in changes.items():
 
-        if name not in srcs:
-            # Das Element ist noch nicht vorhanden (bspw. eine neue funktion)
-            # daher definieren wir einen Namen zum zuweisen der Variable.
-            set_path = name
+        # Wir speichern noch den Namen des originalen Element
+        # Dieses darf NICHT überschrieben werden, das sonst die
+        # Vererbung nicht klappt.
+        destPath = module.__name__
 
-            if destPath != mainLibName:
-                set_path = destPath[len(mainLibName) + 1:] + "." + name
+        # Nun wissen wir was sich geändert hat und wir müssen diese
+        # Änderungen im Modul implementieren:
+        for name, adapted in changed.items():
 
-            _rsetattr(mainLib, set_path, adapted, prevent_to_load)
+            if name not in srcs:
+                # Das Element ist noch nicht vorhanden (bspw. eine neue funktion)
+                # daher definieren wir einen Namen zum zuweisen der Variable.
+                set_path = name
 
-        else:
-            # We are adding an alread existing item.
-            occourence = occourenceDict.get(name, set())
+                if destPath != mainModuleName:
+                    set_path = destPath[len(mainModuleName) + 1:] + "." + name
 
-            for path in occourence:
-                path_to_use = mainLibName + "." + path if path else mainLibName
-                set_path = path + "." + name if path else name
+                _rsetattr(mainModule, set_path, adapted, prevent_to_load)
 
-                # if we working with a reference like here:
-                # we skip adapting the item:
-                if path_to_use in refs:
-                    skipped.append(set_path)
-                    continue
-                # We have to maintain the original item.
-                elif name in srcs and path_to_use == srcs[name]:
-                    skipped.append(set_path)
-                    continue
-                # We already updated our destination. we dont need that.
-                # otherwise we cannot access updated plugins.
-                elif destPath == path_to_use:
-                    skipped.append(set_path)
-                    continue
+            else:
+                # We are adding an alread existing item.
+                occourence = occourenceDict.get(name, set())
 
-                # We now update the lib item.
-                _rsetattr(mainLib, set_path, adapted, prevent_to_load)
-                updated.append(set_path)
+                for path in occourence:
+                    path_to_use = mainModuleName + "." + path if path else mainModuleName
+                    set_path = path + "." + name if path else name
 
-    sys.modules[mainLibName] = mainLib
+                    # if we working with a reference like here:
+                    # we skip adapting the item:
+                    if path_to_use in refs:
+                        skipped.append(set_path)
+                        continue
+                    # We have to maintain the original item.
+                    elif name in srcs and path_to_use == srcs[name]:
+                        skipped.append(set_path)
+                        continue
+                    # We already updated our destination. we dont need that.
+                    # otherwise we cannot access updated plugins.
+                    elif destPath == path_to_use:
+                        skipped.append(set_path)
+                        continue
+
+                    # We now update the lib item.
+                    _rsetattr(mainModule, set_path, adapted, prevent_to_load)
+                    updated.append(set_path)
+
+    sys.modules[mainModuleName] = mainModule
 
     if new_pkg_name is not None:
         to_be_plugged.__name__ = new_pkg_name
         sys.modules[new_pkg_name] = to_be_plugged
         inspect.stack()[1][0].f_globals[new_pkg_name] = to_be_plugged
 
-    return mainLib, updated, skipped
+    return mainModule, updated, skipped
 
 
-"""## Creating plugins ###
-We show now how to develop a plugin that allows instances of
-`PetriNet` to say hello: a new method `PetriNet.hello` is added and
-the constructor `PetriNet.__init__` is added a keyword argument
-`hello` for the message to print when calling method `hello`.
-Defining a plugins required to write a module with a function called
-`extend` that takes as its single argument the module to be extended.
-Inside this function, extensions of the classes in the module are
-defined as normal sub-classes. Function `extend` returns the extended
-classes. A decorator called `plugin` must be used, it also allows to
-resolve plugin dependencies and conflicts.
-"""
-
-# apidoc include "hello.py" lang="python"
-
-"""Note that, when extending an existing method like `__init__` above,
-we have to take care that you may be working on an already extended
-class, consequently, we cannot know how its arguments have been
-changed already. So, we must always use those from the unextended
-method plus `**args`. Then, we remove from the latter what your plugin
-needs and pass the remaining to the method of the base class if we
-need to call it (which is usually the case). """
-
-
-def plugin(base: str, depends=[], conflicts=[]):
+def plugin(base, name: str = None, depends=[], conflicts=[]):
     """ Helper to create a plugin. Used as decorator for the extending function.
 
-        The base
-
-
+        The base defines the bases of the module.
     Args:
-        base (_type_): _description_
-        depends (list, optional): _description_. Defaults to [].
-        conflicts (list, optional): _description_. Defaults to [].
+        base (str, list<str>): The base that has to be adapted.
+        depends (list, optional): Dependencies. Defaults to [].
+        conflicts (list, optional): Conflicts. Defaults to [].
     """
     def wrapper(fun):
         @wraps(fun)
-        def extend(mainModule, deltaPath, module, changed):
+        def extend(mainModule, modules: list, changes: dict):
             try:
-                loaded = set(module.__plugins__)
+                loaded = set(modules.__plugins__)
             except AttributeError:
                 loaded = set()
             for name in depends:
                 if name not in loaded:
-                    module = install(name, module)
-                    loaded.update(module.__plugins__)
+                    modules = install(name, modules)
+                    loaded.update(modules.__plugins__)
+
             conf = set(conflicts) & loaded
             if len(conf) > 0:
                 raise ValueError("plugin conflict (%s)" % ", ".join(conf))
-            objects = fun(module)
-            if not isinstance(objects, tuple):
-                objects = (objects,)
 
-            for obj in objects:
-                if inspect.isclass(obj) or inspect.isfunction(obj):
-                    changed[obj.__name__] = obj
-                elif isinstance(obj, dict):
-                    for k, v in obj.items():
-                        if k in changed:
+            # Aufrufen des eigentlichen Plugins.
+            adaptions = fun(*modules)
+
+            if len(modules) == 1:
+                adaptions = [adaptions]
+
+            if len(modules) > 1 and len(adaptions) != len(modules):
+                raise Exception(
+                    "Can not assign the adaped items. Please make shure you are providing the correct length!")
+
+            adapted_modules = list()
+
+            for idx, changes_per_module in enumerate(adaptions):
+
+                module = modules[idx]
+
+                if module not in changes:
+                    changes[module] = dict()
+
+                if not isinstance(changes_per_module, (tuple, list)):
+                    changes_per_module = [changes_per_module]
+
+                for obj in changes_per_module:
+
+                    if inspect.isclass(obj) or inspect.isfunction(obj):
+                        if obj.__name__ in changes[module]:
                             raise Exception("Adapted name used twice")
-                        changed[k] = v
+                        changes[module][obj.__name__] = obj
+                    elif isinstance(obj, dict):
+                        for varname, v in obj.items():
+                            if varname in changes[module]:
+                                raise Exception("Adapted name used twice")
+                            changes[module][varname] = v
 
-            # Now we use the buid function to update the Module.
-            adaptedModule = _build(fun.__module__, module, *objects)
+                changes[module].update()
 
-            return mainModule, adaptedModule, changed
+                adapted_modules.append(
+                    _build(
+                        fun.__module__,
+                        module,
+                        *changes_per_module))
+
+            return mainModule, adapted_modules, changes
 
         module = sys.modules[fun.__module__]
         module.__test__ = {"extend": extend}
-        objects = fun(__import__(base, fromlist=["__name__"]))
-        if not isinstance(objects, tuple):
-            objects = (objects,)
-        _update(module, objects)
+
+        extend.base = base
+        extend.depends = depends
+        extend.conflicts = conflicts
+        extend.name = name
+
+        # We will define a custom Pluginname if required.
+        if extend.name is None:
+            global _PLUGIN_COUNTER
+            extend.name = f"dynamicPlugin_{_PLUGIN_COUNTER}@{inspect.getsourcefile(inspect.stack()[1][0])}"
+            _PLUGIN_COUNTER += 1
+        else:
+            _PLUGINS[extend.__name__] = extend
+
+        _PLUGINS[extend] = extend
+
         return extend
     return wrapper
 

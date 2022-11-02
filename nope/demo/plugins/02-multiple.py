@@ -62,7 +62,7 @@ calling perform call - extend 1
 Failed but we got the error
 """
 
-install(nope, [extend_1, extend_2], plugin_dest="nope.dispatcher.rpcManager")
+install(nope, [extend_1, extend_2])
 
 # The following main is just for clearification
 

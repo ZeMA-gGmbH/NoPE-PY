@@ -1,7 +1,7 @@
 import nope
 from asyncio import sleep
 from nope import getLayer, EXECUTOR, getDispatcher
-from nope.plugins import install, plugin
+from nope.plugins import install
 
 """
 This is an Example how to extend the behavior of any class inside of Nope.
@@ -27,7 +27,7 @@ async def main():
         print("Hello", greetings, "!")
 
     await dispatcher.ready.waitFor()
-    dispatcher.rpcManager.registerService(hello_srv, {"id": "hello_srv"})
+    await dispatcher.rpcManager.registerService(hello_srv, {"id": "hello_srv"})
 
     await sleep(0.1)
 

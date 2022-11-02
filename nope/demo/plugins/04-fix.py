@@ -31,7 +31,7 @@ def extend(module):
 
 
 # Now install our plugin
-nope, _, __ = install(nope, extend, plugin_dest="nope.helpers.timestamp")
+nope, _, __ = install(nope, extend)
 
 # The following main is just for clearification
 print("ready")

@@ -45,7 +45,7 @@ def extend_1(module):
 
 
 # Now install our plugin
-install(nope, extend_1, plugin_dest="nope.dispatcher.rpcManager")
+install(nope, extend_1)
 
 # The following main is just for clearification
 
@@ -64,7 +64,7 @@ async def main():
         print("Hello", greetings, "!")
 
     await dispatcher.ready.waitFor()
-    dispatcher.rpcManager.registerService(hello_srv, {"id": "hello_srv"})
+    await dispatcher.rpcManager.registerService(hello_srv, {"id": "hello_srv"})
 
     await sleep(0.1)
 

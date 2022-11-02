@@ -1,21 +1,29 @@
 
-""" An example how to modify the
+""" An example how to modify the Behavior of multiple elements using a Plugin.
+
+    In This case the Plugin allows the implementation of an ackknowledgement
+    message if required.
 """
 
 from nope.plugins import plugin
-from nope.helpers import generateId, Promise, EXECUTOR, ensureDottedAccess
+from nope.helpers import generateId, EXECUTOR, ensureDottedAccess, formatException
 from nope.eventEmitter import NopeEventEmitter
 
 
-@plugin("nope.communication.bridge")
-def extend(module):
+@plugin([
+    "nope.communication.bridge",
+    "nope.dispatcher.connectivityManager"
+],
+    name="ackMessages")
+def extend(bridgeMod, conManagerMod):
     "Extends the Bridge and adds the functionality of ack knowlededing messages."
-    class Bridge(module.Bridge):
+    class Bridge(bridgeMod.Bridge):
         def __init__(self, *args, **kwargs):
-            module.Bridge.__init__(self, *args, **kwargs)
+            bridgeMod.Bridge.__init__(self, *args, **kwargs)
 
             # Define
-            self.ackReplyId = kwargs.get("id", None)
+            self.defaultTargets = kwargs.get("defaultTargets", list())
+            self.ackReplyId = kwargs.get("ackReplyId", None)
             self.onTransportError = NopeEventEmitter()
             self._onMessageReceived = NopeEventEmitter()
 
@@ -29,6 +37,16 @@ def extend(module):
                 "ackMessage",
                 lambda msg: self._onMessageReceived.emit(msg))
 
+            # Subscribe to Errors:
+            def onTransportError(err, *args):
+                if self._logger:
+                    self._logger.error(
+                        "Failed to receive an acknowledge message!")
+                    self._logger.error(formatException(err))
+                else:
+                    print(formatException(err))
+            self.onTransportError.subscribe(onTransportError)
+
         async def emit(self, eventName, data, target=None, timeout=0, **kwargs):
             promise = None
 
@@ -38,11 +56,16 @@ def extend(module):
 
                 # Now lets define the Target:
 
-                if target is None:
-                    target = set()
+                if target is None or target == True:
+                    if self.defaultTargets:
+                        target = set(self.defaultTargets)
+                    else:
+                        target = set()
                 else:
                     if isinstance(target, str):
                         target = set([target])
+                    elif target == False:
+                        target = set()
                     else:
                         target = set(target)
 
@@ -81,7 +104,7 @@ def extend(module):
                         "promise": promise
                     }
 
-            res = await module.Bridge.emit(self, eventName, data, **kwargs)
+            await bridgeMod.Bridge.emit(self, eventName, data, **kwargs)
 
             if promise:
                 await promise
@@ -94,7 +117,7 @@ def extend(module):
             # performing the original callback.
 
             if eventName == "ackMessage":
-                return await module.Bridge.on(self, eventName, cb)
+                return await bridgeMod.Bridge.on(self, eventName, cb)
 
             def callback(msg):
                 cb(msg)
@@ -110,6 +133,33 @@ def extend(module):
                         })
                     )
 
-            return await module.Bridge.on(self, eventName, callback)
+            return await bridgeMod.Bridge.on(self, eventName, callback)
 
-    return Bridge
+    class NopeConnectivityManager(conManagerMod.NopeConnectivityManager):
+        def __init__(self, *args, **kwargs):
+            conManagerMod.NopeConnectivityManager.__init__(
+                self, *args, **kwargs)
+
+            self._communicator.ackReplyId = self._id
+            self.forceAckMessage = True
+
+            # To extend
+
+            def cb(dispatchers: list, *args):
+                if self.forceAckMessage:
+                    self._communicator.defaultTargets = dispatchers
+
+            self.dispatchers.data.subscribe(cb)
+
+        def _info(self):
+
+            ret = conManagerMod.NopeConnectivityManager._info(self)
+
+            if "plugins" not in ret:
+                ret.plugins = []
+
+            ret.plugins.append("ackMessages")
+
+            return ret
+
+    return Bridge, NopeConnectivityManager
