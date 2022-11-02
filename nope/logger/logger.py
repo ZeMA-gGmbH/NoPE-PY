@@ -11,28 +11,37 @@ CRITICAL = logging.CRITICAL
 
 LEVELS = {'info': INFO, 'debug': DEBUG, 'warn': WARNING, 'error': ERROR}
 
+_LOGGERS = {}
+
 
 def getNopeLogger(name: str, level=logging.INFO):
     """ Helper to return a specific logger.
 
     """
-    _logger = logging.getLogger(name)
-    # Define  a Logging Format
-    _format = _format = logging.Formatter(
-        '%(asctime)s - %(levelname)s - ' + name + ' - %(message)s')
-    # Create Console Output
-    _handler = logging.StreamHandler(sys.stdout)
-    # Add the Format to the Handler
-    _handler.setFormatter(_format)
-    # Set Loglevel to the Desired One.
-    _handler.setLevel(level)
 
-    # Finally add the Handler to the Logger:
-    _logger.addHandler(_handler)
+    if name not in _LOGGERS:
 
-    # Set the Log Level of the Logger.
-    _logger.setLevel(level)
-    return _logger
+        _logger = logging.getLogger(name)
+        # Define  a Logging Format
+
+        _format = logging.Formatter(
+            '%(asctime)s - %(levelname)s - ' + name + ' - %(message)s')
+        # Create Console Output
+        _handler = logging.StreamHandler(sys.stdout)
+        # Add the Format to the Handler
+        _handler.setFormatter(_format)
+        # Set Loglevel to the Desired One.
+        _handler.setLevel(level)
+
+        # Finally add the Handler to the Logger:
+        _logger.addHandler(_handler)
+
+        # Set the Log Level of the Logger.
+        _logger.setLevel(level)
+
+        _LOGGERS[name] = _logger
+
+    return _LOGGERS[name]
 
 
 def defineNopeLogger(param, default_name: str):
