@@ -29,9 +29,9 @@ import importlib
 import inspect
 from functools import wraps
 
-from nope.logger import getNopeLogger
+from nope.logger import getNopeLogger, DEBUG
 
-_LOGGER = getNopeLogger("plugin-system")
+_LOGGER = getNopeLogger("plugin-system", DEBUG)
 
 _PLUGIN_COUNTER = 0
 _PLUGINS = dict()
@@ -337,7 +337,7 @@ def install(lib, plugins, new_pkg_name: str = None):
     # extrahieren wir diese.
     prevent_to_load = inspect.stack()[1].filename
 
-    _LOGGER.warn(f"Using plugin installed started at '{prevent_to_load}'")
+    _LOGGER.info(f"Using plugin installed started at '{prevent_to_load}'")
 
     # Nun laden wir das main module was wir anpassen werden.
     if isinstance(lib, str):
@@ -377,10 +377,10 @@ def install(lib, plugins, new_pkg_name: str = None):
         # Wir speicher das Plugin.
         plugins_to_use.append(plugin)
 
-    rpr_start = f"Installed the following plugins in '{mainModuleName}':"
+    rpr_start = "Plugins used!\n\n"+"-"*50+"\nPLUGIN INSTALLTION REPORT:\n" + "-"*50+ f"\n\nInstalled the following plugins in '{mainModuleName}':"
     rpr_bases = "\n\nThe following source have been modified:"
     rpr_plugins = ""
-    rpr_end = f"\n\nReturning modified library '{mainModuleName}'"
+    rpr_end = f"\n\nReturning modified library '{mainModuleName}'. Watchout this may change the default behavior of '{mainModuleName}'!"
 
     # In dieser schleife ermitteln wir nun, welche
     # Basis module für die Plugins benötigt werden.

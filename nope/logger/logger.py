@@ -41,20 +41,21 @@ class ColorizedFormatter(logging.Formatter):
         return formatter.format(record)
 
 
-def getNopeLogger(name: str, level=logging.INFO):
+def getNopeLogger(name: str, level=logging.DEBUG):
     """ Helper to return a specific logger.
 
     """
 
     if name not in _LOGGERS:
 
+        if len(name) > 20:
+            name = name[:17] + "..."
+
         _logger = logging.getLogger(name)
         # Define  a Logging Format
 
         _format = ColorizedFormatter(
-            '%(asctime)s - %(levelname)8s - ' +
-            name +
-            ' - %(message)s')
+            '%(asctime)s - %(levelname)8s - %(name)20s - %(message)s')
 
         # Create Console Output
         _handler = logging.StreamHandler(sys.stdout)
