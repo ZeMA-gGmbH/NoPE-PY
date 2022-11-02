@@ -377,6 +377,11 @@ def install(lib, plugins, new_pkg_name: str = None):
         # Wir speicher das Plugin.
         plugins_to_use.append(plugin)
 
+    rpr_start = f"Installed the following plugins in '{mainModuleName}':"
+    rpr_bases = "\n\nThe following source have been modified:"
+    rpr_plugins = ""
+    rpr_end = f"\n\nReturning modified library '{mainModuleName}'"
+
     # In dieser schleife ermitteln wir nun, welche
     # Basis module für die Plugins benötigt werden.
     # Dazu unterscheiden wir in einfache Strings
@@ -388,6 +393,9 @@ def install(lib, plugins, new_pkg_name: str = None):
                 to_be_plugged[plugin.base] = __import__(
                     plugin.base, fromlist=["__name__"])
 
+                rpr_plugins += f"\n\t- {plugin.name}"
+                rpr_bases += f"\n\t- {plugin.base}"
+
             # Sicherstellen, dass wir mit einer Liste arbeiten
             plugin.base = [plugin.base]
 
@@ -396,6 +404,10 @@ def install(lib, plugins, new_pkg_name: str = None):
                 if item not in to_be_plugged:
                     to_be_plugged[item] = __import__(
                         item, fromlist=["__name__"])
+
+                    for base in plugin.base:
+                        rpr_bases += f"\n\t- {base}"
+                    rpr_plugins += f"\n\t- {plugin.name}"
 
     changes = dict()
 
@@ -470,6 +482,8 @@ def install(lib, plugins, new_pkg_name: str = None):
         to_be_plugged.__name__ = new_pkg_name
         sys.modules[new_pkg_name] = to_be_plugged
         inspect.stack()[1][0].f_globals[new_pkg_name] = to_be_plugged
+
+    _LOGGER.warn(rpr_start + rpr_plugins + rpr_bases + rpr_end)
 
     return mainModule, updated, skipped
 
@@ -554,7 +568,7 @@ def plugin(base, name: str = None, depends=[], conflicts=[]):
         # We will define a custom Pluginname if required.
         if extend.name is None:
             global _PLUGIN_COUNTER
-            extend.name = f"dynamicPlugin_{_PLUGIN_COUNTER}@{inspect.getsourcefile(inspect.stack()[1][0])}"
+            extend.name = f"anymousPlugin{_PLUGIN_COUNTER}@{inspect.getsourcefile(inspect.stack()[1][0])}"
             _PLUGIN_COUNTER += 1
         else:
             _PLUGINS[extend.__name__] = extend

@@ -14,6 +14,33 @@ LEVELS = {'info': INFO, 'debug': DEBUG, 'warn': WARNING, 'error': ERROR}
 _LOGGERS = {}
 
 
+class ColorizedFormatter(logging.Formatter):
+    """Logging colored formatter, adapted from https://stackoverflow.com/a/56944256/3638629"""
+
+    grey = '\x1b[38;21m'
+    blue = '\x1b[38;5;39m'
+    yellow = '\x1b[38;5;226m'
+    red = '\x1b[38;5;196m'
+    bold_red = '\x1b[31;1m'
+    reset = '\x1b[0m'
+
+    def __init__(self, fmt):
+        super().__init__()
+        self.fmt = fmt
+        self.FORMATS = {
+            logging.DEBUG: self.grey + self.fmt + self.reset,
+            logging.INFO: self.blue + self.fmt + self.reset,
+            logging.WARNING: self.yellow + self.fmt + self.reset,
+            logging.ERROR: self.red + self.fmt + self.reset,
+            logging.CRITICAL: self.bold_red + self.fmt + self.reset
+        }
+
+    def format(self, record):
+        log_fmt = self.FORMATS.get(record.levelno)
+        formatter = logging.Formatter(log_fmt)
+        return formatter.format(record)
+
+
 def getNopeLogger(name: str, level=logging.INFO):
     """ Helper to return a specific logger.
 
@@ -24,8 +51,11 @@ def getNopeLogger(name: str, level=logging.INFO):
         _logger = logging.getLogger(name)
         # Define  a Logging Format
 
-        _format = logging.Formatter(
-            '%(asctime)s - %(levelname)s - ' + name + ' - %(message)s')
+        _format = ColorizedFormatter(
+            '%(asctime)s - %(levelname)8s - ' +
+            name +
+            ' - %(message)s')
+
         # Create Console Output
         _handler = logging.StreamHandler(sys.stdout)
         # Add the Format to the Handler
