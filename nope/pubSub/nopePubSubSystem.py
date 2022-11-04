@@ -248,10 +248,9 @@ class PubSubSystem:
     def _addMatchingEntryIfRequired(self, pubTopic, subTopic, emitter):
         result = self._comparePatternAndPath(subTopic, pubTopic)
         if result.affected:
-            if not result.containsWildcards and ((result.affectedByChild and
-                                                  not self.options.forwardChildData) or
+            if not result.containsWildcards and ((result.affectedByChild and not self.options.forwardChildData) or
                                                  (
-                result.affectedByParent and not self.options.forwardParentData)
+                                                         result.affectedByParent and not self.options.forwardParentData)
             ):
                 return
 

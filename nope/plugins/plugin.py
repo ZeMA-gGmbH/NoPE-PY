@@ -378,8 +378,8 @@ def install(lib, plugins, new_pkg_name: str = None):
         plugins_to_use.append(plugin)
 
     rpr_start = "Plugins used!\n\n" + "-" * 50 + "\nPLUGIN INSTALLTION REPORT:\n" + \
-        "-" * 50 + \
-        f"\n\nInstalled the following plugins in '{mainModuleName}':"
+                "-" * 50 + \
+                f"\n\nInstalled the following plugins in '{mainModuleName}':"
     rpr_bases = "\n\nThe following source have been modified:"
     rpr_plugins = ""
     rpr_end = f"\n\nReturning modified library '{mainModuleName}'. Watchout this may change the default behavior of '{mainModuleName}'!"

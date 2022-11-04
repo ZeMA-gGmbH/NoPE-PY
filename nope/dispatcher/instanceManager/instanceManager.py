@@ -318,7 +318,7 @@ class NopeInstanceManager:
                         'instance': _instance,
                         'usedBy': [data.dispatcherId]
                     })
-                    )
+                                        )
                     self._internalInstances.add(data.identifier)
 
                     # Update the available instances:
@@ -379,7 +379,7 @@ class NopeInstanceManager:
         )
 
         # Store a generator
-        self._registeredConstructors.set(identifier, _cb)
+        self._registeredConstructors[identifier] = _cb
 
     async def unregisterConstructor(self, identifier: str):
         """ Unregisters a present Constructor. After this, created instances are still valid, the user isnt able to create new ones.

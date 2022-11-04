@@ -4,10 +4,8 @@
     Please visist: nope/plugins/demo and "checkout" the examples.
 """
 
-from nope.plugins import plugin
 
-
-@plugin("nope.dispatcher.rpcManager")
+# @plugin("nope.dispatcher.rpcManager")
 def extend(module):
     "Extends `module` - RPC-Manager"
 

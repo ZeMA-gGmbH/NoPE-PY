@@ -88,4 +88,4 @@ async def main():
     print("ready")
 
 
-EXECUTOR.loop.run_until_complete(test_configuration())
+EXECUTOR.loop.run_until_complete(main())

@@ -13,8 +13,8 @@ Therefore we want to load our sample plugin: "hello".
 Therefore we know
 """
 
+
 # install(nope, "nope.plugins.hello", plugin_dest="nope.dispatcher.rpcManager")
-nope, _, __ = install(nope, "nope.plugins.ack_messages")
 
 
 @pytest.fixture
@@ -26,6 +26,8 @@ def event_loop():
 
 
 async def test_bridge_plugin():
+    nope, _, __ = install(nope, "nope.plugins.ack_messages")
+
     dispatcher = nope.getDispatcher({
         "communicator": await nope.getLayer("event"),
         "logger": False,

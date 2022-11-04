@@ -22,7 +22,7 @@ def mqttMatch(subscription: str, offered: str):
         return res
 
     if (len(offered.split('/')) > len(subscription.split('/'))
-        ) and subscription.index('+') == 1:
+    ) and subscription.index('+') == 1:
         # Adapt the offered Topic, that is max as long as the subscription
         offered = ('/').join(offered.split('/')
                              [0:len(subscription.split('/'))])

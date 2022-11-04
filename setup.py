@@ -41,6 +41,7 @@ if __name__ == "__main__":
                     "nope.helpers",
                     "nope.observable",
                     "nope.logger",
+                    "nope.loader",
                     "nope.merging",
                     "nope.modules",
                     "nope.plugins",

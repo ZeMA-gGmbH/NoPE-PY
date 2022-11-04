@@ -5,9 +5,9 @@ import asyncio
 import itertools
 import logging
 
-from nope.dispatcher.nope_dispatcher import NopeDispatcher
-
-from ..helpers import formatException, getNopeLogger
+from ..dispatcher import NopeDispatcher
+from ..helpers import formatException
+from ..logger import getNopeLogger
 
 
 class NopePackageLoader():

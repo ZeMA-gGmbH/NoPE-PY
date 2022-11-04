@@ -254,11 +254,11 @@ class NopeConnectivityManager:
                 status['status'] = ENopeDispatcherStatus.DEAD
                 changes = True
             elif self._timeouts['warn'] < diff <= self._timeouts['dead'] and status[
-                    'status'] != ENopeDispatcherStatus.WARNING:
+                'status'] != ENopeDispatcherStatus.WARNING:
                 status['status'] = ENopeDispatcherStatus.WARNING
                 changes = True
             elif self._timeouts['slow'] < diff <= self._timeouts['warn'] and status[
-                    'status'] != ENopeDispatcherStatus.SLOW:
+                'status'] != ENopeDispatcherStatus.SLOW:
                 status['status'] = ENopeDispatcherStatus.SLOW
                 changes = True
             elif diff <= self._timeouts['slow'] and status['status'] != ENopeDispatcherStatus.HEALTHY:

@@ -602,7 +602,7 @@ class NopeRpcManager:
                     "The length of the provided services and options does not match")
 
             optionsToUse = [options] * \
-                len(serviceName) if not isIterable(options) else options
+                           len(serviceName) if not isIterable(options) else options
 
             futures = []
 
