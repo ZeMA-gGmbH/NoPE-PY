@@ -2,7 +2,8 @@
 # @author Martin Karkowski
 # @email m.karkowski@zema.de
 
-from ..helpers import keysToCamelNested, getPropertyPath, isPropertyPathCorrect, isMethodPathCorrect, getMethodPath, getEmitterPath, isEmitterPathCorrect, ensureDottedAccess, EXECUTOR
+from ..helpers import keysToCamelNested, getPropertyPath, isPropertyPathCorrect, isMethodPathCorrect, getMethodPath, \
+    getEmitterPath, isEmitterPathCorrect, ensureDottedAccess, EXECUTOR
 from ..logger import getNopeLogger
 
 

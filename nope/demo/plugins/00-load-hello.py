@@ -1,5 +1,6 @@
-import nope
 from asyncio import sleep
+
+import nope
 from nope import getLayer, EXECUTOR, getDispatcher
 from nope.plugins import install
 
@@ -10,12 +11,11 @@ Therefore we want to load our sample plugin: "hello".
 Therefore we know
 """
 
-#install(nope, "nope.plugins.hello", plugin_dest="nope.dispatcher.rpcManager")
+# install(nope, "nope.plugins.hello", plugin_dest="nope.dispatcher.rpcManager")
 install(nope, "nope.plugins.hello")
 
 
 async def main():
-
     dispatcher = getDispatcher({
         "communicator": await getLayer("event"),
         "logger": False,

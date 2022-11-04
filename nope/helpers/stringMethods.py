@@ -82,7 +82,6 @@ def insert(str: str, index: int, content: str) -> str:
 
 
 def to_camel_case(str: str, char='_') -> str:
-
     def callback_0(word, index):
         return word.to_lower_case() if index == 0 else word.to_upper_case()
 

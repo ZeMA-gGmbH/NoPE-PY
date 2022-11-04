@@ -1,11 +1,10 @@
+import asyncio
+
 import pytest
 
 from ..nopeObservable import NopeObservable
 from ...helpers import EXECUTOR
 from ...helpers import formatException
-
-
-import asyncio
 
 
 @pytest.fixture

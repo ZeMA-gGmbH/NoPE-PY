@@ -51,8 +51,8 @@ def create_config(path_to_scan: str, dest_dir: str, name_of_file: str):
     path_to_config_file = os.path.join(dest_dir, name_of_file)
 
     for package in packages:
-        for cl in package["provided_classes"]:
-            cl.pop("create_instance", None)
+        for cl in package["providedClasses"]:
+            cl.pop("createInstance", None)
 
         for func in package["provided_functions"]:
             func.pop("function", None)

@@ -1,8 +1,6 @@
 import asyncio
-from asyncio import sleep
-
-import yappi
 import time
+from asyncio import sleep
 
 import pytest
 
@@ -75,10 +73,10 @@ async def main():
 
         start = time.process_time()
         for i in range(bench):
-            #s = time.process_time()
+            # s = time.process_time()
             await manager.performCall("hello", ["Benchmark"])
-            #delta = (time.process_time() - s) * 1000
-            #print(i, "mainloop:", delta, "[ms]")
+            # delta = (time.process_time() - s) * 1000
+            # print(i, "mainloop:", delta, "[ms]")
         end = time.process_time()
         delta = end - start
         print(delta, bench)
@@ -116,6 +114,7 @@ async def main():
             "[R/s]")
 
     # await manager.dispose()
+
 
 if __name__ == "__main__":
     EXECUTOR.loop.run_until_complete(main())

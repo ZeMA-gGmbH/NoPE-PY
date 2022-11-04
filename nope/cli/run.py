@@ -9,9 +9,9 @@ import json
 import logging
 import sys
 
+from nope.loader import getPackageLoader, loadConfig, loadDesiredPackages
 from ..communication import getLayer, LAYER_DEFAULT_PARAMETERS
-from ..helpers import ensureDottedAccess, formatException
-from nope.loader import get_package_loader, loadConfig, loadDesiredPackages
+from ..helpers import ensureDottedAccess
 
 
 def get_args(add_mode=True):
@@ -24,13 +24,15 @@ def get_args(add_mode=True):
     parser.add_argument('--file', type=str, default="config/settings.json", dest='file',
                         help='configuration file to use. This File contains the defined packages.')
     parser.add_argument('-c', type=str, default="event", dest='channel',
-                        help='name of the communication layer to use. Possible values are: ' + ', '.join([key for key in LAYER_DEFAULT_PARAMETERS.keys()]))
+                        help='name of the communication layer to use. Possible values are: ' + ', '.join(
+                            [key for key in LAYER_DEFAULT_PARAMETERS.keys()]))
     parser.add_argument('-l', type=str, default="debug", dest='log',
                         help='Level of the Logger. Valid values are "debug", "info"')
     parser.add_argument('-s', dest='skip_loading_config', action='store_true',
                         help='Skips the Configuration File.')
     parser.add_argument('--params', type=str, default=None, dest='params',
-                        help='Paramas for the Channel, to connect to. The Following Default-Values are used: ' + json.dumps(LAYER_DEFAULT_PARAMETERS))
+                        help='Paramas for the Channel, to connect to. The Following Default-Values are used: ' + json.dumps(
+                            LAYER_DEFAULT_PARAMETERS))
     parser.add_argument('--force-emit', default=False, dest='force_emit', action='store_true',
                         help='Forces emitting the events of the system')
 
@@ -106,7 +108,7 @@ def generate_nope_backend(args: dict):
             args, "params", None), level
     )
     # Get the Loader
-    loader = get_package_loader(
+    loader = getPackageLoader(
         communicator, {
             'force_emitting_updates': getattr(args, "force_emit", False)
         }, loop, level=level
@@ -116,7 +118,6 @@ def generate_nope_backend(args: dict):
 
         try:
             if not getattr(args, "skip_loading_config", False):
-
                 # Load all Packages
                 loop.run_until_complete(
                     loadDesiredPackages(

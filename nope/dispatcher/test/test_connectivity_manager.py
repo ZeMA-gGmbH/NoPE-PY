@@ -1,12 +1,11 @@
-import time
+import asyncio
 from asyncio import sleep
+
+import pytest
 
 from ..connectivityManager import NopeConnectivityManager
 from ...communication import getLayer
 from ...helpers import EXECUTOR
-
-import pytest
-import asyncio
 
 
 @pytest.fixture

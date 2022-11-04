@@ -1,6 +1,7 @@
-from nope.observable import NopeObservable
 from nope.helpers import extractUniqueValues
 from nope.merging import MergeData, DictBasedMergeData
+from nope.observable import NopeObservable
+
 called = 0
 
 
@@ -40,7 +41,6 @@ d = {
     }
 }
 res = extractUniqueValues(d, "a/+/content", "a/+/id")
-
 
 d = dict()
 merge = MergeData(d, lambda m: extractUniqueValues(m))

@@ -2,7 +2,7 @@
 # @author Martin Karkowski
 # @email m.karkowski@zema.de
 
-from .getPackageLoader import get_package_loader
+from .getPackageLoader import getPackageLoader
 from .loadPackages import loadConfig, loadDesiredPackages
 from .nopePackkageLoader import NopePackageLoader
 

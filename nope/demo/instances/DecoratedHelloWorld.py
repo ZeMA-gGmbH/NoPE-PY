@@ -2,8 +2,8 @@
 # @author Martin Karkowski
 # @email m.karkowski@zema.de
 
+from ...decorators.classes import exportAsNopeService
 from ...modules import BaseModule
-from ...decorators.classes import exportAsNopeEvent, exportAsNopeProperty, exportAsNopeService
 from ...observable import NopeObservable
 
 
@@ -21,7 +21,6 @@ class DecoratedHelloWorldModule(BaseModule):
         self.prop = NopeObservable()
 
     async def init(self):
-
         await super().init()
 
         await self.registerProperty('prop', self.prop, {

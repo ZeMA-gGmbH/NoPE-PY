@@ -1,7 +1,7 @@
+import time
+
 from nope.helpers import Emitter, generateId
 from nope.observable import NopeObservable
-
-import time
 
 PROFILE = False
 OPEN_REQUESTS = {}
@@ -44,11 +44,13 @@ class EventCommunicationInterface:
                 def req(data, *args):
                     profile_task("new", data)
                     cb(data)
+
                 self._emitter.on(eventName, req)
             elif eventName == "rpcResponse":
                 def res(data, *args):
                     profile_task("done", data)
                     cb(data)
+
                 self._emitter.on(eventName, res)
             else:
                 self._emitter.on(eventName, cb)

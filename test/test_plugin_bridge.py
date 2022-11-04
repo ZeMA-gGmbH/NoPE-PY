@@ -1,8 +1,10 @@
-import nope
-import pytest
 import asyncio
 from asyncio import sleep
-from nope.plugins import install, plugin
+
+import pytest
+
+import nope
+from nope.plugins import install
 
 """
 This is an Example how to extend the behavior of any class inside of Nope.
@@ -11,7 +13,7 @@ Therefore we want to load our sample plugin: "hello".
 Therefore we know
 """
 
-#install(nope, "nope.plugins.hello", plugin_dest="nope.dispatcher.rpcManager")
+# install(nope, "nope.plugins.hello", plugin_dest="nope.dispatcher.rpcManager")
 nope, _, __ = install(nope, "nope.plugins.ack_messages")
 
 
@@ -24,7 +26,6 @@ def event_loop():
 
 
 async def test_bridge_plugin():
-
     dispatcher = nope.getDispatcher({
         "communicator": await nope.getLayer("event"),
         "logger": False,

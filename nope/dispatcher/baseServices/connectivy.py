@@ -1,5 +1,3 @@
-
-
 import asyncio
 
 from nope.helpers import avgOfArray, ensureDottedAccess, maxOfArray, minOfArray
@@ -9,7 +7,6 @@ logger = getNopeLogger('baseService')
 
 
 async def generatePingServices(dispatcher):
-
     async def ping():
         return ensureDottedAccess({
             'dispatcherId': dispatcher.id,
@@ -46,7 +43,6 @@ async def generatePingServices(dispatcher):
 
 
 async def generatePingAccessors(dispatcher):
-
     serviceName = 'nope/baseService/ping'
 
     # Function to determine the ping in the services.
@@ -60,7 +56,7 @@ async def generatePingAccessors(dispatcher):
 
         return ensureDottedAccess({
             "ping": ping,
-            ** result,
+            **result,
         })
 
     # Function to Ping all Services

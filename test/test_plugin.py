@@ -25,6 +25,7 @@ key use the name of the variable you want to edit.
 @plugin("nope.dispatcher.rpcManager")
 def extend_1(module):
     "Extends `module` - rpcManager"
+
     class NopeRpcManager(module.NopeRpcManager):
         async def performCall(self, *args, **kwargs):
             """ Extend the original behavior """
@@ -49,6 +50,7 @@ install(nope, extend_1, plugin_dest="nope.dispatcher.rpcManager")
 @plugin("nope.dispatcher.rpcManager")
 def extend_2(module):
     "Extends `module` - rpcManager"
+
     class NopeRpcManager(module.NopeRpcManager):
         async def performCall(self, *args, **kwargs):
             """ Extend the original behavior """
@@ -65,7 +67,6 @@ install(nope, [extend_1, extend_2], plugin_dest="nope.dispatcher.rpcManager")
 
 
 async def main():
-
     dispatcher = getDispatcher({
         "communicator": await getLayer("event"),
         "logger": False,

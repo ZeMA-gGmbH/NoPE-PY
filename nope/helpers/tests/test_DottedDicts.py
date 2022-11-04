@@ -1,10 +1,9 @@
+import asyncio
+
 import pytest
 
 from ..dottedDict import convertToDottedDict
 from ...helpers import EXECUTOR
-
-
-import asyncio
 
 
 @pytest.fixture

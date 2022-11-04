@@ -20,7 +20,6 @@ class HelloWorldModule(BaseModule):
         self.prop = NopeObservable()
 
     async def init(self):
-
         await super().init()
 
         await self.registerProperty('prop', self.prop, {

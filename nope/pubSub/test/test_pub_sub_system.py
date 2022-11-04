@@ -1,10 +1,10 @@
+import asyncio
+
 import pytest
 
 from ..nopePubSubSystem import PubSubSystem
 from ...eventEmitter import NopeEventEmitter
 from ...helpers import EXECUTOR
-
-import asyncio
 
 
 @pytest.fixture

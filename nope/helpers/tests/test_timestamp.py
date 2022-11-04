@@ -1,10 +1,9 @@
+import asyncio
+
 import pytest
 
 from ..timestamp import getTimestamp
 from ...helpers import EXECUTOR
-
-
-import asyncio
 
 
 @pytest.fixture

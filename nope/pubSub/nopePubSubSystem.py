@@ -138,7 +138,8 @@ class PubSubSystem:
 
             # Register the emitter. This will be used during topic matching.
             self._emitters[emitter] = ensureDottedAccess(
-                {'options': options, 'pubTopic': pubTopic, 'subTopic': subTopic, 'callback': callback, 'observer': observer})
+                {'options': options, 'pubTopic': pubTopic, 'subTopic': subTopic, 'callback': callback,
+                 'observer': observer})
 
             # Update the Matching Rules.
             self._updatePartialMatching('add', emitter, pubTopic, subTopic)

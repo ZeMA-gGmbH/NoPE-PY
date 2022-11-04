@@ -1,6 +1,6 @@
-from nope.helpers import generateId, DottedDict
 from nope.communication.bridge import Bridge
 from nope.communication.layers import MQTTLayer, IoSocketClientLayer
+from nope.helpers import generateId, DottedDict
 
 VALID_LAYERS = DottedDict({
     'event': Bridge,

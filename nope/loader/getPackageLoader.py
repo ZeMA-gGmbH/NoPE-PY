@@ -4,8 +4,8 @@
 
 import logging
 
-from ..dispatcher import getDispatcher
 from .nopePackkageLoader import NopePackageLoader
+from ..dispatcher import getDispatcher
 
 
 class NopePackageLoaderSingleton(object):
@@ -20,8 +20,8 @@ class NopePackageLoaderSingleton(object):
         return cls._instance
 
 
-def get_package_loader(communicator, options={}, loop=None,
-                       logger: logging.Logger = None, level=logging.INFO):
+def getPackageLoader(communicator, options={}, loop=None,
+                     logger: logging.Logger = None, level=logging.INFO):
     """ helper function, which will be used to create a package-loader
     """
     # Create the Dispatcher Instance.

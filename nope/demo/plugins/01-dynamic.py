@@ -1,5 +1,6 @@
-import nope
 from asyncio import sleep
+
+import nope
 from nope import getLayer, EXECUTOR, getDispatcher
 from nope.plugins import install, plugin
 
@@ -26,6 +27,7 @@ key use the name of the variable you want to edit.
 @plugin("nope.dispatcher.rpcManager")
 def extend_1(module):
     "Extends `module` - rpcManager"
+
     class NopeRpcManager(module.NopeRpcManager):
         async def performCall(self, *args, **kwargs):
             """ Extend the original behavior """
@@ -47,11 +49,11 @@ def extend_1(module):
 # Now install our plugin
 install(nope, extend_1)
 
+
 # The following main is just for clearification
 
 
 async def main():
-
     # Create our dispatcher
     dispatcher = getDispatcher({
         "communicator": await getLayer("event"),

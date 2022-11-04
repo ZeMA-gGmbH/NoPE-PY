@@ -1,4 +1,3 @@
-
 """ An example plugin that allows instances of `NopeRpcManager` to
     say hello. The source code can be used as a starting example.
 
@@ -11,6 +10,7 @@ from nope.plugins import plugin
 @plugin("nope.dispatcher.rpcManager")
 def extend(module):
     "Extends `module` - RPC-Manager"
+
     class NopeRpcManager(module.NopeRpcManager):
         def hello(self):
             "Ask the plugin to say hello"

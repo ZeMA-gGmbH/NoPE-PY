@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # @author Martin Karkowski
 # @email m.karkowski@zema.de
+import asyncio
 import itertools
 import logging
-import sys
-import asyncio
 
 from nope.dispatcher.nope_dispatcher import NopeDispatcher
+
 from ..helpers import formatException, getNopeLogger
 
 
@@ -45,10 +45,10 @@ class NopePackageLoader():
 
         # Based on the provided settings register a generator Function for the
         # Instances:
-        for cl in package["provided_classes"]:
+        for cl in package["providedClasses"]:
             # Get the Settings
-            allow_instance_generation = cl.get(
-                "allow_instance_generation", False)
+            allowInstanceGeneration = cl.get(
+                "allowInstanceGeneration", False)
             max_amountOf_instance = cl.get(
                 "max_amountOf_instance", -1)
 
@@ -57,17 +57,17 @@ class NopePackageLoader():
                 raise Exception(
                     "A function to create the function must be provided")
 
-            create_instance = cl.get("create_instance", _not_provided)
+            createInstance = cl.get("createInstance", _not_provided)
             selector = cl.get("selector", None)
 
-            if selector is not None and allow_instance_generation:
+            if selector is not None and allowInstanceGeneration:
                 # Create a Function that will generate functions
                 async def _generate_instance(dispatcher, identifier):
                     current_amount = self._instances.get(selector, 0)
 
                     if max_amountOf_instance == -1 or current_amount < max_amountOf_instance:
                         # Define the Instance:
-                        instance = await create_instance(dispatcher, identifier)
+                        instance = await createInstance(dispatcher, identifier)
                         # Assign the Name
                         instance.identifier = identifier
                         # Update the Used Instance
@@ -76,6 +76,7 @@ class NopePackageLoader():
                         return instance
 
                     raise Exception("Not allowed to create instances")
+
                 await self.dispatcher.provide_instance_generator_for_externalDispatchers(
                     selector,
                     _generate_instance
@@ -121,6 +122,7 @@ class NopePackageLoader():
                 # leaving.
                 async def _dispose():
                     await instance.dispose()
+
                 self._dispose_default_instance.append(_dispose)
 
                 self._logger.info("Generated Instance" +

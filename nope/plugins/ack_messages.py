@@ -1,13 +1,12 @@
-
 """ An example how to modify the Behavior of multiple elements using a Plugin.
 
     In This case the Plugin allows the implementation of an ackknowledgement
     message if required.
 """
 
-from nope.plugins import plugin
-from nope.helpers import generateId, EXECUTOR, ensureDottedAccess, formatException
 from nope.eventEmitter import NopeEventEmitter
+from nope.helpers import generateId, EXECUTOR, ensureDottedAccess, formatException
+from nope.plugins import plugin
 
 
 @plugin([
@@ -17,6 +16,7 @@ from nope.eventEmitter import NopeEventEmitter
     name="ackMessages")
 def extend(bridgeMod, conManagerMod):
     "Extends the Bridge and adds the functionality of ack knowlededing messages."
+
     class Bridge(bridgeMod.Bridge):
         def __init__(self, *args, **kwargs):
             bridgeMod.Bridge.__init__(self, *args, **kwargs)
@@ -45,6 +45,7 @@ def extend(bridgeMod, conManagerMod):
                     self._logger.error(formatException(err))
                 else:
                     print(formatException(err))
+
             self.onTransportError.subscribe(onTransportError)
 
         async def emit(self, eventName, data, target=None, timeout=0, **kwargs):
@@ -86,7 +87,6 @@ def extend(bridgeMod, conManagerMod):
                             data["received"].add(msg["dispatcher"])
 
                             if len(data["target"] - data["received"]) == 0:
-
                                 # Remove the Message, becaus it is finished
                                 self._openMessages.pop(messageId)
 
@@ -123,7 +123,6 @@ def extend(bridgeMod, conManagerMod):
                 cb(msg)
 
                 if "messageId" in msg and self.ackReplyId is not None:
-
                     EXECUTOR.callParallel(
                         self.emit,
                         "ackMessage",

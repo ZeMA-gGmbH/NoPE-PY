@@ -2,9 +2,7 @@ from nope.helpers import ensureDottedAccess
 
 
 def _class_decorator_factory(storing_type: str):
-
     def func(options):
-
         options = ensureDottedAccess(options)
 
         class class_decorator:

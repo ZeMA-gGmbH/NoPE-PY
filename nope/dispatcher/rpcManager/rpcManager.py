@@ -4,11 +4,11 @@
 
 import asyncio
 
-from nope.dispatcher.connectivityManager import NopeConnectivityManager
 from nope.communication.bridge import Bridge
+from nope.dispatcher.connectivityManager import NopeConnectivityManager
 from nope.eventEmitter import NopeEventEmitter
 from nope.helpers import generateId, ensureDottedAccess, isAsyncFunction, \
-    formatException, DottedDict, SPLITCHAR, isIterable, getOrCreateEventloop, isList, EXECUTOR
+    formatException, DottedDict, SPLITCHAR, isIterable, isList, EXECUTOR
 from nope.logger import defineNopeLogger
 from nope.merging import DictBasedMergeData
 from nope.observable import NopeObservable
@@ -273,7 +273,8 @@ class NopeRpcManager:
 
         await self._communicator.on("servicesChanged", onServicesChanged)
         await self._communicator.on("rpcRequest", lambda data: EXECUTOR.callParallel(self._handleExternalRequest, data))
-        await self._communicator.on("rpcResponse", lambda data: EXECUTOR.callParallel(self._handle_external_response, data))
+        await self._communicator.on("rpcResponse",
+                                    lambda data: EXECUTOR.callParallel(self._handle_external_response, data))
 
         def on_cancelation(msg):
             if msg.dispatcher == self._id:

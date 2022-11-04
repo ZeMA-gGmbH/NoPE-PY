@@ -1,10 +1,11 @@
 import json
 from logging import Logger
+from socket import gethostname
 
 import paho.mqtt.client as mqtt
-from socket import gethostname
+
 from nope.helpers import replaceAll, generateId, formatException, SPLITCHAR
-from nope.logger import getNopeLogger, DEBUG, INFO
+from nope.logger import getNopeLogger, INFO
 from nope.observable import NopeObservable
 
 HOSTNAME = gethostname()

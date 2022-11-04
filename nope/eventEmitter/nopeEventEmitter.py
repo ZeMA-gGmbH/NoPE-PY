@@ -1,6 +1,7 @@
 from asyncio import Future
 
-from ..helpers import generateId, DottedDict, Emitter, ensureDottedAccess, isAsyncFunction, getTimestamp, Promise, EXECUTOR
+from ..helpers import generateId, DottedDict, Emitter, ensureDottedAccess, isAsyncFunction, getTimestamp, Promise, \
+    EXECUTOR
 
 
 # from ..logger.getLogger import getNopeLogger

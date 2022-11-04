@@ -349,7 +349,6 @@ def allowsSubscripton(obj):
 
 def flattenObject(data, prefix="", splitchar=SPLITCHAR,
                   onlyPathToBaseValue=False, max_depth=None):
-
     ret = DottedDict()
 
     # Check if we are ae to access the items using an subscription.

@@ -1,10 +1,9 @@
+import asyncio
+
 import pytest
 
 from ..dictMethods import extractUniqueValues
 from ...helpers import EXECUTOR
-
-
-import asyncio
 
 
 @pytest.fixture

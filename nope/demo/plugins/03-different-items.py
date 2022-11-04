@@ -1,5 +1,6 @@
-import nope
 from asyncio import sleep
+
+import nope
 from nope.plugins import install, plugin
 
 """
@@ -15,6 +16,7 @@ the provided order.
 @plugin("nope.dispatcher.rpcManager")
 def extend_1(module):
     "Extends `module` - rpcManager"
+
     class NopeRpcManager(module.NopeRpcManager):
         async def performCall(self, *args, **kwargs):
             """ Extend the original behavior """
@@ -36,6 +38,7 @@ def extend_1(module):
 @plugin("nope.dispatcher.nopeDispatcher")
 def extend_2(module):
     "Extends `module` - NopeDispatcher"
+
     class NopeDispatcher(module.NopeDispatcher):
         async def performCall(self, *args, **kwargs):
             """ Extend the original behavior """
@@ -66,11 +69,11 @@ nope, updated, skipped = install(nope, extend_2)
 
 print(updated, skipped)
 
+
 # The following main is just for clearification
 
 
 async def main():
-
     # Create our dispatcher
     dispatcher = nope.getDispatcher({
         "communicator": await nope.getLayer("event"),

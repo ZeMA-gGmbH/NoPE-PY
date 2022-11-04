@@ -15,6 +15,7 @@ the provided order.
 @plugin("nope.dispatcher.rpcManager")
 def extend_1(module):
     "Extends `module` - rpcManager"
+
     class NopeRpcManager(module.NopeRpcManager):
         async def performCall(self, *args, **kwargs):
             """ Extend the original behavior """
@@ -36,6 +37,7 @@ def extend_1(module):
 @plugin("nope.dispatcher.rpcManager")
 def extend_2(module):
     "Extends `module` - rpcManager"
+
     class NopeRpcManager(module.NopeRpcManager):
         async def performCall(self, *args, **kwargs):
             """ Extend the original behavior """
@@ -64,11 +66,11 @@ Failed but we got the error
 
 install(nope, [extend_1, extend_2])
 
+
 # The following main is just for clearification
 
 
 async def main():
-
     # Create our dispatcher
     dispatcher = getDispatcher({
         "communicator": await getLayer("event"),

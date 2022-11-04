@@ -1,10 +1,9 @@
+import asyncio
+
 import pytest
 
 from ..objectMethods import (convertData, flattenObject, rgetattr, rqueryAttr)
 from ...helpers import EXECUTOR
-
-
-import asyncio
 
 
 @pytest.fixture

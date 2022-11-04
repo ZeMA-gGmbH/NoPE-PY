@@ -1,5 +1,4 @@
 import nope
-from asyncio import sleep
 from nope.plugins import install, plugin
 
 """
@@ -25,8 +24,10 @@ key use the name of the variable you want to edit.
 @plugin("nope.helpers.timestamp")
 def extend(module):
     "Extends `module` - rpcManager"
+
     def getTimestamp(options=None) -> str:
         return module.getTimestamp() + 500
+
     return getTimestamp
 
 

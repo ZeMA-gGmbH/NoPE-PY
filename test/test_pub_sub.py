@@ -1,6 +1,4 @@
-from glob import glob
 from nope import PubSubSystem, NopeEventEmitter
-
 
 called = 0
 

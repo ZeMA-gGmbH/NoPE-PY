@@ -4,8 +4,6 @@
 
 from distutils.core import setup
 
-import setuptools
-
 try:
     long_description = open("README").read()
 except BaseException:

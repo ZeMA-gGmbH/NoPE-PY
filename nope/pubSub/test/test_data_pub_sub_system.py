@@ -1,10 +1,9 @@
-from ..nopeDataPubSubSystem import DataPubSubSystem
+import asyncio
+
 import pytest
 
+from ..nopeDataPubSubSystem import DataPubSubSystem
 from ...helpers import EXECUTOR
-
-
-import asyncio
 
 
 @pytest.fixture

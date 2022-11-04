@@ -1,5 +1,5 @@
-from nope.helpers.pathMatchingMethods import comparePatternAndPath, ensureDottedAccess
 from nope.dispatcher.core import NopeCore
+from nope.helpers.pathMatchingMethods import comparePatternAndPath, ensureDottedAccess
 
 
 class NopeDispatcher(NopeCore):
@@ -72,6 +72,7 @@ class NopeDispatcher(NopeCore):
 
             def callback_0(item):
                 return item.identifier
+
             items = map(callback_0, self.instanceManager.
                         instances.data.getContent())
         elif type == 'services':

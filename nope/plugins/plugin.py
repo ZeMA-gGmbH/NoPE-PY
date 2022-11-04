@@ -24,9 +24,9 @@ our plugin (`nope.plugins.hello`).
 """
 
 import imp
-import sys
 import importlib
 import inspect
+import sys
 from functools import wraps
 
 from nope.logger import getNopeLogger, DEBUG
@@ -377,7 +377,9 @@ def install(lib, plugins, new_pkg_name: str = None):
         # Wir speicher das Plugin.
         plugins_to_use.append(plugin)
 
-    rpr_start = "Plugins used!\n\n"+"-"*50+"\nPLUGIN INSTALLTION REPORT:\n" + "-"*50+ f"\n\nInstalled the following plugins in '{mainModuleName}':"
+    rpr_start = "Plugins used!\n\n" + "-" * 50 + "\nPLUGIN INSTALLTION REPORT:\n" + \
+        "-" * 50 + \
+        f"\n\nInstalled the following plugins in '{mainModuleName}':"
     rpr_bases = "\n\nThe following source have been modified:"
     rpr_plugins = ""
     rpr_end = f"\n\nReturning modified library '{mainModuleName}'. Watchout this may change the default behavior of '{mainModuleName}'!"
@@ -497,6 +499,7 @@ def plugin(base, name: str = None, depends=[], conflicts=[]):
         depends (list, optional): Dependencies. Defaults to [].
         conflicts (list, optional): Conflicts. Defaults to [].
     """
+
     def wrapper(fun):
         @wraps(fun)
         def extend(mainModule, modules: list, changes: dict):
@@ -576,6 +579,7 @@ def plugin(base, name: str = None, depends=[], conflicts=[]):
         _PLUGINS[extend] = extend
 
         return extend
+
     return wrapper
 
 

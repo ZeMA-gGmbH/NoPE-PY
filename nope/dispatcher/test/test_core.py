@@ -1,14 +1,11 @@
+import asyncio
 from asyncio import sleep
 
-
-from ...communication import getLayer
-from ...demo import HelloWorldModule, DecoratedHelloWorldModule
-from ..getDispatcher import getDispatcher
-
-from ...helpers import EXECUTOR
-
 import pytest
-import asyncio
+
+from ..getDispatcher import getDispatcher
+from ...communication import getLayer
+from ...helpers import EXECUTOR
 
 
 @pytest.fixture
@@ -129,6 +126,7 @@ async def test_properties_dirty():
 
     await srv.dispose()
     await client.dispose()
+
 
 if __name__ == "__main__":
     EXECUTOR.callParallel(func)

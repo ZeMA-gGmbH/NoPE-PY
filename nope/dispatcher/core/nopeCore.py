@@ -2,13 +2,13 @@
 # @author Martin Karkowski
 # @email m.karkowski@zema.de
 
+from nope.dispatcher.connectivityManager import NopeConnectivityManager
+from nope.dispatcher.instanceManager import NopeInstanceManager
+from nope.dispatcher.rpcManager import generateSelector, NopeRpcManager
 from nope.helpers import ensureDottedAccess, generateId, EXECUTOR
-from nope.logger import getNopeLogger, defineNopeLogger
+from nope.logger import defineNopeLogger
 from nope.observable import NopeObservable
 from nope.pubSub import DataPubSubSystem, PubSubSystem
-from nope.dispatcher.connectivityManager import NopeConnectivityManager
-from nope.dispatcher.rpcManager import generateSelector, NopeRpcManager
-from nope.dispatcher.instanceManager import generateAssignmentChecker, NopeInstanceManager
 
 
 class NopeCore:

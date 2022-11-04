@@ -1,11 +1,10 @@
+import asyncio
+
 import pytest
 
 from ..mergeData import DictBasedMergeData, MergeData
 from ...helpers import EXECUTOR
 from ...helpers.dictMethods import extractUniqueValues
-
-
-import asyncio
 
 
 @pytest.fixture

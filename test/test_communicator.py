@@ -1,11 +1,9 @@
+import asyncio
 from asyncio import sleep
 
 import pytest
 
 from nope import getLayer, EXECUTOR, NopeConnectivityManager, DictBasedMergeData
-
-
-import asyncio
 
 
 @pytest.fixture

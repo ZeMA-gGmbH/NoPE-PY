@@ -5,13 +5,13 @@
 import asyncio
 
 from nope.communication.bridge import Bridge
+from nope.dispatcher.connectivityManager import NopeConnectivityManager
+from nope.dispatcher.rpcManager import NopeRpcManager
 from nope.helpers import SPLITCHAR, ensureDottedAccess, generateId, isIterable, EXECUTOR
 from nope.logger import defineNopeLogger
 from nope.merging import DictBasedMergeData
 from nope.modules import NopeGenericModule
 from nope.observable import NopeObservable
-from nope.dispatcher.connectivityManager import NopeConnectivityManager
-from nope.dispatcher.rpcManager import NopeRpcManager
 
 
 class NopeInstanceManager:
@@ -116,7 +116,8 @@ class NopeInstanceManager:
                 "dispatcher": self._id,
                 # We will send the descriptions.
                 # Generate the Module Description for every identifier:
-                "instances": list(map(lambda item: self._instances[item]["instance"].toDescription(), self._internalInstances))
+                "instances": list(
+                    map(lambda item: self._instances[item]["instance"].toDescription(), self._internalInstances))
             }
         )
 
@@ -561,8 +562,9 @@ class NopeInstanceManager:
                     _description.identifier)
 
                 if _instanceDetails is not None and _instanceDetails.description.type != _description.type:
-                    raise Exception("There exists an Instance named: '" + _description.identifier + "' but it uses a different type. Requested type: '" +
-                                    _description.type + "', given type: '" + _instanceDetails.description.type + "'")
+                    raise Exception(
+                        "There exists an Instance named: '" + _description.identifier + "' but it uses a different type. Requested type: '" +
+                        _description.type + "', given type: '" + _instanceDetails.description.type + "'")
 
                 usedDispatcher = _instanceDetails.dispatcher.id
 
@@ -748,7 +750,7 @@ class NopeInstanceManager:
 
                 promises.append(promise)
 
-            EXECUTOR.callParallel(asyncio.gather, * promises)
+            EXECUTOR.callParallel(asyncio.gather, *promises)
 
         self._instances = dict()
         self._externalInstances = dict()

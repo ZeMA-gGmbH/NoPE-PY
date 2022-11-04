@@ -2,10 +2,10 @@
 # @author Martin Karkowski
 # @email m.karkowski@zema.de
 
+from nope.dispatcher.baseServices import addAllBaseServices
+from nope.dispatcher.nopeDispatcher import NopeDispatcher
 from nope.helpers import ensureDottedAccess
 from nope.modules import NopeGenericModule
-from nope.dispatcher.nopeDispatcher import NopeDispatcher
-from nope.dispatcher.baseServices import addAllBaseServices
 
 
 def _perform_init(dispatcher: NopeDispatcher, options):

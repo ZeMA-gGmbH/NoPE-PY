@@ -1,8 +1,6 @@
-
-import time
+from nope.helpers import generateId
 from nope.logger import defineNopeLogger
 from nope.observable import NopeObservable
-from nope.helpers import generateId, EXECUTOR
 
 
 class AbstractLayer:

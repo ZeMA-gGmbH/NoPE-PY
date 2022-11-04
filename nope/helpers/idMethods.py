@@ -1,6 +1,7 @@
 from uuid import uuid4
-from .stringMethods import replaceAll
+
 from .dottedDict import ensureDottedAccess
+from .stringMethods import replaceAll
 
 
 def generateId(options=None) -> str:

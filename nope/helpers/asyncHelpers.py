@@ -132,7 +132,6 @@ class NopeExecutor:
             Future | Task: The item.
         """
         if isinstance(todo, (asyncio.Task, asyncio.Future)):
-
             self._todos.add(todo)
 
             def remove(*args, **kwargs):
@@ -279,7 +278,8 @@ def Promise(callback):
     return future
 
 
-async def waitFor(callback, initalWaitInMs: int = None, testFirst: bool = True, maxRetries: int = float("inf"), delay: int = 50, maxTimeout: int = None, additionalDelay: int = None):
+async def waitFor(callback, initalWaitInMs: int = None, testFirst: bool = True, maxRetries: int = float("inf"),
+                  delay: int = 50, maxTimeout: int = None, additionalDelay: int = None):
     """ Function which will wait for the callback to return true
 
     Args:

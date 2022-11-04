@@ -1,9 +1,8 @@
+import asyncio
+
 import pytest
 
 from ..asyncHelpers import EXECUTOR, waitFor
-
-
-import asyncio
 
 
 @pytest.fixture

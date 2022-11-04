@@ -1,3 +1,4 @@
+import asyncio
 from time import sleep
 
 import pytest
@@ -5,9 +6,6 @@ import pytest
 from ..nopeEventEmitter import NopeEventEmitter
 from ...helpers import EXECUTOR
 from ...helpers import getTimestamp, formatException, DottedDict
-
-
-import asyncio
 
 
 @pytest.fixture

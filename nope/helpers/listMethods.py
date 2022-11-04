@@ -3,10 +3,11 @@
 # @email m.karkowski@zema.de
 
 
-from functools import reduce
 from collections.abc import Iterable
-from .objectMethods import rgetattr
+from functools import reduce
+
 from .dottedDict import DottedDict
+from .objectMethods import rgetattr
 
 
 def extractListElements(_list, _path: str):

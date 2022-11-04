@@ -1,4 +1,3 @@
-from .dottedDict import DottedDict
 from .stringMethods import replaceAll, camelToSnake, snakeToCamel
 
 SPLITCHAR = '/'

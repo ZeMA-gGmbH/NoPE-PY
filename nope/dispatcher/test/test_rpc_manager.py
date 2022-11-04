@@ -1,12 +1,11 @@
+import asyncio
 from asyncio import sleep
 
-
-from ...communication import getLayer
-from ..rpcManager import NopeRpcManager
-from ...helpers import EXECUTOR
-
 import pytest
-import asyncio
+
+from ..rpcManager import NopeRpcManager
+from ...communication import getLayer
+from ...helpers import EXECUTOR
 
 
 @pytest.fixture

@@ -51,12 +51,14 @@ def setTimeout(func, msec, *args):
             loop = getOrCreateEventloop()
             asyncio.set_event_loop(loop)
             asyncio.run_coroutine_threadsafe(func(*args))
+
         t = threading.Timer(msec / 1000.0, func_wrapper)
         t.start()
         return t
     else:
         def func_wrapper():
             func(*args)
+
         t = threading.Timer(msec / 1000.0, func_wrapper)
         t.start()
         return t

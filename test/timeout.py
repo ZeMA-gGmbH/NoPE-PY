@@ -1,7 +1,8 @@
-from nope.helpers import getTimestamp, formatException, getOrCreateEventloop, offload_function_to_event_loop
-from nope.eventEmitter import NopeEventEmitter
-from asyncio import ensure_future, to_thread
 from time import sleep
+
+from nope.eventEmitter import NopeEventEmitter
+from nope.helpers import getTimestamp, formatException, getOrCreateEventloop, offload_function_to_event_loop
+
 
 # emitter = NopeEventEmitter()
 
@@ -41,6 +42,7 @@ async def test_waitForUpdate():
         print(formatException(e))
 
     print("done")
+
 
 loop = getOrCreateEventloop()
 loop.run_until_complete(test_waitForUpdate())

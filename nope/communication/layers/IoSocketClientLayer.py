@@ -1,10 +1,10 @@
-import socketio
 import time
-from nope.communication.layers import EventCommunicationInterface
+
+import socketio
+
+from nope.helpers import generateId, EXECUTOR
 from nope.logger import defineNopeLogger
 from nope.observable import NopeObservable
-from nope.helpers import generateId, EXECUTOR
-
 
 PROFILE = False
 OPEN_REQUESTS = {}
@@ -63,11 +63,13 @@ class IoSocketClientLayer:
                 def req(data, *args):
                     profile_task("new", data)
                     cb(data)
+
                 self._client.on(eventName, req)
             elif eventName == "rpcResponse":
                 def res(data, *args):
                     profile_task("done", data)
                     cb(data)
+
                 self._client.on(eventName, res)
             else:
                 self._client.on(eventName, cb)

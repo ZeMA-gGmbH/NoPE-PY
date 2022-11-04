@@ -1,10 +1,9 @@
+import asyncio
+
 import pytest
 
 from ..emitter import Emitter
 from ...helpers import EXECUTOR
-
-
-import asyncio
 
 
 @pytest.fixture

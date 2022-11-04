@@ -1,10 +1,9 @@
+import asyncio
+
 import pytest
 
 from ..pathMatchingMethods import comparePatternAndPath, generateResult
 from ...helpers import EXECUTOR
-
-
-import asyncio
 
 
 @pytest.fixture

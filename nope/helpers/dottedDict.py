@@ -1,5 +1,6 @@
 from copy import deepcopy
-from .hashable import hdict, unhash, hashable
+
+from .hashable import hdict
 
 DEFAULT_METHODS = dir(hdict)
 
@@ -38,7 +39,7 @@ class DottedDict(hdict):
         return dict.__repr__(self)
 
 
-#DottedDict = hashable(DottedDict)
+# DottedDict = hashable(DottedDict)
 
 
 class NoneDottedDict(DottedDict):
@@ -71,7 +72,7 @@ class NoneDottedDict(DottedDict):
         return NoneDottedDict(cp)
 
 
-#NoneDottedDict = hashable(NoneDottedDict)
+# NoneDottedDict = hashable(NoneDottedDict)
 
 def _convertItem(item, useNoneAsDefaultValue: bool):
     """ Helper that converts the items to the corresponding type

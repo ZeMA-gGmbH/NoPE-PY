@@ -3,8 +3,8 @@ from collections.abc import Iterable
 from .dottedDict import DottedDict, ensureDottedAccess
 from .objectMethods import convertData, rgetattr, rqueryAttr, flattenObject, rsetattr
 from .path import SPLITCHAR, getLeastCommonPathSegment, pathToCamelCase, pathToSnakeCase
-from .stringMethods import camelToSnake, snakeToCamel
 from .prints import formatException
+from .stringMethods import camelToSnake, snakeToCamel
 
 __SENTINENTAL = object()
 
