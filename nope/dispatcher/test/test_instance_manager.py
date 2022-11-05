@@ -43,7 +43,8 @@ async def test_register_instance():
 
     await sleep(0.1)
 
-    assert srv.instanceManager.getServiceName(
-        "hello_word",
-        "constructor") in client.instanceManager.constructors.data.getContent()
+    assert srv.instanceManager.getServiceName("hello_word","constructor") in client.instanceManager.constructors.data.getContent()
     assert len(client.instanceManager.constructors.data.getContent()) == 1
+
+if __name__ == "__main__":
+    EXECUTOR.loop.run_until_complete(test_register_instance())

@@ -1,6 +1,6 @@
 from . import (communication, decorators, dispatcher, eventEmitter, helpers, demo, loader,
 
-               logger, merging, observable, pubSub, plugins, modules)
+               logger, merging, observable, pubSub, plugins, modules, types)
 from .communication import *
 from .decorators import *
 from .dispatcher import *
@@ -12,3 +12,4 @@ from .merging import *
 from .observable import *
 from .plugins import install
 from .pubSub import *
+from .types import *

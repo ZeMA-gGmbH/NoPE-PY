@@ -1,6 +1,6 @@
 from .DecoratedHelloWorld import DecoratedHelloWorldModule
 from .HelloWorld import HelloWorldModule
-from ...loader import ProvidedClass, NopePackage, DefaultInstance, ProvidedFunctions
+from ...types import ProvidedClass, NopePackage, DefaultInstance, ProvidedService, ServiceOptions
 
 
 async def _createHellowordModule(dispatcher, *args):
@@ -20,6 +20,12 @@ DESCRIPTION = NopePackage("helloWorld",
                               ProvidedClass(
                                   "HelloWorldModule", _createHellowordModule)
                           ],
-                          providedFunctions=[
-                              ProvidedFunctions(helloWorldService)
+                          providedServices=[
+                              ProvidedService(
+                                helloWorldService,
+                                ServiceOptions(
+                                    id="helloWorldService",
+                                    schema={}
+                                )
+                              )
                           ])

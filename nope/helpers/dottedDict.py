@@ -1,6 +1,7 @@
 from copy import deepcopy
 
 from .hashable import hdict
+from dataclasses import is_dataclass, asdict
 
 DEFAULT_METHODS = dir(hdict)
 
@@ -85,6 +86,8 @@ def _convertItem(item, useNoneAsDefaultValue: bool):
     """
     if type(item) in (dict, DottedDict, NoneDottedDict):
         return convertToDottedDict(item, useNoneAsDefaultValue)
+    elif is_dataclass(item):
+        return convertToDottedDict(asdict(item))
     elif type(item) in (list, set):
         new_list = list()
         for i in item:
@@ -103,6 +106,10 @@ def convertToDottedDict(d: dict | DottedDict |
         useNoneAsDefaultValue (bool): Flag to enable the default value 'none' instead of an KeyError
     """
     ret = NoneDottedDict() if useNoneAsDefaultValue else DottedDict()
+
+    if is_dataclass(d):
+        d = asdict(d)
+
     for k, v in d.items():
         ret[k] = _convertItem(v, useNoneAsDefaultValue)
 

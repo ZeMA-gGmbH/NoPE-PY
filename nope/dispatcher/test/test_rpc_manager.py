@@ -31,11 +31,11 @@ async def test_rpc_manager():
         await sleep(1)
         return await hello(name)
 
-    manager.registerService(hello, {
+    await manager.registerService(hello, {
         "id": "hello"
     })
 
-    manager.registerService(delayed, {
+    await manager.registerService(delayed, {
         "id": "delayed"
     })
 

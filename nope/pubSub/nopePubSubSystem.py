@@ -84,7 +84,7 @@ class PubSubSystem:
         self.publishers = DictBasedMergeData(self._emitters, 'pubTopic')
         self.onIncrementalDataChange = NopeEventEmitter()
 
-        self._data = ensureDottedAccess({})
+        self._data = ensureDottedAccess({}, useNoneAsDefaultValue=False)
 
     @property
     def options(self):

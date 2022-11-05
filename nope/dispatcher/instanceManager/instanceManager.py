@@ -50,7 +50,7 @@ class NopeInstanceManager:
         self._mappingOfRemoteDispatchersAndGenerators = dict()
         # Overview of the available Constructors in the network.
         self.constructors = DictBasedMergeData(
-            self._mappingOfRemoteDispatchersAndGenerators, '+')
+            self._mappingOfRemoteDispatchersAndGenerators, '+', '+')
         self._mappingOfRemoteDispatchersAndInstances = dict()
 
         # Overview of the available instances in the network.
@@ -74,18 +74,19 @@ class NopeInstanceManager:
         self.internalInstances = NopeObservable()
         self.internalInstances.setContent([])
 
+        _ctorStart = f'nope{SPLITCHAR}core{SPLITCHAR}constructor{SPLITCHAR}'
+
         def _extractGenerators(*args):
             self._mappingOfRemoteDispatchersAndGenerators.clear()
             for dispatcher, services in self._rpcManager.services.originalData.items():
                 def _filterMatchingServices(svc):
-                    if "id" in svc and svc["id"].startswith(
-                            f'nope{SPLITCHAR}core{SPLITCHAR}constructor{SPLITCHAR}'):
+                    if "id" in svc and svc["id"].startswith(_ctorStart):
                         return True
                     return False
 
                 generators = list(
                     map(
-                        lambda item: item.id,
+                        lambda item: item.id[len(_ctorStart):],
                         filter(
                             _filterMatchingServices,
                             services.services
@@ -144,7 +145,7 @@ class NopeInstanceManager:
             _generateWrapper
         )
 
-        def _onDispatchersChanged(changes):
+        def _onDispatchersChanged(changes, *args):
             """ Callback which will handle new and offline Dispatchers.
             """
 
@@ -162,7 +163,7 @@ class NopeInstanceManager:
         self._connectivityManager.dispatchers.onChange.subscribe(
             _onDispatchersChanged)
 
-        def _onInstancesChanged(message):
+        def _onInstancesChanged(message, *args):
             """ Callback which will be called if the commincator receives a Message
                 that some instances has been changed.
 
@@ -242,8 +243,8 @@ class NopeInstanceManager:
         Args:
             dispatcher (str): The Id of the Dispatcher
         """
-        self._mappingOfRemoteDispatchersAndInstances.pop(dispatcher)
-        self.instances.update()
+        if self._mappingOfRemoteDispatchersAndInstances.pop(dispatcher, False):
+            self.instances.update()
 
     async def registerConstructor(self, identifier: str, cb):
         """ Registers a Constructor, that enables other NopeInstanceManagers to create an instance of the given type. Therefore a callback "cb" is registered with the given "typeIdentifier"
@@ -278,6 +279,7 @@ class NopeInstanceManager:
 
                     # Create the Instance
                     _instance = await cb(self._core, data.identifier)
+                    _instance.identifier = data.identifier
 
                     # Make shure the Data is expressed as Array.
                     if not isIterable(data.params):
@@ -491,8 +493,7 @@ class NopeInstanceManager:
         Returns:
             bool: _description_
         """
-        ctorName = self.getServiceName(typeIdentifier, 'constructor')
-        return self.constructors.data.getContent().includes(ctorName)
+        return typeIdentifier in self.constructors.data.getContent()
 
     async def createInstance(self, description, options=None):
         """ Allows to create an instance. This might be the case on remote dispatchers or
@@ -515,6 +516,7 @@ class NopeInstanceManager:
         # which will lead to an error.
 
         options = ensureDottedAccess(options)
+        description = ensureDottedAccess(description)
 
         # Assign the provided Description
         _description = ensureDottedAccess({
@@ -540,7 +542,7 @@ class NopeInstanceManager:
 
         try:
             _type = _description.type
-            if not self._internalWrapperGenerators.has(_type):
+            if _type not in self._internalWrapperGenerators:
                 _type = '*'
 
             if not self.constructorExists(_description.type):

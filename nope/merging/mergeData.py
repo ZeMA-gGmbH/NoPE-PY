@@ -1,5 +1,5 @@
 from ..eventEmitter import NopeEventEmitter
-from ..helpers import DottedDict, extractUniqueValues, transform_dict, determineDifference
+from ..helpers import DottedDict, extractUniqueValues, transformDict, determineDifference
 from ..observable import NopeObservable
 
 
@@ -52,7 +52,7 @@ class DictBasedMergeData(MergeData):
     def update(self, data=None, force=False):
         if data is not None:
             self.originalData = data
-        result = transform_dict(self.originalData, self._path, self._pathKey)
+        result = transformDict(self.originalData, self._path, self._pathKey)
 
         self.simplified = result.extracted_map
         self.amountOf = result.amountOf

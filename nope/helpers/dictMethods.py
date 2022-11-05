@@ -148,7 +148,7 @@ def extractValues(d, path='', unique=False):
     return s
 
 
-def transform_dict(d, pathExtractedValue: str,
+def transformDict(d, pathExtractedValue: str,
                    pathExtractedKey: str, logger=None):
     """_summary_
 
@@ -216,47 +216,52 @@ def transform_dict(d, pathExtractedValue: str,
 
         else:
 
-            data = DottedDict({
-                'key': None,
-                'value': None,
-                'keyIsHashable': True,
-                'valueIsHashable': True
-            })
+            keys = []
+            values = []
 
             # We migt adapt the key and the Value. Therefore we will use
             # the next if statements
 
             if isinstance(pathExtractedKey, str):
                 if len(pathExtractedKey) > 0:
-                    data.key = rgetattr(v, pathExtractedKey)
+                    keys = rqueryAttr(v, pathExtractedKey)
                 else:
-                    data.key = v
+                    keys = [v]
             else:
-                data.key = k
+                keys = [k]
 
             if isinstance(pathExtractedValue, str):
                 if len(pathExtractedValue) > 0:
-                    data.value = rgetattr(v, pathExtractedValue)
+                    values = rqueryAttr(v, pathExtractedValue)
                 else:
-                    data.value = v
+                    values = [v]
             else:
-                data.value = v
+                values = [v]
 
-            # Try to convert the data:
-            try:
-                hash(data.key)
-            except BaseException:
-                data.keyIsHashable = False
-                keyIsHashable = False
+            for key in keys:
+                for value in values:
+                    data = DottedDict({
+                        'key': key,
+                        'value': value,
+                        'keyIsHashable': True,
+                        'valueIsHashable': True
+                    })
 
-            # Try to convert the data:
-            try:
-                hash(data.value)
-            except BaseException:
-                data.valueIsHashable = False
-                valueIsHashable = False
+                    # Try to convert the data:
+                    try:
+                        hash(data.key)
+                    except BaseException:
+                        data.keyIsHashable = False
+                        keyIsHashable = False
 
-            extracted.append(data)
+                    # Try to convert the data:
+                    try:
+                        hash(data.value)
+                    except BaseException:
+                        data.valueIsHashable = False
+                        valueIsHashable = False
+
+                    extracted.append(data)
 
         # Create the entries for the following dicts.
         keyMapping[k] = set()

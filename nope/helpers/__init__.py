@@ -29,7 +29,7 @@ from .dictMethods import (extractUniqueValues, extractValues,
 
                           keysToCamel, keysToCamelNested, keysToSnake,
 
-                          keysToSnakeNested, transform_dict)
+                          keysToSnakeNested, transformDict)
 from .dispatcherPathes import (getEmitterPath, getMethodPath,
 
                                getPropertyPath, isEmitterPathCorrect,

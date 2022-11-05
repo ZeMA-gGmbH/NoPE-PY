@@ -13,22 +13,22 @@ SENTINEL_1 = object()
 SENTINEL_2 = object()
 
 
-def rgetattr(data, path, default=SENTINEL_1, _SPLITCHAR=SPLITCHAR):
+def rgetattr(data, path, default=SENTINEL_1, splitchar=SPLITCHAR):
     """ Helper to recursively get an value.
 
     Args:
         data (any): The data to extract the value from
         path (str): The path to extract the data from.
         default (any, optional): The Default value which will be return if no value has been found. If not provided None is returned
-        _SPLITCHAR (str, optional): _description_. Defaults to SPLITCHAR.
+        splitchar (str, optional): _description_. Defaults to SPLITCHAR.
 
     Returns:
         any: The found data.
     """
     obj = data
     if len(path) > 0:
-        if _SPLITCHAR in path:
-            for attr in path.split(_SPLITCHAR):
+        if splitchar in path:
+            for attr in path.split(splitchar):
                 if type(obj) in (dict, DottedDict):
                     obj = obj.get(attr)
                 else:
@@ -40,7 +40,8 @@ def rgetattr(data, path, default=SENTINEL_1, _SPLITCHAR=SPLITCHAR):
                         return default
         else:
             try:
-                return obj[path]
+                data = obj[path]
+                return data
             except KeyError:
                 if default == SENTINEL_1:
                     return None
@@ -215,7 +216,7 @@ def rsetattr(data, path: str, value, splitchar: str = SPLITCHAR):
         data (any):  The Object, where the data should be stored
         path (str): The Path of the Attribute. All are seprated by a the splitchar. (Defaults to'.' => For Instance 'a/b/0/a/c')
         value (any): The Value which should be Stored in the Attribute.
-        _SPLITCHAR (str, optional): The Splitchar to use. Defaults to "/". Defaults to SPLITCHAR.
+        splitchar (str, optional): The Splitchar to use. Defaults to "/". Defaults to SPLITCHAR.
     """
 
     obj = data
@@ -429,7 +430,7 @@ def deepAssign(target, source):
     return target
 
 
-def recursiveForEach(obj, callback=None, prefix="", _SPLITCHAR=SPLITCHAR, callOnlyOnBaseValues=True,
+def recursiveForEach(obj, callback=None, prefix="", splitchar=SPLITCHAR, callOnlyOnBaseValues=True,
                      max_depth=None, parent='', level=0):
     """ Function, that will iterate over an object.
 
@@ -437,7 +438,7 @@ def recursiveForEach(obj, callback=None, prefix="", _SPLITCHAR=SPLITCHAR, callOn
         obj: The Object to iterate
         prefix (_type_): A prefix for the Path.
         callback (callable, optional): Callback, that will be called.. Defaults to None.
-        _SPLITCHAR (_type_, optional): The Splitchar to use, to generate the path. Defaults to SPLITCHAR.
+        splitchar (_type_, optional): The Splitchar to use, to generate the path. Defaults to SPLITCHAR.
         callOnlyOnBaseValues (bool, optional): A Flag, to call the Function only on Values. Defaults to True.
         max_depth (_type_, optional): Determine the max Depth, after which the Iteration will be stopped.. Defaults to None.
         parent (str, optional): For Recursive call only. Defaults to ''.
@@ -460,7 +461,7 @@ def recursiveForEach(obj, callback=None, prefix="", _SPLITCHAR=SPLITCHAR, callOn
         # We will iterate over the and
         for key in keys:
             # Define the variable, containing the path
-            path = str(key) if '' == prefix else prefix + _SPLITCHAR + str(key)
+            path = str(key) if '' == prefix else prefix + splitchar + str(key)
 
             if obj[key] is not None:
                 if hasattr(obj[key], "to_json") and callable(obj[key].to_json):
@@ -469,7 +470,7 @@ def recursiveForEach(obj, callback=None, prefix="", _SPLITCHAR=SPLITCHAR, callOn
                         data,
                         callback,
                         path,
-                        _SPLITCHAR,
+                        splitchar,
                         callOnlyOnBaseValues,
                         max_depth,
                         prefix,
@@ -482,7 +483,7 @@ def recursiveForEach(obj, callback=None, prefix="", _SPLITCHAR=SPLITCHAR, callOn
                         obj[key],
                         callback,
                         path,
-                        _SPLITCHAR,
+                        splitchar,
                         callOnlyOnBaseValues,
                         max_depth,
                         prefix,

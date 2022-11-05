@@ -45,7 +45,8 @@ if __name__ == "__main__":
                     "nope.merging",
                     "nope.modules",
                     "nope.plugins",
-                    "nope.pubSub"
+                    "nope.pubSub",
+                    "nope.types"
                     ],
           package_data={'': ['VERSION']},
           include_package_data=True,

@@ -215,14 +215,13 @@ class NopeConnectivityManager:
 
         await self._communicator.on('aurevoir', onAurevoir)
 
-        await self._asyncSendStatus()
+        await self.emitBonjour()
+        await self._asyncSendStatus(forced=True)
 
         if self._logger:
             self._logger.info('core.connectivity-manager',
                               self.id, 'initialized')
 
-        await self.emitBonjour()
-        await self._asyncSendStatus(forced=True)
         self.ready.setContent(True)
 
     def _checkDispachterHealth(self):
