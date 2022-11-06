@@ -52,14 +52,12 @@ def extend(bridgeMod, conManagerMod):
             promise = None
 
             if eventName != "ackMessage" and self.ackReplyId is not None:
-                messageId = generateId()
-                data["messageId"] = messageId
-
                 # Now lets define the Target:
-
                 if target is None or target == True:
                     if self.defaultTargets:
                         target = set(self.defaultTargets)
+                    elif "target" in data:
+                        target = set([data["target"]])                    
                     else:
                         target = set()
                 else:
@@ -73,6 +71,8 @@ def extend(bridgeMod, conManagerMod):
                 # Only if we expect a target,
                 # we will wait for the message.
                 if len(target) > 0:
+                    messageId = generateId()
+                    data["messageId"] = messageId
 
                     def callback(msg, *args):
                         nonlocal messageId
@@ -84,7 +84,7 @@ def extend(bridgeMod, conManagerMod):
                                 messageId, False)
 
                             # Mark the Dispatcher as ready:
-                            data["received"].add(msg["dispatcher"])
+                            data["received"].add(msg["dispatcherId"])
 
                             if len(data["target"] - data["received"]) == 0:
                                 # Remove the Message, becaus it is finished
@@ -104,12 +104,12 @@ def extend(bridgeMod, conManagerMod):
                         "promise": promise
                     }
 
-            await bridgeMod.Bridge.emit(self, eventName, data, **kwargs)
+            res = await bridgeMod.Bridge.emit(self, eventName, data, **kwargs)
 
             if promise:
                 await promise
 
-            return eventName, data, None
+            return res
 
         async def on(self, eventName, cb):
             # In here we will define a custom callback,
@@ -128,7 +128,7 @@ def extend(bridgeMod, conManagerMod):
                         "ackMessage",
                         ensureDottedAccess({
                             "messageId": msg["messageId"],
-                            "dispatcher": self.ackReplyId
+                            "dispatcherId": self.ackReplyId
                         })
                     )
 

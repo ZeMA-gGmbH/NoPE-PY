@@ -571,7 +571,7 @@ def plugin(base, name: str = None, depends=[], conflicts=[]):
         # We will define a custom Pluginname if required.
         if extend.name is None:
             global _PLUGIN_COUNTER
-            extend.name = f"anymousPlugin{_PLUGIN_COUNTER}@{inspect.getsourcefile(inspect.stack()[1][0])}"
+            extend.name = f"anonymousPlugin{_PLUGIN_COUNTER}@{inspect.getsourcefile(inspect.stack()[1][0])}"
             _PLUGIN_COUNTER += 1
         else:
             _PLUGINS[extend.__name__] = extend
