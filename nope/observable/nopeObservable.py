@@ -50,7 +50,7 @@ class NopeObservable(NopeEventEmitter):
     def _informSpecificObserver(self, observer):
         if self._lastRest is not None:
             # Call the last rest
-            observer(self._lastValue, self._lastRest)
+            observer({ "value": self._lastValue, **self._lastRest})
 
     def _publish(self, value, options=None):
         options = ensureDottedAccess(options)
@@ -77,14 +77,16 @@ class NopeObservable(NopeEventEmitter):
     def content(self):
         return self.getContent()
 
-    def subscribe(self, observer, options=None):
+    def subscribe(self, callback, options=None):
         if options is None:
-            options = {'type': 'sync', 'mode': [
+            options = {'mode': [
                 'direct', 'sub', 'super'], 'skipCurrent': False}
 
-        res = self._subscribe(observer, ensureDottedAccess(options))
+        customCallback = self._adaptCallback(callback, ensureDottedAccess(options))
+
+        res = self._subscribe(customCallback)
 
         # Because we are an observerable -> we will send the update:
-        self._informSpecificObserver(observer)
+        self._informSpecificObserver(customCallback)
 
         return res

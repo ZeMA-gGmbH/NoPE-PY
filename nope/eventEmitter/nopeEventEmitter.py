@@ -59,15 +59,11 @@ class NopeEventEmitter:
                   options: dict | DottedDict = DottedDict({'type': 'sync', 'mode': ['direct', 'sub', 'super']})):
         options = ensureDottedAccess(options)
         options.skipCurrent = self.options.showCurrent and not self.options.playHistory
-        return self._subscribe(callback, options)
+        return self._subscribe(self._adaptCallback(callback, options))
 
-    def _subscribe(self, callback, options):
-
-        active = True
+    def _adaptCallback(self, callback, options):
         first = True
-
         def adaptedCallback(_data: DottedDict):
-            nonlocal active
             nonlocal first
 
             data = _data.copy()
@@ -78,13 +74,17 @@ class NopeEventEmitter:
 
             first = False
 
-            if active and data is not None:
+            if data is not None:
                 # Pop the value
                 value = data.pop("value")
                 # Now we call value, ... rest
                 callback(value, data)
 
-        return self._emitter.on(callback=adaptedCallback)
+        return adaptedCallback        
+
+    def _subscribe(self, callback):
+
+        return self._emitter.on(callback=callback)
 
     def once(self, callback, options=None):
         ret = None

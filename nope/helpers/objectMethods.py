@@ -314,25 +314,23 @@ def objectToDict(obj):
 
 
 def isDictLike(obj) -> bool:
-    """
-    Check if the object is dict-like.
-    Parameters
-    ----------
-    obj : The object to check
-    Returns
-    -------
-    is_dict_like : bool
-        Whether `obj` has dict-like properties.
-    Examples
-    --------
-    >>> isDictLike({1: 2})
-    True
-    >>> isDictLike([1, 2, 3])
-    False
-    >>> isDictLike(dict)
-    False
-    >>> isDictLike(dict())
-    True
+    """ Check if the object is dict-like.
+
+    Args:
+        obj (any): The object to check
+
+    Returns:
+        bool:  Whether `obj` has dict-like properties.
+    
+    Examples:    
+        >>> isDictLike({1: 2})
+        True
+        >>> isDictLike([1, 2, 3])
+        False
+        >>> isDictLike(dict)
+        False
+        >>> isDictLike(dict())
+        True
     """
     attributes_to_check = ("__getitem__")
 
@@ -415,9 +413,10 @@ def deepAssign(target, source):
     """ Deeply assigns the items given in the dict, whereas the
         keys of the source will be used as path, its value as value
         to assign.
+
     Args:
         target (any): original object.
-        source (dict | dict-like): _description_
+        source (dict | dict-like): Todo
 
     Returns:
         any: the manipulated target
