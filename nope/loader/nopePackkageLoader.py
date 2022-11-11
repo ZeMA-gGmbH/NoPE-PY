@@ -13,7 +13,6 @@ from ..logger import getNopeLogger
 from ..types import NopePackage
 
 
-
 class NopePackageLoader():
     def __init__(self, dispatcher: NopeDispatcher,
                  logger=None, level=logging.INFO):
@@ -97,7 +96,7 @@ class NopePackageLoader():
             reuqiredPackages = set()
 
             for package in self.packages.values():
-                reuqiredPackages |= set(package.requiredPackages) 
+                reuqiredPackages |= set(package.requiredPackages)
 
             # Now check if the required packages are present or not.
             for req in reuqiredPackages:

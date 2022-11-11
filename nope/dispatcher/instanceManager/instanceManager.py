@@ -320,7 +320,7 @@ class NopeInstanceManager:
                         'instance': _instance,
                         'usedBy': [data.dispatcherId]
                     })
-                                        )
+                    )
                     self._internalInstances.add(data.identifier)
 
                     # Update the available instances:

@@ -9,12 +9,14 @@ from nope.demo.instances import DESCRIPTION
 from nope.dispatcher import getDispatcher
 from nope.helpers import EXECUTOR
 
+
 @pytest.fixture
 def event_loop():
     loop = asyncio.new_event_loop()
     EXECUTOR.assignLoop(loop)
     yield loop
     loop.close()
+
 
 async def test_loading():
     communicator = await getLayer("event")

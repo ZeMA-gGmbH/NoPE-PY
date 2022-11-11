@@ -22,10 +22,10 @@ DESCRIPTION = NopePackage("helloWorld",
                           ],
                           providedServices=[
                               ProvidedService(
-                                helloWorldService,
-                                ServiceOptions(
-                                    id="helloWorldService",
-                                    schema={}
-                                )
+                                  helloWorldService,
+                                  ServiceOptions(
+                                      id="helloWorldService",
+                                      schema={}
+                                  )
                               )
                           ])

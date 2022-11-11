@@ -390,7 +390,7 @@ class hset(set):
 
     def __str__(self):
         return self.__class__.__name__ + \
-               "(" + set.__str__(self).split("(", 1)[1]
+            "(" + set.__str__(self).split("(", 1)[1]
 
     def __sub__(self, other):
         return self.__class__(set.__sub__(self, other))

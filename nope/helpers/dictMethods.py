@@ -149,7 +149,7 @@ def extractValues(d, path='', unique=False):
 
 
 def transformDict(d, pathExtractedValue: str,
-                   pathExtractedKey: str, logger=None):
+                  pathExtractedKey: str, logger=None):
     """_summary_
 
     Args:

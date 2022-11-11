@@ -121,11 +121,15 @@ class NopeRpcManager:
 
                 _result = _DEFAULT_RESULT
 
-                if not func.isAsync and not self.__warned and self._logger:
-                    self._logger.warn(
-                        "!!! You have provided synchronous functions. They may break NoPE. Use them with care !!!")
-                    self._logger.warn(
-                        "Offloading function to a separate thread.")
+                if not func.isAsync and not self.__warned:
+                    if self._logger:
+                        self._logger.warn(
+                            "!!! You have provided synchronous functions. They may break NoPE. Use them with care !!!")
+                        self._logger.warn(
+                            "Offloading function to a separate thread.")
+                    else:
+                        print("!!! You have provided synchronous functions. They may break NoPE. Use them with care !!!")
+                        print("Offloading function to a separate thread.")
                     # We only want to warn the user once.
                     self.__warned = True
 
@@ -438,10 +442,14 @@ class NopeRpcManager:
         options.id = idOfFunc
 
         if not self.__warned and not isAsyncFunction(func):
-            self._logger.warn(
-                "!!! You have provided synchronous functions. They may break NoPE. Use them with care !!!")
-            self._logger.warn(
-                f'The service "{idOfFunc}" is synchronous!')
+            if self._logger:
+                self._logger.warn(
+                    "!!! You have provided synchronous functions. They may break NoPE. Use them with care !!!")
+                self._logger.warn(
+                    f'The service "{idOfFunc}" is synchronous!')
+            else:
+                print("!!! You have provided synchronous functions. They may break NoPE. Use them with care !!!")
+                print(f'The service "{idOfFunc}" is synchronous!')
             # We only want to warn the user once.
             self.__warned = True
 
@@ -468,7 +476,7 @@ class NopeRpcManager:
     async def _performCall(self, serviceName, params, options=None):
         optionsToUse = ensureDottedAccess({
             "resultSink": self._getServiceName(serviceName, "response"),
-            "waitFor_result": True
+            "waitForResult": True
         })
         optionsToUse.update(ensureDottedAccess(options))
 
@@ -556,7 +564,7 @@ class NopeRpcManager:
 
             if self._logger:
                 self._logger.debug(
-                    f'Dispatcher "${self._id}" putting task "${taskId}" on: "${self._getServiceName(tastRequest.functionId, "request")}"')
+                    f'Dispatcher "{self._id}" putting task "{taskId}" on: "{self._getServiceName(tastRequest.functionId, "request")}"')
 
             if optionsToUse.get("timeout", 0) > 0:
                 async def onTimeout():
@@ -589,7 +597,7 @@ class NopeRpcManager:
 
         future.cancelCallback = _cancelTask
 
-        if not optionsToUse.waitFor_result:
+        if not optionsToUse.waitForResult:
             EXECUTOR.loop.create_task(future)
             return future
 
@@ -602,7 +610,7 @@ class NopeRpcManager:
                     "The length of the provided services and options does not match")
 
             optionsToUse = [options] * \
-                           len(serviceName) if not isIterable(options) else options
+                len(serviceName) if not isIterable(options) else options
 
             futures = []
 

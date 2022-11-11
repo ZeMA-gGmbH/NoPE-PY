@@ -88,7 +88,7 @@ def generate_nope_backend(args: dict):
     loop = asyncio.get_event_loop()
 
     if getattr(args, "channel", "event") in [
-        key for key in LAYER_DEFAULT_PARAMETERS.keys()]:
+            key for key in LAYER_DEFAULT_PARAMETERS.keys()]:
         pass
     else:
         print("invalid communication-layer has been selected")

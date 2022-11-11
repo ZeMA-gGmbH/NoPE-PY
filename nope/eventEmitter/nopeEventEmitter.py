@@ -63,6 +63,7 @@ class NopeEventEmitter:
 
     def _adaptCallback(self, callback, options):
         first = True
+
         def adaptedCallback(_data: DottedDict):
             nonlocal first
 
@@ -80,7 +81,7 @@ class NopeEventEmitter:
                 # Now we call value, ... rest
                 callback(value, data)
 
-        return adaptedCallback        
+        return adaptedCallback
 
     def _subscribe(self, callback):
 

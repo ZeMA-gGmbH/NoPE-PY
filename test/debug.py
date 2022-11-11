@@ -76,7 +76,7 @@ class NopeExecutor:
         return task
 
     def callParallel(self, func, *args, **
-    kwargs) -> asyncio.Task | asyncio.Future:
+                     kwargs) -> asyncio.Task | asyncio.Future:
         function_to_use = self._wrapFuncIfRequired(func)
 
         task = self.loop.create_task(function_to_use(*args, **kwargs))

@@ -57,7 +57,7 @@ def extend(bridgeMod, conManagerMod):
                     if self.defaultTargets:
                         target = set(self.defaultTargets)
                     elif "target" in data:
-                        target = set([data["target"]])                    
+                        target = set([data["target"]])
                     else:
                         target = set()
                 else:
@@ -143,22 +143,20 @@ def extend(bridgeMod, conManagerMod):
             self.forceAckMessage = True
 
             # To extend
-
             def cb(dispatchers: list, *args):
                 if self.forceAckMessage:
-                    self._communicator.defaultTargets = dispatchers
+                    # Get all Dispatchers running the Plugin.
+                    dispatchersWithPlugin = list(
+                        filter(
+                            lambda id: "ackMessages" in self.dispatchers.originalData[id].plugins,
+                            dispatchers))
+                    self._communicator.defaultTargets = dispatchersWithPlugin
 
             self.dispatchers.data.subscribe(cb)
 
         def _info(self):
-
             ret = conManagerMod.NopeConnectivityManager._info(self)
-
-            if "plugins" not in ret:
-                ret.plugins = []
-
             ret.plugins.append("ackMessages")
-
             return ret
 
     return Bridge, NopeConnectivityManager

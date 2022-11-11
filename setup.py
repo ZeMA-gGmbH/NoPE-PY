@@ -2,7 +2,7 @@
 # Author: Martin Karkowski
 
 
-from distutils.core import setup
+from setuptools import setup
 
 try:
     long_description = open("README").read()

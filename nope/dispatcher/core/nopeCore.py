@@ -41,8 +41,8 @@ class NopeCore:
 
         def isReady(_):
             return self.connectivityManager.ready.getContent() \
-                   and self.rpcManager.ready.getContent() \
-                   and self.instanceManager.ready.getContent()
+                and self.rpcManager.ready.getContent() \
+                and self.instanceManager.ready.getContent()
 
         def onEvent(msg):
             msg = ensureDottedAccess(msg)

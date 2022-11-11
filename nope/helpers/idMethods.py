@@ -1,28 +1,26 @@
 from uuid import uuid4
 
-from .dottedDict import ensureDottedAccess
 from .stringMethods import replaceAll
 
 
-def generateId(options=None) -> str:
+def generateId(use_as_var: bool = False, pre_string: str = None) -> str:
     """ Helper to generate an id.
-        if "useAsVar" is provided in the Options => the id is converted to an id
-        if "preString" is provided, this string will be added in front of the id.
+        if "use_as_var" is provided in the Options => the id is converted to an id
+        if "pre_string" is provided, this string will be added in front of the id.
 
 
     Args:
-        options (dotted_dict, optional):    The options. May cotains "useAsVar" and "preString".
+        options (dotted_dict, optional):    The options. May cotains "use_as_var" and "pre_string".
                                             Defaults to dotted_dict({}).
 
     Returns:
         str: The id.
     """
-    options = ensureDottedAccess(options)
 
     _id = str(uuid4())
-    if options.useAsVar:
+    if use_as_var:
         _id = replaceAll(_id, '-', '')
-        options.preString = options.preString if options.preString else '_'
-    if options.preString:
-        _id = options.preString + _id
+        pre_string = pre_string if pre_string else '_'
+    if pre_string:
+        _id = pre_string + _id
     return _id

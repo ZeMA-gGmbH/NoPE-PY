@@ -78,7 +78,7 @@ class NopeConnectivityManager:
         self.dispatchers = DictBasedMergeData(self._externalDispatchers, 'id')
 
         if self._logger:
-            self._logger.info('core.connectivity-manager', self.id, 'is ready')
+            self._logger.info(f'core.connectivity-manager {self.id} is ready')
 
         self.reset()
         EXECUTOR.callParallel(self.init)
@@ -120,7 +120,8 @@ class NopeConnectivityManager:
             'pid': os.getpid(),
             'timestamp': self.now,
             'connectedSince': self.connectedSince,
-            'status': ENopeDispatcherStatus.HEALTHY.value
+            'status': ENopeDispatcherStatus.HEALTHY.value,
+            'plugins': []
         })
 
     @property
@@ -219,8 +220,7 @@ class NopeConnectivityManager:
         await self._asyncSendStatus(forced=True)
 
         if self._logger:
-            self._logger.info('core.connectivity-manager',
-                              self.id, 'initialized')
+            self._logger.info(f'core.connectivity-manager {self.id} is initialized')
 
         self.ready.setContent(True)
 
@@ -253,11 +253,11 @@ class NopeConnectivityManager:
                 status['status'] = ENopeDispatcherStatus.DEAD
                 changes = True
             elif self._timeouts['warn'] < diff <= self._timeouts['dead'] and status[
-                'status'] != ENopeDispatcherStatus.WARNING:
+                    'status'] != ENopeDispatcherStatus.WARNING:
                 status['status'] = ENopeDispatcherStatus.WARNING
                 changes = True
             elif self._timeouts['slow'] < diff <= self._timeouts['warn'] and status[
-                'status'] != ENopeDispatcherStatus.SLOW:
+                    'status'] != ENopeDispatcherStatus.SLOW:
                 status['status'] = ENopeDispatcherStatus.SLOW
                 changes = True
             elif diff <= self._timeouts['slow'] and status['status'] != ENopeDispatcherStatus.HEALTHY:

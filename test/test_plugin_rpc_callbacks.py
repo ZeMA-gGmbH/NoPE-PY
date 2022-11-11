@@ -26,7 +26,7 @@ def event_loop():
 
 async def test_bridge_plugin():
     import nope
-    nope, _, __ = install(nope, "nope.plugins.ack_messages")
+    nope, _, __ = install(nope, "nope.plugins.rpc_with_callbacks")
 
     dispatcher = nope.getDispatcher({
         "communicator": await nope.getLayer("event"),
@@ -35,25 +35,22 @@ async def test_bridge_plugin():
 
     # To make our Plugin work -> we have to manually assign the id
     # dispatcher.communicator.ackReplyId = dispatcher.id
-
     await dispatcher.ready.waitFor()
 
-    def sub(*args):
-        print(*args)
+    async def funcWithCallback(p, cb1, cb2):
+        return await cb1(p,cb2)
 
-    await dispatcher.communicator.on("test", sub)
-    dispatcher.dataDistributor.patternbasedPullData("test/+/a/#")
-    await dispatcher.communicator.emit("test", {"data": "test-data-1"}, target=dispatcher.id, timeout=1.0)
-    await sleep(1)
-    ex = Exception("Failed")
-    try:
-        await dispatcher.communicator.emit("test", {"data": "test-data-2"}, target="Wont possible", timeout=1.0)
-        raise ex
-    except Exception as e:
-        if e == ex:
-            raise ex
+    await dispatcher.rpcManager.registerService(funcWithCallback, {
+        "id": "funcWithCallback"
+    })
 
-    print(dispatcher.connectivityManager.info)
+    async def cb(p,cb2):
+        print("inside of callback")
+        await cb2()
+
+    await dispatcher.rpcManager.performCall("funcWithCallback", ["jeah", cb, lambda *args: print("Here")], {
+        "calledOnce": [1]
+    })
 
 
 if __name__ == "__main__":

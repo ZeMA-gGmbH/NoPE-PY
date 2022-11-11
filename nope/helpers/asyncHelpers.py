@@ -200,7 +200,7 @@ class NopeExecutor:
         return self.ensureExecution(task)
 
     def callParallel(self, func, *args, **
-    kwargs) -> asyncio.Task | asyncio.Future:
+                     kwargs) -> asyncio.Task | asyncio.Future:
         """ Helper, which will call the function in the Background.
 
 

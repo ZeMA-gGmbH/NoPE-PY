@@ -321,8 +321,8 @@ def isDictLike(obj) -> bool:
 
     Returns:
         bool:  Whether `obj` has dict-like properties.
-    
-    Examples:    
+
+    Examples:
         >>> isDictLike({1: 2})
         True
         >>> isDictLike([1, 2, 3])

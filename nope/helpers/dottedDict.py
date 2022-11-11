@@ -98,7 +98,7 @@ def _convertItem(item, useNoneAsDefaultValue: bool):
 
 
 def convertToDottedDict(d: dict | DottedDict |
-                           NoneDottedDict, useNoneAsDefaultValue=True):
+                        NoneDottedDict, useNoneAsDefaultValue=True):
     """ Converts a dict to a dotted dict. Although, ensures,
 
     Args:

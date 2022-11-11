@@ -119,7 +119,7 @@ class Bridge:
                     except Exception as error:
                         if self._logger:
                             self._logger.error(
-                                'failed to emit the event "${event}"')
+                                'failed to emit the event "{event}"')
                             self._logger.error(error)
                         else:
                             print(formatException(error))

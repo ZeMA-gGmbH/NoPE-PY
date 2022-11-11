@@ -1,5 +1,5 @@
 set DIR=%~dp0
 cd "%DIR%"
 
-rm ./dist
+del ./dist
 python setup.py bdist_wheel --universal
