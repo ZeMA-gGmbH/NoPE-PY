@@ -30,7 +30,7 @@ async def test_bridge_plugin():
 
     dispatcher = nope.getDispatcher({
         "communicator": await nope.getLayer("event"),
-        "logger": False,
+        "logger": "info",
     })
 
     # To make our Plugin work -> we have to manually assign the id

@@ -48,10 +48,12 @@ def getNopeLogger(name: str, level=logging.DEBUG):
 
     if name not in _LOGGERS:
 
-        if len(name) > 20:
-            name = name[:17] + "..."
+        nameToUse = name
 
-        _logger = logging.getLogger(name)
+        if len(nameToUse) > 20:
+            nameToUse = nameToUse[:17] + "..."
+
+        _logger = logging.getLogger(nameToUse)
         # Define  a Logging Format
 
         _format = ColorizedFormatter(
