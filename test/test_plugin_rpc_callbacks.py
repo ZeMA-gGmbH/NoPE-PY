@@ -38,13 +38,13 @@ async def test_bridge_plugin():
     await dispatcher.ready.waitFor()
 
     async def funcWithCallback(p, cb1, cb2):
-        return await cb1(p,cb2)
+        return await cb1(p, cb2)
 
     await dispatcher.rpcManager.registerService(funcWithCallback, {
         "id": "funcWithCallback"
     })
 
-    async def cb(p,cb2):
+    async def cb(p, cb2):
         print("inside of callback")
         await cb2()
 

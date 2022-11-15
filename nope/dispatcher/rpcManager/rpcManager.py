@@ -128,7 +128,8 @@ class NopeRpcManager:
                         self._logger.warn(
                             "Offloading function to a separate thread.")
                     else:
-                        print("!!! You have provided synchronous functions. They may break NoPE. Use them with care !!!")
+                        print(
+                            "!!! You have provided synchronous functions. They may break NoPE. Use them with care !!!")
                         print("Offloading function to a separate thread.")
                     # We only want to warn the user once.
                     self.__warned = True
@@ -448,7 +449,8 @@ class NopeRpcManager:
                 self._logger.warn(
                     f'The service "{idOfFunc}" is synchronous!')
             else:
-                print("!!! You have provided synchronous functions. They may break NoPE. Use them with care !!!")
+                print(
+                    "!!! You have provided synchronous functions. They may break NoPE. Use them with care !!!")
                 print(f'The service "{idOfFunc}" is synchronous!')
             # We only want to warn the user once.
             self.__warned = True

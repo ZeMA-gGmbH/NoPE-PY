@@ -220,7 +220,8 @@ class NopeConnectivityManager:
         await self._asyncSendStatus(forced=True)
 
         if self._logger:
-            self._logger.info(f'core.connectivity-manager {self.id} is initialized')
+            self._logger.info(
+                f'core.connectivity-manager {self.id} is initialized')
 
         self.ready.setContent(True)
 

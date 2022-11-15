@@ -238,19 +238,23 @@ def extend(rpcMod, conManagerMod):
                         })
                     else:
 
-                        if not self.__warned and not isAsyncFunction(contentOfParameter):
+                        if not self.__warned and not isAsyncFunction(
+                                contentOfParameter):
                             if self._logger:
                                 self._logger.warn(
                                     "!!! You have provided synchronous functions. They may break NoPE. Use them with care !!!")
                                 self._logger.warn(
                                     f'The service of parameter {idx} is synchronous!')
                             else:
-                                print("!!! You have provided synchronous functions. They may break NoPE. Use them with care !!!")
-                                print(f'The service of parameter {idx} is synchronous!')
+                                print(
+                                    "!!! You have provided synchronous functions. They may break NoPE. Use them with care !!!")
+                                print(
+                                    f'The service of parameter {idx} is synchronous!')
                             # We only want to warn the user once.
                             self.__warned = True
 
-                        _functionAsAsync = EXECUTOR.wrapFuncIfRequired(contentOfParameter)
+                        _functionAsAsync = EXECUTOR.wrapFuncIfRequired(
+                            contentOfParameter)
 
                         _timeToLifeAfterCall = callbackOptions.get(
                             idx, {"timeToLifeAfterCall": optionsToUse.timeToLifeAfterCall})["timeToLifeAfterCall"]
@@ -275,9 +279,10 @@ def extend(rpcMod, conManagerMod):
                                 _timeout.cancel()
 
                             if t > 0:
-                                _timeout = EXECUTOR.setTimeout(removeCallback, t)
+                                _timeout = EXECUTOR.setTimeout(
+                                    removeCallback, t)
 
-                            return await f(*args,**kwargs)
+                            return await f(*args, **kwargs)
 
                         async def cbOnce(*args, f=_functionAsAsync, **kwargs):
 
