@@ -135,7 +135,7 @@ class BaseModule(object):
         # Helper for the Decorator
         self._markedElements = dict()
 
-    async def registerProperty(self, name: str, observable, options):
+    async def registerProperty(self, name: str, observable, options = None):
         """ Function to register a property. This will provide the property in the NoPE-Environment.
 
         Args:
@@ -155,8 +155,9 @@ class BaseModule(object):
         # Adapt the Topic:
         if not "topic" in options:
             # Raise an error, because we expect and dict or an string
-            raise Exception("Topic must be provided in the options")
-        elif isinstance(options.topic, str) and not isPropertyPathCorrect(self.identifier, options.topic):
+            options.topic = getPropertyPath(self.identifier, name)
+            
+        if isinstance(options.topic, str) and not isPropertyPathCorrect(self.identifier, options.topic):
             # Adapt the name.
             options.topic = getPropertyPath(self.identifier, options.topic)
         else:
@@ -170,7 +171,7 @@ class BaseModule(object):
                 options.topic.publish = getPropertyPath(
                     self.identifier, options.topic.publish)
 
-        observable = await self._core.dataDistributor.register(observable, options)
+        observable = self._core.dataDistributor.register(observable, options)
 
         # Register the new Property.
         self._registeredProperties[name] = {

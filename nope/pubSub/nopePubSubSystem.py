@@ -195,7 +195,7 @@ class PubSubSystem:
             data.subTopic = subTopic
             data.pubTopic = pubTopic
 
-            self._emitters.set(emitter, data)
+            self._emitters[emitter] = data
             self._updatePartialMatching('add', emitter, pubTopic, subTopic)
         else:
             raise Exception('Emitter is not registered')

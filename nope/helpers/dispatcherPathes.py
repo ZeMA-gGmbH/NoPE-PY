@@ -6,7 +6,7 @@ def getPropertyPath(identifier, name):
 
 
 def isPropertyPathCorrect(identifier, path):
-    return path.startswith(f'{identifier}{SPLITCHAR}prop{SPLITCHAR}')
+    return path.startswith(f'{identifier}{SPLITCHAR}properties{SPLITCHAR}')
 
 
 def getMethodPath(identifier, name):

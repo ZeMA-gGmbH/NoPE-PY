@@ -301,15 +301,15 @@ class NopeInstanceManager:
                                     data.identifier).usedBy.splice(idx, 1)
                             if len(self._instances.get(
                                     data.identifier).usedBy) == 0:
-                                self._internalInstances.delete(data.identifier)
+                                self._internalInstances.pop(data.identifier)
                                 await _instance.dispose()
-                                self._instances.delete(data.identifier)
+                                self._instances.pop(data.identifier)
                                 self._rpcManager.unregisterService(
                                     self.getServiceName(data.identifier, 'dispose'))
 
                     # A Function is registered, taking care of removing
                     # an instances, if it isnt needed any more.
-                    self._rpcManager.registerService(
+                    await self._rpcManager.registerService(
                         disposeInstance,
                         ensureDottedAccess({
                             'id': self.getServiceName(data.identifier, 'dispose'),
@@ -320,18 +320,18 @@ class NopeInstanceManager:
                     )
 
                     # Store the Instance.
-                    self._instances.set(data.identifier, ensureDottedAccess({
+                    self._instances[data.identifier] = ensureDottedAccess({
                         'instance': _instance,
                         'usedBy': [data.dispatcherId]
                     })
-                    )
+                    
                     self._internalInstances.add(data.identifier)
 
                     # Update the available instances:
                     self._sendAvailableInstances()
 
                     # Make shure, we remove this instance.hash
-                    self._initializingInstance.delete(data.identifier)
+                    self._initializingInstance.pop(data.identifier)
 
                 elif self._initializingInstance.get(data.identifier) != hashed:
                     raise Exception(
@@ -347,7 +347,7 @@ class NopeInstanceManager:
                             self._logger.warn(
                                 f'Parallel request for the same Instance "{data.identifier}" => Waiting until the Instance has been initialized')
                             firstHint = False
-                        return self._instances.has(data.identifier)
+                        return data.identifier in self._instances
 
                     await waitFor(
                         checker,
@@ -393,7 +393,7 @@ class NopeInstanceManager:
         Args:
             identifier (str): The identifier for the Constructor (Like a service)
         """
-        if self._registeredConstructors.has(identifier):
+        if identifier in self._registeredConstructors:
             if self._logger:
                 self._logger.debug('Removing instance generator for "' + identifier +
                                    '" from external Generators. Other Elements cant create instances of self type anymore.')
@@ -402,7 +402,7 @@ class NopeInstanceManager:
             # system. Therefore we just use the rpcManager
 
             await self._rpcManager.unregisterService(self._registeredConstructors.get(identifier))
-            self._registeredConstructors.delete(identifier)
+            self._registeredConstructors.pop(identifier)
 
     def registerInternalWrapperGenerator(self, identifier: str, cb):
         """ Defaultly a generic wrapper will be returned, when an instance is created. you
@@ -428,7 +428,7 @@ class NopeInstanceManager:
             self._logger.debug('Rmoving instance generator for "' + identifier +
                                '" from internal Generator. The sytem cant create elements of self type any more.')
 
-        self._internalWrapperGenerators.delete(identifier)
+        self._internalWrapperGenerators.pop(identifier)
 
     def instanceExists(self, identifier: str, externalOnly=True) -> bool:
         """  Helper, to test if an instance with the given identifier exists or not.
@@ -441,10 +441,9 @@ class NopeInstanceManager:
             bool: The Testresult
         """
         if externalOnly:
-            return self._externalInstances.has(identifier)
+            return identifier in self._externalInstances
         else:
-            return (self._externalInstances.has(identifier) or self.
-                    _instances.has(identifier))
+            return identifier in self._externalInstances or identifier in self._instances
 
     def getManagerOfInstance(self, identifier: str):
         """ Returns the hosting dispatcher for the given instance.
@@ -460,7 +459,7 @@ class NopeInstanceManager:
             return None
 
         # First we will check if the instance is available internally
-        if self._internalInstances.has(identifier):
+        if identifier in self._internalInstances:
             return self._connectivityManager.info
 
         # If that isnt the case, we will check all dispatchers and search the
@@ -483,7 +482,7 @@ class NopeInstanceManager:
         Returns:
             INopeModuleDescription | False: The Description or False if not found.
         """
-        if self._instances.has(instanceIdentifier):
+        if instanceIdentifier in self._instances:
             return self._instances.get(
                 instanceIdentifier).instance.toDescription()
         return False
@@ -554,7 +553,7 @@ class NopeInstanceManager:
                 # => assing the default type which is "*""
                 raise Exception('Generator "' + _description.type +
                                 '" isnt present in the network!')
-            if self._internalWrapperGenerators.has(_type):
+            if _type in self._internalWrapperGenerators:
                 if self._logger:
                     self._logger.debug('No instance with the identifiert: "' + _description.identifier +
                                        '" found, but an internal generator is available. Using the internal one for creating the instance and requesting the "real" instance externally')
@@ -601,15 +600,14 @@ class NopeInstanceManager:
                     self._logger.debug(
                         f'Created a Wrapper for the instance "{definedInstance.description.identifier}"')
 
-                self._instances.set(
-                    _description.identifier,
-                    ensureDottedAccess({
+                self._instances[_description.identifier] = ensureDottedAccess({
                         'instance': wrapper,
                         'usedBy': [
                             _description.dispatcherId
                         ]
-                    })
+                    }
                 )
+                
 
                 return wrapper
 
@@ -634,13 +632,11 @@ class NopeInstanceManager:
         Returns:
             INopeInstance: The instance.
         """
-        self._instances.set(
-            instance.identifier,
-            ensureDottedAccess({
+        self._instances[instance.identifier] = ensureDottedAccess({
                 'instance': instance,
                 'usedBy': [],
                 'manual': True
-            })
+            }
         )
         return instance
 
@@ -687,7 +683,7 @@ class NopeInstanceManager:
                 )
 
                 # Delete the Identifier
-                self._instances.delete(_instance.instance.identifier)
+                self._instances.pop(_instance.instance.identifier)
 
                 # Check if an update should be emitted or not.
                 if not preventSendingUpdate:
