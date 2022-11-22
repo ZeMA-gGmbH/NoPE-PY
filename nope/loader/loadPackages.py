@@ -5,7 +5,7 @@
 import json
 import logging
 
-from ..helpers import dynamicImport, formatException, keysToSnakeNested
+from ..helpers import dynamicImport, formatException, ensureDottedAccess
 from ..logger import getNopeLogger
 
 
@@ -37,11 +37,11 @@ async def loadDesiredPackages(loader, packages_to_load, logger: logging.Logger =
     for item in packages_to_load:
         # Now Try to load a Package, to test whether is is an assembly.
 
-        item = keysToSnakeNested(item)
-
         try:
             loadedPackage = dynamicImport(
                 item["nameOfPackage"], item["path"]).DESCRIPTION
+
+            loadedPackage = ensureDottedAccess(loadedPackage)
 
             loadedPackage["autostart"] = item["autostart"]
             loadedPackage["defaultInstances"] = item["defaultInstances"]

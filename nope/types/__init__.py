@@ -35,7 +35,7 @@ class CallOptions:
             timeout     = A User Provided Timeout of the call. After the timeout has been ellapsed, the task is
                           cancelled with a timeout error. The Time is given in **ms**
     """
-    resultSink: str = "undefined"
+    resultSink: str = None
     """ Desired result sink. If implemented, the result will be published on this topic as well. """
 
     timeout: int = -1
@@ -51,7 +51,7 @@ class ServiceOptions:
     """ Schmea describing the Function.
     """
 
-    resultSink: str = "undefined"
+    resultSink: str = None
     """ Desired result sink. If implemented, the result will be published on this topic as well. """
 
     timeout: int = -1

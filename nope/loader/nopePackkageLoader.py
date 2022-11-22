@@ -8,24 +8,19 @@ import typing
 
 
 from ..dispatcher import NopeDispatcher
-from ..helpers import formatException
-from ..logger import getNopeLogger
+from ..helpers import formatException, ensureDottedAccess
+from ..logger import defineNopeLogger
 from ..types import NopePackage
 
 
 class NopePackageLoader():
-    def __init__(self, dispatcher: NopeDispatcher,
-                 logger=None, level=logging.INFO):
+    def __init__(self, dispatcher: NopeDispatcher, **options):
+        _options = ensureDottedAccess(options)
+        self._logger = defineNopeLogger(_options.log, 'core')
         self.packages: typing.Dict[str, NopePackage] = {}
         self.dispatcher = dispatcher
         self._instances = {}
         self._dispose_default_instance = []
-
-        # Determine if a Logger is provided. If not create one.
-        if logger is not None:
-            self._logger = logger
-        else:
-            self._logger = getNopeLogger('NopePackageLoader', level)
 
     async def addPackage(self, package: NopePackage):
         """ Loader Function. self function will register all provided functions,
@@ -40,8 +35,9 @@ class NopePackageLoader():
                 "\" !"
             )
 
-        self._logger.warn("loading package \"" +
-                          package.nameOfPackage + "\"")
+        if self._logger:
+            self._logger.warn("loading package \"" +
+                            package.nameOfPackage + "\"")
 
         # Store the Package:
         self.packages[package.nameOfPackage] = package
@@ -84,12 +80,15 @@ class NopePackageLoader():
                 )
 
         for func in package.providedServices:
+            if self._logger:
+                self._logger.info("Package Loader generates the instances.")
             await self.dispatcher.rpcManager.registerService(func.function, func.options)
 
     async def generateInstances(self, test_requirements=True):
         """ Function to initialize all the instances.
         """
-        self._logger.info("Package Loader generates the instances.")
+        if self._logger:
+            self._logger.info("Package Loader generates the instances.")
 
         if test_requirements:
             # First extract all required Packages
@@ -109,11 +108,12 @@ class NopePackageLoader():
 
             # Iterate over the Defined Instances.
             for definition in definitions:
-                self._logger.info("Requesting Generating Instance \"" +
-                                  definition.identifier +
-                                  "\" of type \"" +
-                                  definition.type +
-                                  "\"")
+                if self._logger:
+                    self._logger.info("Requesting Generating Instance \"" +
+                                    definition.identifier +
+                                    "\" of type \"" +
+                                    definition.type +
+                                    "\"")
 
                 instance = await self.dispatcher.instanceManager.createInstance(
                     definition
@@ -126,14 +126,16 @@ class NopePackageLoader():
 
                 self._dispose_default_instance.append(_dispose)
 
-                self._logger.info("Generated Instance" +
-                                  definition.identifier)
+                if self._logger:
+                    self._logger.info("Generated Instance" +
+                                    definition.identifier)
 
                 # Perform the autostart:
                 if definition.identifier in package.autostart:
-
-                    self._logger.info(
-                        "Trying to perform autostart Instance" + definition.identifier)
+                    
+                    if self._logger:
+                        self._logger.info(
+                            "Trying to perform autostart Instance" + definition.identifier)
 
                     try:
                         for task in package.autostart[definition.identifier]:
@@ -143,9 +145,12 @@ class NopePackageLoader():
                             func = getattr(instance, task.name)
                             await func(*task.params)
                     except Exception as e:
-                        self._logger.error(
-                            "Failed performing autostart for " + definition.identifier)
-                        self._logger.error(e)
-                        print(formatException(e))
-
-        self._logger.info("generated all defined Instances")
+                        if self._logger:
+                            self._logger.error(
+                                "Failed performing autostart for " + definition.identifier)
+                            self._logger.error(e)
+                        else:
+                            print("Failed performing autostart for " + definition.identifier)
+                            print(formatException(e))
+        if self._logger:
+            self._logger.info("generated all defined Instances")

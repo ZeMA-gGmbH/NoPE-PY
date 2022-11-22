@@ -58,6 +58,8 @@ def getDispatcher(
     # id = dispatcherOptions.communicator.id
     id = None
 
+    dispatcherOptions["logger"] = dispatcherOptions["dispatcherLogLevel"]
+
     if options.singleton:
         return NopeDispatcherSingleton(dispatcherOptions, id)
 

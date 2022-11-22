@@ -11,7 +11,7 @@ from . import (asyncHelpers, dictMethods, dispatcherPathes, dottedDict,
 
                pathMatchingMethods, prints, runtime, stringMethods, timers,
 
-               timestamp, hashable, listMethods, jsonMethods)
+               timestamp, hashable, listMethods, jsonMethods, files)
 
 from .asyncHelpers import (
 
@@ -39,6 +39,7 @@ from .dispatcherPathes import (getEmitterPath, getMethodPath,
                                isPropertyPathCorrect)
 from .dottedDict import DottedDict, convertToDottedDict, ensureDottedAccess
 from .emitter import Emitter
+from .files import createFile
 from .hashable import hlist, hset, hdict
 from .idMethods import generateId
 from .importing import dynamicImport

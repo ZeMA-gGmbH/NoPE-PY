@@ -6,7 +6,7 @@ def getPropertyPath(identifier, name):
 
 
 def isPropertyPathCorrect(identifier, path):
-    return path.starts_with(f'{identifier}{SPLITCHAR}prop{SPLITCHAR}')
+    return path.startswith(f'{identifier}{SPLITCHAR}prop{SPLITCHAR}')
 
 
 def getMethodPath(identifier, name):
@@ -14,7 +14,7 @@ def getMethodPath(identifier, name):
 
 
 def isMethodPathCorrect(identifier, path):
-    return path.starts_with(f'{identifier}{SPLITCHAR}methods{SPLITCHAR}')
+    return path.startswith(f'{identifier}{SPLITCHAR}methods{SPLITCHAR}')
 
 
 def getEmitterPath(identifier, name):
@@ -22,4 +22,4 @@ def getEmitterPath(identifier, name):
 
 
 def isEmitterPathCorrect(identifier, path):
-    return path.starts_with(f'{identifier}{SPLITCHAR}events{SPLITCHAR}')
+    return path.startswith(f'{identifier}{SPLITCHAR}events{SPLITCHAR}')

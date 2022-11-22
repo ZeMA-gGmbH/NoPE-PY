@@ -1,6 +1,6 @@
 from dataclasses import is_dataclass, asdict
 from inspect import isfunction, getsource
-from json import dumps, loads, JSONEncoder, JSONDecoder
+from json import dumps as _dumps, loads as _loads, JSONEncoder, JSONDecoder
 from typing import Any
 
 FUNC_BEGIN = "__FUNCTION_BEGIN__"
@@ -23,6 +23,14 @@ class EnhancedJSONEncoder(JSONEncoder):
             elif "lambda" in code:
                 idx = code.index("lambda")
                 return f"{FUNC_BEGIN}{code[idx:]}{FUNC_END}"
+        return super().default(o)
+
+class SimpleJSONEncoder(JSONEncoder):
+    def default(self, o):
+        if is_dataclass(o):
+            return asdict(o)
+        elif isfunction(o):
+            return None
         return super().default(o)
 
 
@@ -54,7 +62,7 @@ class EnhancedJSONDecoder(JSONDecoder):
         return o
 
 
-def loads(o: Any, indent: int = 4, parse_functions=True, **kwargs) -> str:
+def dumps(o: Any, indent: int = 4, parse_functions=True, **kwargs) -> str:
     """ Helper function, to dump data to JSON and serialize
         python functions.
 
@@ -69,11 +77,12 @@ def loads(o: Any, indent: int = 4, parse_functions=True, **kwargs) -> str:
     """
     if parse_functions:
         kwargs.pop("cls", None)
-        return dumps(o, indent=indent, cls=EnhancedJSONEncoder, **kwargs)
-    return dumps(o, indent=indent, **kwargs)
+        return _dumps(o, indent=indent, cls=EnhancedJSONEncoder, **kwargs)
+    return _dumps(o, indent=indent, cls=SimpleJSONEncoder, **kwargs)
 
 
-def dumps(s: str, parse_functions=True, **kwargs) -> Any:
-    if parse_functions:
-        return loads(s, cls=EnhancedJSONDecoder, **kwargs)
-    return loads(s, **kwargs)
+def loads(s: str, parse_functions=True, **kwargs) -> Any:
+    if parse_functions:        
+        kwargs.pop("cls", None)
+        return _loads(s, cls=EnhancedJSONDecoder, **kwargs)
+    return _loads(s, **kwargs)

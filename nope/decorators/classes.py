@@ -28,6 +28,7 @@ def _class_decorator_factory(storing_type: str):
                         "accessor": name,
                         "options": options,
                         "type": self._type,
+                        "owner": owner
                     })
                 )
 

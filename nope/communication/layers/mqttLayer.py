@@ -49,7 +49,7 @@ class MQTTLayer:
         self.preTopic = preTopic
         self.qos = qos
         self.forwardToCustomTopics = forwardToCustomTopics
-        self.uri = self.uri if self.uri.starts_with(
+        self.uri = self.uri if self.uri.startswith(
             'mqtt://') else 'mqtt://' + self.uri
         self.connected = NopeObservable()
         self.connected.setContent(False)

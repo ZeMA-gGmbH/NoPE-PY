@@ -178,7 +178,7 @@ class BaseModule(object):
             'options': options
         }
 
-    async def registerEvent(self, name: str, emitter, options):
+    async def registerEvent(self, name: str, emitter, options = None):
         """ Function to register an emitter as property. This will provide the emitter in the NoPE-Environment.
 
         Args:
@@ -194,10 +194,11 @@ class BaseModule(object):
         # Unregister Property
         await self.unregisterEvent(name)
 
+        print(options)
         # Adapt the Topic:
         if not "topic" in options:
             # Raise an error, because we expect and dict or an string
-            raise Exception("Topic must be provided in the options")
+            options.topic = getEmitterPath(self.identifier, name)
         elif isinstance(options.topic, str) and not isEmitterPathCorrect(self.identifier, options.topic):
             # Adapt the name.
             options.topic = getEmitterPath(self.identifier, options.topic)
@@ -220,7 +221,7 @@ class BaseModule(object):
             'options': options
         }
 
-    async def registerMethod(self, name: str, method, options):
+    async def registerMethod(self, name: str, method, options = None):
 
         options = ensureDottedAccess(options)
 
@@ -314,6 +315,12 @@ class BaseModule(object):
         # TODO: Test the Implementation with decorators.
         if self.decoratedItems:
             for item in self.decoratedItems:
+
+                # Currently our decorators will add the information to all classes...
+                if item.owner != self.__class__:
+                    # FIX
+                    continue
+
                 if item.type == "method":
                     await self.registerMethod(item.accessor, getattr(self, item.accessor), item.options)
                 elif item.type == "property":

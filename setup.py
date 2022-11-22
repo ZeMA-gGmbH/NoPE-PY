@@ -25,6 +25,7 @@ if __name__ == "__main__":
                             'psutil'],
           url="https://github.com/anti-held-333/nope-py.git",
           packages=["nope",
+                    "nope.cli",
                     "nope.communication",
                     "nope.communication.layers",
                     "nope.decorators",
@@ -57,9 +58,9 @@ if __name__ == "__main__":
               "Topic :: Scientific/Engineering",
               "Topic :: Software Development :: Libraries :: Python Modules",
           ],
-          #   entry_points={
-          #       'console_scripts': [
-          #           'nope-py = nope.cli:main_cli',
-          #       ],
-          #   },
+            entry_points={
+                'console_scripts': [
+                    'nope-py = nope.cli:main_cli',
+                ],
+            },
           )

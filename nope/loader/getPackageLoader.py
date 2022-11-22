@@ -11,20 +11,19 @@ from ..dispatcher import getDispatcher
 class NopePackageLoaderSingleton(object):
     _instance = None
 
-    def __new__(cls, communicator, options={}, loop=None,
-                logger: logging.Logger = None, level=logging.INFO):
+    def __new__(cls, **settings):
         if cls._instance is None:
-            cls._instance = NopePackageLoader(getDispatcher(
-                communicator, options, loop, logger, level), logger, level)
+            cls._instance = NopePackageLoader(
+                getDispatcher(settings),
+                **settings
+            )
         # Put any initialization here.
         return cls._instance
 
 
-def getPackageLoader(communicator, options={}, loop=None,
-                     logger: logging.Logger = None, level=logging.INFO):
+def getPackageLoader(**settings):
     """ helper function, which will be used to create a package-loader
     """
     # Create the Dispatcher Instance.
-    loader = NopePackageLoaderSingleton(
-        communicator, options, loop, logger, level)
+    loader = NopePackageLoaderSingleton(**settings)
     return loader

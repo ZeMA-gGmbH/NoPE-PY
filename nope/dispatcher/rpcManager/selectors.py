@@ -5,6 +5,15 @@
 from nope.helpers import maxOfArray, minOfArray
 
 
+ValidDefaultSelectors = [
+    "master",
+    "first",
+    "dispatcher",
+    "host",
+    "free-ram",
+    "cpu-usage",
+]
+
 def generateSelector(selector, core):
     """ A Helper Function, to generate the Basic selector Functions.
 

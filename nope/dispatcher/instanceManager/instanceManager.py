@@ -3,6 +3,7 @@
 # @email m.karkowski@zema.de
 
 import asyncio
+import json
 
 from nope.communication.bridge import Bridge
 from nope.dispatcher.connectivityManager import NopeConnectivityManager
@@ -267,7 +268,10 @@ class NopeInstanceManager:
 
             if data.identifier not in self._instances:
                 hashableData = [data.identifier, data.params, data.type]
-                hashed = hash(hashableData)
+                try:
+                    hashed = hash(hashableData)
+                except:
+                    hashed = json.dumps(hashableData)
 
                 # It might happen, that an instance is requested multiple times.
                 # therefore we have to make shure, we wont create them multiple times:
@@ -275,7 +279,7 @@ class NopeInstanceManager:
 
                 if data.identifier not in self._initializingInstance:
                     # Mark the Instance as available.
-                    self._initializingInstance.set(data.identifier, hashed)
+                    self._initializingInstance[data.identifier] = hashed
 
                     # Create the Instance
                     _instance = await cb(self._core, data.identifier)

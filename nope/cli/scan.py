@@ -1,11 +1,11 @@
-#!/usr/bin/env python
+#!\\usr\\bin\\env python
 # @author Martin Karkowski
 # @email m.karkowski@zema.de
 
 import json
 import os
 
-from nope.helpers import dynamicImport, formatException
+from nope.helpers import dynamicImport, formatException, dumps, loads
 
 
 def list_packages(path: str):
@@ -26,9 +26,23 @@ def list_packages(path: str):
                         name, pathToFile)
 
                     # Add the Path:
-                    module.DESCRIPTION["path"] = pathToFile
+                    description = module.DESCRIPTION.__dict__
+                    description["path"] = pathToFile
+
+                    description = loads(dumps(description, parse_functions=False))
+
                     # Add it to the packages
-                    packages.append(module.DESCRIPTION)
+                    packages.append(description)
+                except ModuleNotFoundError:
+                    pass
+                except ImportError as e:
+                    if e.msg == "attempted relative import with no known parent package":
+                        pass
+                    else:
+                        print("Failed to load", pathToFile)
+                        print(formatException(e))                
+                except AttributeError:
+                    pass                
                 except Exception as e:
                     print("Failed to load", pathToFile)
                     print(formatException(e))
@@ -54,7 +68,7 @@ def create_config(path_to_scan: str, dest_dir: str, name_of_file: str):
         for cl in package["providedClasses"]:
             cl.pop("createInstance", None)
 
-        for func in package["provided_functions"]:
+        for func in package["providedServices"]:
             func.pop("function", None)
 
     with open(path_to_config_file, "w") as file:

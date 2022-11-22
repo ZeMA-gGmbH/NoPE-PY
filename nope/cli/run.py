@@ -10,11 +10,12 @@ import logging
 import sys
 
 from nope.loader import getPackageLoader, loadConfig, loadDesiredPackages
-from ..communication import getLayer, LAYER_DEFAULT_PARAMETERS
-from ..helpers import ensureDottedAccess
+from nope.communication import getLayer, LAYER_DEFAULT_PARAMETERS, VALID_LAYERS
+from nope.dispatcher.rpcManager.selectors import ValidDefaultSelectors
+from nope.helpers import ensureDottedAccess, generateId, EXECUTOR
 
 
-def get_args(add_mode=True):
+def getArgs(add_mode=True):
     """ Helper Function to extract the Arguments
     """
     parser = argparse.ArgumentParser(description='cli-tool to run the backend')
@@ -26,25 +27,47 @@ def get_args(add_mode=True):
     parser.add_argument('-c', type=str, default="event", dest='channel',
                         help='name of the communication layer to use. Possible values are: ' + ', '.join(
                             [key for key in LAYER_DEFAULT_PARAMETERS.keys()]))
-    parser.add_argument('-l', type=str, default="debug", dest='log',
-                        help='Level of the Logger. Valid values are "debug", "info"')
-    parser.add_argument('-s', dest='skip_loading_config', action='store_true',
+    parser.add_argument('-p', '--channelParams', type=str, default="not-provided", dest='channelParams',
+                        help='name of the communication layer to use. Possible values are: ' + ', '.join(
+                            [key for key in LAYER_DEFAULT_PARAMETERS.keys()]))
+    parser.add_argument('-s', '--skip-loading-config', dest='skipLoadingConfig', action='store_true',
                         help='Skips the Configuration File.')
-    parser.add_argument('--params', type=str, default=None, dest='params',
-                        help='Paramas for the Channel, to connect to. The Following Default-Values are used: ' + json.dumps(
-                            LAYER_DEFAULT_PARAMETERS))
-    parser.add_argument('--force-emit', default=False, dest='force_emit', action='store_true',
-                        help='Forces emitting the events of the system')
+
+    parser.add_argument("--default-selector", default="first", dest="defaultSelector",
+                        help="The default-selector to select the service providers. Possible Values are: " +
+                        ", ".join(ValidDefaultSelectors)
+                        )
+
+    parser.add_argument("--log-to-file", help="Log will be stored in a logfile.",
+                        action="store_true", dest='logToFile')
+
+    parser.add_argument('-l', '--log', type=str, default="debug", dest='log',
+                        help='Level of the Logger. Valid values are "debug", "info"')
+
+    parser.add_argument('--id', type=str, default=generateId(use_as_var=True, pre_string="_dispatcher"), dest='id',
+                        help="Define a custom id to the Dispatcher",)
+
+    parser.add_argument('--dispatcher-log', type=str, default="info", dest='dispatcherLogLevel',
+                        help='Specify the Logger Level of the Dispatcher. Defaults to "info"')
+
+    parser.add_argument('--communication-log', type=str, default="info", dest='communicationLogLevel',
+                        help='Specify the Logger Level of the Communication. Defaults to "info"')
+
+    parser.add_argument('--noBaseServices', default=False, dest='noBaseServices', action='store_true',
+                        help='Flag to enable prevent the base Services to be loaded')
 
     args = parser.parse_args()
 
-    if args.channel in [key for key in LAYER_DEFAULT_PARAMETERS.keys()]:
+    if args.channel in [key for key in VALID_LAYERS.keys()]:
         pass
     else:
         print("invalid communication-layer has been selected")
-        return
+        raise Exception("invalid communication-layer has been selected")
 
-    if args.params is not None:
+    if args.channelParams == "not-provided":
+        args.channelParams = None
+
+    if args.channelParams is not None:
         try:
             try:
                 args.params = json.loads(args.params)
@@ -64,54 +87,53 @@ def get_args(add_mode=True):
     return args
 
 
-def get_default_parameters():
+def getDefaultParameters():
     return {
-        "file": "config/settings.json",
+        "file": "./config/settings.json",
         "channel": "event",
+        "skipLoadingConfig": False,
+        "channelParams": "not-provided",
         "log": "debug",
-        "skip_loading_config": False,
-        "params": None
+        "dispatcherLogLevel": "info",
+        "communicationLogLevel": "info",
+        "delay": 2,
+        "timings": {},
+        "defaultSelector": "first",
+        "forceUsingSelectors": False,
+        "preventVarifiedNames": False,
+        # "logToFile": False,
+        "id": generateId(),
+        "profile": False,
+        "noBaseServices": False,
     }
 
 
-def generate_nope_backend(args: dict):
+async def generateNopeBackend(_args: dict):
     """ Helper Function, which will create a Nope Instance.
     """
-
-    args = get_default_parameters().update(args)
+    args = getDefaultParameters()    
+    args.update(_args if isinstance(_args, dict) else _args.__dict__)
 
     # Test if we need to parse the Data.
     if isinstance(args, dict):
         args = ensureDottedAccess(args)
 
-    # Create an Event Loop.
-    loop = asyncio.get_event_loop()
-
-    if getattr(args, "channel", "event") in [
-            key for key in LAYER_DEFAULT_PARAMETERS.keys()]:
+    if getattr(args, "channel", "event") in VALID_LAYERS:
         pass
     else:
         print("invalid communication-layer has been selected")
         return
 
-    level = logging.INFO
-    if getattr(args, "log", "info") == "debug":
-        level = logging.DEBUG
-    elif getattr(args, "log", "info") == "error":
-        level = logging.ERROR
-    elif getattr(args, "log", "info") == "fatal":
-        level = logging.FATAL
-
     # Get a Communicator
-    communicator = getLayer(
-        loop, getattr(args, "channel", "event"), getattr(
-            args, "params", None), level
+    communicator = await getLayer(
+        args["channel"],
+        args.get("params", None),
+        args["communicationLogLevel"]
     )
     # Get the Loader
     loader = getPackageLoader(
-        communicator, {
-            'force_emitting_updates': getattr(args, "force_emit", False)
-        }, loop, level=level
+        communicator=communicator,
+        **args
     )
 
     def __run():
@@ -119,19 +141,16 @@ def generate_nope_backend(args: dict):
         try:
             if not getattr(args, "skip_loading_config", False):
                 # Load all Packages
-                loop.run_until_complete(
-                    loadDesiredPackages(
-                        loader, loadConfig(args.file)
-                    )
+                EXECUTOR.callParallel(
+                    loadDesiredPackages,
+                    loader,
+                    loadConfig(args.file)
                 )
-
-            # Try to start our dispatcher
-            loader.dispatcher.run()
         except KeyboardInterrupt as error:
             loader.dispatcher.stop()
             # Now we have to run our loop,
             # until the bridge has been disposed.
-            loop.run_until_complete(
+            EXECUTOR.loop.run_until_complete(
                 communicator.dispose()
             )
         except FileNotFoundError:
@@ -140,13 +159,24 @@ def generate_nope_backend(args: dict):
     return loader, loader.dispatcher, communicator, __run
 
 
-def run_cli(add_mode=True):
-    args = get_args(add_mode)
-    _, __, ___, run = generate_nope_backend(args)
-
-    # Now spool up the Loop
+async def run(add_mode):
+    args = getArgs(add_mode)
+    _, __, ___, run = await generateNopeBackend(args)
     run()
 
 
+def run_cli(add_mode=True):
+    task = EXECUTOR.callParallel(run,add_mode)
+    # Try to start our dispatcher
+    EXECUTOR.run()
+
+
 if __name__ == "__main__":
+    import sys
+    import os
+    import io
+
+    SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+    sys.path.append(os.path.dirname(SCRIPT_DIR))
+
     run_cli(False)
