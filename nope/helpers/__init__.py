@@ -44,8 +44,7 @@ from .hashable import hlist, hset, hdict
 from .idMethods import generateId
 from .importing import dynamicImport
 from .jsonMethods import dumps, loads
-from .listMethods import (avgOfArray, extractListElements, isIterable, isList,
-
+from .listMethods import (avgOfArray, extractListElements, isIterable, isList, flattenDeep,
                           maxOfArray, minOfArray)
 from .objectMethods import (convertData, copy, deepAssign, deflattenObject,
 

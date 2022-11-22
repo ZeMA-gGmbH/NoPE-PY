@@ -63,4 +63,33 @@ def isIterable(obj):
 
 
 def isList(obj) -> bool:
+    """ Helper to check if the item is a list.
+
+    Args:
+        obj (any): The item to check
+
+    Returns:
+        bool: Result. If `True` => List
+    """
     return type(obj) in (list,)
+
+
+def flattenDeep(l: list) -> list:
+    """ Helper to flatten a list of elements:
+
+    Example:
+        >>> l = [1, [2,3,[4,5]]]
+        >>> flatten_deep(l)
+        [1,2,3,4,5]
+
+    Args:
+        l (list): A nested list.
+
+    Returns:
+        list: A flattend list. (1 Dimension)
+    """
+    if len(l) == 0:
+        return l
+    if isinstance(l[0], list):
+        return flattenDeep(l[0]) + flattenDeep(l[1:])
+    return l[:1] + flattenDeep(l[1:])
