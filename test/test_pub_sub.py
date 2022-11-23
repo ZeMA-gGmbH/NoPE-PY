@@ -25,6 +25,11 @@ def callback(data, rest):
     called += 1
     assert data == "Hello World"
 
+def incremental(data, rest):
+    print(data, rest)
+
+
+pub_sub.onIncrementalDataChange.subscribe(incremental)
 
 subscriber.subscribe(callback)
 publisher.emit("Hello World")

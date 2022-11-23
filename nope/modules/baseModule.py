@@ -156,6 +156,9 @@ class BaseModule(object):
         if not "topic" in options:
             # Raise an error, because we expect and dict or an string
             options.topic = getPropertyPath(self.identifier, name)
+
+        if not "mode" in options:
+            options.mode = ["publish", "subscrie"]
             
         if isinstance(options.topic, str) and not isPropertyPathCorrect(self.identifier, options.topic):
             # Adapt the name.
@@ -194,8 +197,7 @@ class BaseModule(object):
 
         # Unregister Property
         await self.unregisterEvent(name)
-
-        print(options)
+        
         # Adapt the Topic:
         if not "topic" in options:
             # Raise an error, because we expect and dict or an string
@@ -485,4 +487,4 @@ class BaseModule(object):
             'uiLinks': self.uiLinks
         }
 
-        return keysToCamelNested(ret)
+        return ret

@@ -50,7 +50,7 @@ class NopeObservable(NopeEventEmitter):
     def _informSpecificObserver(self, observer):
         if self._lastRest is not None:
             # Call the last rest
-            observer({"value": self._lastValue, **self._lastRest})
+            observer(ensureDottedAccess({"value": self._lastValue, **self._lastRest}))
 
     def _publish(self, value, options=None):
         options = ensureDottedAccess(options)
