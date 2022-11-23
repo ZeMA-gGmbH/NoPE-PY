@@ -108,7 +108,7 @@ def getDefaultParameters():
     }
 
 
-async def generateNopeBackend(_args: dict):
+async def generateNopeBackend(_args: dict, run=False):
     """ Helper Function, which will create a Nope Instance.
     """
     args = getDefaultParameters()    
@@ -146,6 +146,8 @@ async def generateNopeBackend(_args: dict):
                     loader,
                     loadConfig(args.file)
                 )
+
+            EXECUTOR.run()
         except KeyboardInterrupt as error:
             loader.dispatcher.stop()
             # Now we have to run our loop,
@@ -155,6 +157,9 @@ async def generateNopeBackend(_args: dict):
             )
         except FileNotFoundError:
             print("Configuration-File not Found")
+
+    if run:
+        __run()
 
     return loader, loader.dispatcher, communicator, __run
 

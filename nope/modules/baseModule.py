@@ -479,7 +479,7 @@ class BaseModule(object):
         ret = {
             'author': self.author,
             'description': self.description,
-            'functions': self.methods,
+            'methods': self.methods,
             'identifier': self.identifier,
             'properties': self.properties,
             'type': self.type,
