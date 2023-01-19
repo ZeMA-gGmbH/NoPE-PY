@@ -111,7 +111,7 @@ def getDefaultParameters():
 async def generateNopeBackend(_args: dict, run=False):
     """ Helper Function, which will create a Nope Instance.
     """
-    args = getDefaultParameters()    
+    args = getDefaultParameters()
     args.update(_args if isinstance(_args, dict) else _args.__dict__)
 
     # Test if we need to parse the Data.
@@ -171,7 +171,7 @@ async def run(add_mode):
 
 
 def run_cli(add_mode=True):
-    task = EXECUTOR.callParallel(run,add_mode)
+    task = EXECUTOR.callParallel(run, add_mode)
     # Try to start our dispatcher
     EXECUTOR.run()
 

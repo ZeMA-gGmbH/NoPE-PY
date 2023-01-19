@@ -135,7 +135,7 @@ class BaseModule(object):
         # Helper for the Decorator
         self._markedElements = dict()
 
-    async def registerProperty(self, name: str, observable, options = None):
+    async def registerProperty(self, name: str, observable, options=None):
         """ Function to register a property. This will provide the property in the NoPE-Environment.
 
         Args:
@@ -159,8 +159,9 @@ class BaseModule(object):
 
         if not "mode" in options:
             options.mode = ["publish", "subscrie"]
-            
-        if isinstance(options.topic, str) and not isPropertyPathCorrect(self.identifier, options.topic):
+
+        if isinstance(options.topic, str) and not isPropertyPathCorrect(
+                self.identifier, options.topic):
             # Adapt the name.
             options.topic = getPropertyPath(self.identifier, options.topic)
         else:
@@ -182,7 +183,7 @@ class BaseModule(object):
             'options': options
         }
 
-    async def registerEvent(self, name: str, emitter, options = None):
+    async def registerEvent(self, name: str, emitter, options=None):
         """ Function to register an emitter as property. This will provide the emitter in the NoPE-Environment.
 
         Args:
@@ -197,7 +198,7 @@ class BaseModule(object):
 
         # Unregister Property
         await self.unregisterEvent(name)
-        
+
         # Adapt the Topic:
         if not "topic" in options:
             # Raise an error, because we expect and dict or an string
@@ -224,7 +225,7 @@ class BaseModule(object):
             'options': options
         }
 
-    async def registerMethod(self, name: str, method, options = None):
+    async def registerMethod(self, name: str, method, options=None):
 
         options = ensureDottedAccess(options)
 
@@ -319,7 +320,8 @@ class BaseModule(object):
         if self.decoratedItems:
             for item in self.decoratedItems:
 
-                # Currently our decorators will add the information to all classes...
+                # Currently our decorators will add the information to all
+                # classes...
                 if item.owner != self.__class__:
                     # FIX
                     continue

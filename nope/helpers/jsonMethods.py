@@ -25,6 +25,7 @@ class EnhancedJSONEncoder(JSONEncoder):
                 return f"{FUNC_BEGIN}{code[idx:]}{FUNC_END}"
         return super().default(o)
 
+
 class SimpleJSONEncoder(JSONEncoder):
     def default(self, o):
         if is_dataclass(o):
@@ -82,7 +83,7 @@ def dumps(o: Any, indent: int = 4, parse_functions=True, **kwargs) -> str:
 
 
 def loads(s: str, parse_functions=True, **kwargs) -> Any:
-    if parse_functions:        
+    if parse_functions:
         kwargs.pop("cls", None)
         return _loads(s, cls=EnhancedJSONDecoder, **kwargs)
     return _loads(s, **kwargs)

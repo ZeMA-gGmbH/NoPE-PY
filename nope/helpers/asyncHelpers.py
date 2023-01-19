@@ -154,16 +154,19 @@ class NopeExecutor:
         function_to_use = self.wrapFuncIfRequired(func)
 
         async def timeout():
+            promise = None
             try:
                 await asyncio.sleep(timeout_ms / 1000.0)
-                await function_to_use(*args, **kwargs)
+                promise = function_to_use(*args, **kwargs)
+                await promise
             except Exception as error:
-                if self.logger:
-                    self.logger.error(
-                        "Exception raised during executing 'setTimeout'")
-                    self.logger.error(formatException(error))
-                else:
-                    print(formatException(error))
+                if promise:
+                    if self.logger:
+                        self.logger.error(
+                            "Exception raised during executing 'setTimeout'")
+                        self.logger.error(formatException(error))
+                    else:
+                        print(formatException(error))
 
         task = self.loop.create_task(timeout())
 
@@ -184,9 +187,11 @@ class NopeExecutor:
 
         async def interval():
             try:
+                promise = None
                 while True:
                     await asyncio.sleep(interval_ms / 1000.0)
-                    await function_to_use(*args, **kwargs)
+                    promise = function_to_use(*args, **kwargs)
+                    await promise
             except Exception as error:
                 if self.logger:
                     self.logger.error(

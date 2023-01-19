@@ -1,6 +1,7 @@
 from . import (communication, decorators, dispatcher, eventEmitter, helpers, demo, loader,
 
                logger, merging, observable, pubSub, plugins, modules, types)
+from .cli import *
 from .communication import *
 from .decorators import *
 from .dispatcher import *
