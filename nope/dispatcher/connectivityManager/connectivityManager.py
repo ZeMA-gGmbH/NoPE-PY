@@ -186,6 +186,8 @@ class NopeConnectivityManager:
         def onConnect(connected, _rest):
             if connected:
                 self._connectedSince = getTimestamp()
+                EXECUTOR.callParallel(self.emitBonjour)
+                EXECUTOR.callParallel(self._asyncSendStatus, forced=True)
 
         self._communicator.connected.subscribe(onConnect)
         await self._communicator.connected.waitFor()

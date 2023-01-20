@@ -75,13 +75,21 @@ class NopeInstanceManager:
         self.internalInstances = NopeObservable()
         self.internalInstances.setContent([])
 
+
+        self.constructorServices = NopeObservable()
+        self.constructorServices.setContent([])
+
         _ctorStart = f'nope{SPLITCHAR}core{SPLITCHAR}constructor{SPLITCHAR}'
 
         def _extractGenerators(*args):
+
+            constructorServices = set()
+
             self._mappingOfRemoteDispatchersAndGenerators.clear()
             for dispatcher, services in self._rpcManager.services.originalData.items():
                 def _filterMatchingServices(svc):
-                    if "id" in svc and svc["id"].startswith(_ctorStart):
+                    if "id" in svc and svc.id.startswith(_ctorStart):
+                        constructorServices.add(svc["id"])
                         return True
                     return False
 
@@ -98,6 +106,7 @@ class NopeInstanceManager:
                 if len(generators):
                     self._mappingOfRemoteDispatchersAndGenerators[dispatcher] = generators
 
+            self.constructorServices.setContent(list(constructorServices))
             self.constructors.update()
 
         # Subscribe to changes.
