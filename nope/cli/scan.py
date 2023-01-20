@@ -29,7 +29,10 @@ def list_packages(path: str):
                     description = module.DESCRIPTION.__dict__
                     description["path"] = pathToFile
 
-                    description = loads(dumps(description, parse_functions=False))
+                    description = loads(
+                        dumps(
+                            description,
+                            parse_functions=False))
 
                     # Add it to the packages
                     packages.append(description)
@@ -40,9 +43,9 @@ def list_packages(path: str):
                         pass
                     else:
                         print("Failed to load", pathToFile)
-                        print(formatException(e))                
+                        print(formatException(e))
                 except AttributeError:
-                    pass                
+                    pass
                 except Exception as e:
                     print("Failed to load", pathToFile)
                     print(formatException(e))

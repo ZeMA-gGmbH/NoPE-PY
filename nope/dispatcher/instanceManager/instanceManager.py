@@ -279,7 +279,7 @@ class NopeInstanceManager:
                 hashableData = [data.identifier, data.params, data.type]
                 try:
                     hashed = hash(hashableData)
-                except:
+                except BaseException:
                     hashed = json.dumps(hashableData)
 
                 # It might happen, that an instance is requested multiple times.
@@ -333,7 +333,7 @@ class NopeInstanceManager:
                         'instance': _instance,
                         'usedBy': [data.dispatcherId]
                     })
-                    
+
                     self._internalInstances.add(data.identifier)
 
                     # Update the available instances:
@@ -610,13 +610,12 @@ class NopeInstanceManager:
                         f'Created a Wrapper for the instance "{definedInstance.description.identifier}"')
 
                 self._instances[_description.identifier] = ensureDottedAccess({
-                        'instance': wrapper,
-                        'usedBy': [
-                            _description.dispatcherId
-                        ]
-                    }
+                    'instance': wrapper,
+                    'usedBy': [
+                        _description.dispatcherId
+                    ]
+                }
                 )
-                
 
                 return wrapper
 
@@ -642,10 +641,10 @@ class NopeInstanceManager:
             INopeInstance: The instance.
         """
         self._instances[instance.identifier] = ensureDottedAccess({
-                'instance': instance,
-                'usedBy': [],
-                'manual': True
-            }
+            'instance': instance,
+            'usedBy': [],
+            'manual': True
+        }
         )
         return instance
 

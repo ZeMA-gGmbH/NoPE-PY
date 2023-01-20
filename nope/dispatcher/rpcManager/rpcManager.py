@@ -311,16 +311,17 @@ class NopeRpcManager:
         self.ready.setContent(True)
 
     def removeDispatcher(self, dispatcherId: str):
-        self._mappingOfDispatchersAndServices.pop(dispatcherId)
-        self.services.update()
+        res = self._mappingOfDispatchersAndServices.pop(dispatcherId, False)
+        if (res):
+            self.services.update()
 
-        # Now we need to cancel every Task of the dispatcher,
-        # which isnt present any more.
-        EXECUTOR.callParallel(self.cancelRunningTasksOfDispatcher, dispatcherId, Exception(
-            "Dispatcher has been removed! Tasks cannot be executed any more."))
-        # Stop executing the requested Tasks.
-        EXECUTOR.callParallel(self.cancelRequestedTasksOfDispatcher, dispatcherId, Exception(
-            "Dispatcher has been removed! Tasks are not required any more."))
+            # Now we need to cancel every Task of the dispatcher,
+            # which isnt present any more.
+            EXECUTOR.callParallel(self.cancelRunningTasksOfDispatcher, dispatcherId, Exception(
+                "Dispatcher has been removed! Tasks cannot be executed any more."))
+            # Stop executing the requested Tasks.
+            EXECUTOR.callParallel(self.cancelRequestedTasksOfDispatcher, dispatcherId, Exception(
+                "Dispatcher has been removed! Tasks are not required any more."))
 
     async def cancelTask(self, taskId: str, reason, quiet=False):
         if taskId in self._runningInternalRequestedTasks:
@@ -566,7 +567,7 @@ class NopeRpcManager:
 
             if self._logger:
                 self._logger.debug(
-                    f'Dispatcher "{self._id}" putting task "{taskId}" on: "{self._getServiceName(tastRequest.functionId, "request")}"')
+                    f'Dispatcher "{self._id}" putting task "{taskId}" on: "{self._getServiceName(tastRequest.serviceName, "request")}"')
 
             if optionsToUse.get("timeout", 0) > 0:
                 async def onTimeout():

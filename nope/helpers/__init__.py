@@ -55,19 +55,21 @@ from .objectMethods import (convertData, copy, deepAssign, deflattenObject,
                             keepProperties, objectToDict,
 
                             recursiveForEach, rgetattr, rqueryAttr, rsetattr)
-from .path import (MULTI_LEVEL_WILDCARD, SINGLE_LEVEL_WILDCARD, SPLITCHAR,
-
-                   containsWildcards, convertPath, pathToCamelCase, pathToSnakeCase,
-
-                   getLeastCommonPathSegment, patternIsValid)
+from .path import (
+    MULTI_LEVEL_WILDCARD,
+    SINGLE_LEVEL_WILDCARD,
+    SPLITCHAR,
+    containsWildcards,
+    convertPath,
+    pathToCamelCase,
+    pathToSnakeCase,
+    getLeastCommonPathSegment,
+    patternIsValid,
+    toPythonPath)
 from .pathMatchingMethods import comparePatternAndPath
 from .prints import formatException
 from .runtime import offload_function_to_thread
 from .setMethods import determineDifference, difference, union
-from .stringMethods import (camelToSnake, insert, insert_new_lines,
-
-                            limit_string, pad_string, replaceAll,
-
-                            snakeToCamel, to_camel_case, to_snake_case)
+from .stringMethods import camelToSnake, insertNewLines, insert, limitString, padString, replaceAll, snakeToCamel, toCamelCase, toSnakeCase, toVariableName
 from .timers import setInterval, setTimeout
 from .timestamp import getTimestamp

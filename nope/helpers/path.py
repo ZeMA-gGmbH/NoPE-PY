@@ -1,4 +1,5 @@
 from .stringMethods import replaceAll, camelToSnake, snakeToCamel
+from typing import Literal
 
 SPLITCHAR = '/'
 SINGLE_LEVEL_WILDCARD = '+'
@@ -35,6 +36,41 @@ def convertPath(path: str) -> str:
         str: The adapted Path
     """
     return replaceAll(path, ['.', '[', [']', '']], SPLITCHAR)
+
+
+def _isNumber(item: str) -> bool:
+    try:
+        float(item)
+        return True
+    except BaseException:
+        return False
+
+
+def toPythonPath(path: str, style: Literal["dot", "bracket"] = "dot") -> str:
+    """ converts the nope-path to a python path.
+
+    Args:
+        path (str): The Path to adapt.
+        style (Literal["dot","bracket"], optional): The access-style (bracket or dotted.). Defaults to "dot".
+
+    Returns:
+        str: The adapted Path
+    """
+
+    ret = ""
+    splitted = path.split(SPLITCHAR)
+
+    for item in splitted:
+        if len(ret) > 0:
+            if _isNumber(ret):
+                ret += f"[{item}]"
+            elif style == "dot":
+                ret += "." + item
+            else:
+                ret += f"[{item}]"
+        else:
+            ret = item
+    return ret
 
 
 def containsWildcards(str: str) -> bool:

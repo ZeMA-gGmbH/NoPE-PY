@@ -37,7 +37,7 @@ class NopePackageLoader():
 
         if self._logger:
             self._logger.warn("loading package \"" +
-                            package.nameOfPackage + "\"")
+                              package.nameOfPackage + "\"")
 
         # Store the Package:
         self.packages[package.nameOfPackage] = package
@@ -110,10 +110,10 @@ class NopePackageLoader():
             for definition in definitions:
                 if self._logger:
                     self._logger.info("Requesting Generating Instance \"" +
-                                    definition.identifier +
-                                    "\" of type \"" +
-                                    definition.type +
-                                    "\"")
+                                      definition.identifier +
+                                      "\" of type \"" +
+                                      definition.type +
+                                      "\"")
 
                 instance = await self.dispatcher.instanceManager.createInstance(
                     definition
@@ -128,11 +128,11 @@ class NopePackageLoader():
 
                 if self._logger:
                     self._logger.info("Generated Instance" +
-                                    definition.identifier)
+                                      definition.identifier)
 
                 # Perform the autostart:
                 if definition.identifier in package.autostart:
-                    
+
                     if self._logger:
                         self._logger.info(
                             "Trying to perform autostart Instance" + definition.identifier)
@@ -150,7 +150,9 @@ class NopePackageLoader():
                                 "Failed performing autostart for " + definition.identifier)
                             self._logger.error(e)
                         else:
-                            print("Failed performing autostart for " + definition.identifier)
+                            print(
+                                "Failed performing autostart for " +
+                                definition.identifier)
                             print(formatException(e))
         if self._logger:
             self._logger.info("generated all defined Instances")

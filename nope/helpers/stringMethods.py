@@ -52,7 +52,7 @@ def replaceAll(org_str: str, value, replacement: str) -> str:
     return ret
 
 
-def pad_string(num: Union[float, int], size: int, max_length=False):
+def padString(num: Union[float, int], size: int, max_length=False):
     """ Function to Pad a String.
 
     Args:
@@ -81,7 +81,7 @@ def insert(str: str, index: int, content: str) -> str:
         return content + str
 
 
-def to_camel_case(str: str, char='_') -> str:
+def toCamelCase(str: str, char='_') -> str:
     def callback_0(word, index):
         return word.to_lower_case() if index == 0 else word.to_upper_case()
 
@@ -90,7 +90,7 @@ def to_camel_case(str: str, char='_') -> str:
         re.compile('\\s+'), '')
 
 
-def to_snake_case(str: str) -> str:
+def toSnakeCase(str: str) -> str:
     """ Helper to convert the string to the snake-case
 
     Args:
@@ -111,8 +111,8 @@ def to_snake_case(str: str) -> str:
     return ret
 
 
-def limit_string(str: str, length: int,
-                 limit_chars: str = '...') -> DottedDict:
+def limitString(str: str, length: int,
+                limit_chars: str = '...') -> DottedDict:
     """ Helper to limit the string to a specific length. the rest is reduced by the limitChars
 
     Args:
@@ -137,7 +137,7 @@ def limit_string(str: str, length: int,
         })
 
 
-def insert_new_lines(str: str, max_length: int = 100) -> str:
+def insertNewLines(str: str, max_length: int = 100) -> str:
     """ Helper to insert new lines after a given amount of time.
 
     Args:
@@ -162,3 +162,19 @@ def insert_new_lines(str: str, max_length: int = 100) -> str:
             length = 0
 
     return ret
+
+
+def toVariableName(s: str) -> str:
+    """ Helper to convert the Variable to a valid varialbe name.
+
+    Example:
+        >>> toVariableName('32v2 g #Gmw845h$W b53wi ')
+        '_32v2_g__Gmw845h_W_b53wi_'
+
+    Args:
+        s (str): The String to convert
+
+    Returns:
+        str: The string as valid variable name.
+    """
+    return re.sub('\\W|^(?=\\d)', '_', s)
