@@ -15,10 +15,11 @@ from nope.dispatcher.rpcManager.selectors import ValidDefaultSelectors
 from nope.helpers import ensureDottedAccess, generateId, EXECUTOR
 
 
-def getArgs(add_mode=True):
+def getArgs(add_mode=True, parser = None):
     """ Helper Function to extract the Arguments
     """
-    parser = argparse.ArgumentParser(description='cli-tool to run the backend')
+    if parser is None:
+        parser = argparse.ArgumentParser(description='cli-tool to run the backend')
     if add_mode:
         parser.add_argument('mode', type=str, default="run",
                             help='option, used to run the code')
@@ -84,7 +85,9 @@ def getArgs(add_mode=True):
             print("Please provide valid JSON")
             sys.exit()
 
-    return args
+    ret = getDefaultParameters()
+    ret.update(args.__dict__)
+    return ensureDottedAccess(ret)
 
 
 def getDefaultParameters():
