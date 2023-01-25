@@ -1,4 +1,4 @@
-from .stringMethods import replaceAll, camelToSnake, snakeToCamel
+from .stringMethods import replaceAll, camelToSnake, snakeToCamel, toVariableName
 from typing import Literal
 
 SPLITCHAR = '/'
@@ -187,3 +187,14 @@ def patternIsValid(str: str) -> bool:
             return False
 
     return True
+
+def varifyPath(path: str) -> str:
+    """ Start to varify the Path.
+
+    Args:
+        path (str): The Path to adapt.
+
+    Returns:
+        str: The item to return
+    """
+    return SPLITCHAR.join(map(lambda item: toVariableName(item), path.split(SPLITCHAR) ))

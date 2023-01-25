@@ -8,12 +8,11 @@ import json
 from nope.communication.bridge import Bridge
 from nope.dispatcher.connectivityManager import NopeConnectivityManager
 from nope.dispatcher.rpcManager import NopeRpcManager
-from nope.helpers import SPLITCHAR, ensureDottedAccess, generateId, isIterable, EXECUTOR
+from nope.helpers import SPLITCHAR, ensureDottedAccess, generateId, isIterable, EXECUTOR, waitFor, varifyPath
 from nope.logger import defineNopeLogger
 from nope.merging import DictBasedMergeData
 from nope.modules import NopeGenericModule
 from nope.observable import NopeObservable
-
 
 class NopeInstanceManager:
 

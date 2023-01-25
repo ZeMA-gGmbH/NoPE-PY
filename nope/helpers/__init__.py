@@ -65,7 +65,8 @@ from .path import (
     pathToSnakeCase,
     getLeastCommonPathSegment,
     patternIsValid,
-    toPythonPath)
+    toPythonPath,
+    varifyPath)
 from .pathMatchingMethods import comparePatternAndPath
 from .prints import formatException
 from .runtime import offload_function_to_thread
