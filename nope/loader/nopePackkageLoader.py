@@ -107,7 +107,9 @@ class NopePackageLoader():
             definitions = package.defaultInstances
 
             # Iterate over the Defined Instances.
-            for definition in definitions:
+            for definition in definitions:                
+                definition = ensureDottedAccess(definition)
+                
                 if self._logger:
                     self._logger.info("Requesting Generating Instance \"" +
                                       definition.identifier +

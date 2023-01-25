@@ -139,6 +139,10 @@ async def generateNopeBackend(_args: dict, run=False):
         **args
     )
 
+    await loader.dispatcher.ready.waitFor()
+    if args.delay:
+        await asyncio.sleep(args.delay)
+
     def __run():
 
         try:
@@ -147,7 +151,8 @@ async def generateNopeBackend(_args: dict, run=False):
                 EXECUTOR.callParallel(
                     loadDesiredPackages,
                     loader,
-                    loadConfig(args.file)
+                    loadConfig(args.file),
+                    delay = args.delay
                 )
 
             EXECUTOR.run()

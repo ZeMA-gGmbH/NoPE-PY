@@ -5,6 +5,8 @@
 import json
 import logging
 
+from asyncio import sleep
+
 from ..helpers import dynamicImport, formatException, ensureDottedAccess
 from ..logger import getNopeLogger
 
@@ -25,7 +27,7 @@ def loadConfig(pathToFile: str):
     return config
 
 
-async def loadDesiredPackages(loader, packages_to_load, logger: logging.Logger = getNopeLogger('loadDesiredPackages')):
+async def loadDesiredPackages(loader, packages_to_load, logger: logging.Logger = getNopeLogger('loadDesiredPackages'), delay = 2):
     """ Load the Packages provided in the configuration
     """
 
@@ -39,7 +41,7 @@ async def loadDesiredPackages(loader, packages_to_load, logger: logging.Logger =
 
         try:
             loadedPackage = dynamicImport(
-                item["nameOfPackage"], item["path"]).DESCRIPTION
+                item["nameOfPackage"], item["path"]).DESCRIPTION                           
 
             loadedPackage = ensureDottedAccess(loadedPackage)
 
@@ -52,6 +54,7 @@ async def loadDesiredPackages(loader, packages_to_load, logger: logging.Logger =
             if logger is not None:
                 logger.error("Failed Loading the Package " +
                              item["nameOfPackage"])
+                logger.error(formatException(e))
             else:
                 print("Failed Loading the Package " +
                       item["nameOfPackage"])
@@ -75,6 +78,12 @@ async def loadDesiredPackages(loader, packages_to_load, logger: logging.Logger =
                 print("Failed Loading the Package " +
                       item["nameOfPackage"])
                 print(formatException(e))
+
+    if (delay > 0):
+        if logger:
+            logger.info(f"Waiting ${delay} [s] before creating instances.")
+        await sleep(delay)
+    
 
     # Generate the instances.
     await loader.generateInstances()
