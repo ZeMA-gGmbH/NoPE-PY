@@ -564,14 +564,17 @@ class NopeInstanceManager:
                 # to allow the function be called.
 
                 _instanceDetails = self._getInstanceInfo(
-                    _description.identifier)
+                    _description.identifier)                
+
+                usedDispatcher = None
 
                 if _instanceDetails is not None and _instanceDetails.description.type != _description.type:
                     raise Exception(
                         "There exists an Instance named: '" + _description.identifier + "' but it uses a different type. Requested type: '" +
                         _description.type + "', given type: '" + _instanceDetails.description.type + "'")
-
-                usedDispatcher = _instanceDetails.dispatcher.id
+                
+                elif _instanceDetails is not None:
+                    usedDispatcher = _instanceDetails.dispatcher.id
 
                 if usedDispatcher and options.assignmentValid:
 

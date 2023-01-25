@@ -110,8 +110,9 @@ def convertToDottedDict(d: dict | DottedDict |
     if is_dataclass(d):
         d = asdict(d)
 
-    for k, v in d.items():
-        ret[k] = _convertItem(v, useNoneAsDefaultValue)
+    if isinstance(d, (dict, DottedDict, NoneDottedDict)):
+        for k, v in d.items():
+            ret[k] = _convertItem(v, useNoneAsDefaultValue)
 
     return ret
 

@@ -48,8 +48,7 @@ class NopeExecutor:
 
         self.logger = None
         self._todos = set()
-
-        # asyncio.set_event_loop(self._loop)
+        self._running = False
 
     def assignLoop(self, loop, forceDefaultToBeDefaultLoop=False):
         """ Helper to assign a event loop.
@@ -92,7 +91,9 @@ class NopeExecutor:
     def run(self):
         """ Starts the eventloop and runs it forever """
         try:
-            self.loop.run_forever()
+            if self._running == False:                
+                self._running = True
+                self.loop.run_forever()
         except KeyboardInterrupt:
             self.dispose()
 
@@ -217,6 +218,19 @@ class NopeExecutor:
         """
         function_to_use = self.wrapFuncIfRequired(func)
         task = self.loop.create_task(function_to_use(*args, **kwargs))
+
+        def on_done(future: asyncio.Task):
+            err = future.exception()
+            if err:
+                if self.logger:
+                    self.logger.error(err)
+                    self.logger.error(formatException(err))
+                else:
+                    print(err)
+                    print(formatException(err))
+
+        task.add_done_callback(on_done)
+        
         return self.ensureExecution(task)
 
     def wrapFuncIfRequired(self, func):

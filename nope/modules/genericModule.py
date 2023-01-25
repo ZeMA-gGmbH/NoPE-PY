@@ -5,11 +5,12 @@
 from .baseModule import BaseModule
 from ..helpers import ensureDottedAccess
 from ..logger import getNopeLogger, DEBUG
-
+from ..observable import NopeObservable
+from ..eventEmitter import NopeEventEmitter
 
 def _invertMode(options):
-    _ret = deepClone(options)
-    if Array.isArray(_ret.mode):
+    _ret = options.copy()
+    if isinstance(_ret.mode, list):
         if _ret.mode.includes('subscribe'):
             _ret.mode = ['publish', 'subscribe']
         else:
@@ -75,7 +76,7 @@ class NopeGenericModule(BaseModule):
             self._logger.debug('Create function interface for "' + name + '"')
 
             async def _func(*args, _options=options):
-                return await self._core.performCall(_options['id'], args, _options)
+                return await self._core.rpcManager.performCall(_options['id'], args, _options)
 
             if name in self.dynamicInstanceMethods:
                 raise Exception(
@@ -113,7 +114,7 @@ class NopeGenericModule(BaseModule):
             # options.preventSendingToRegistery = true']
 
             # Register the Observable:
-            self.dynamicInstanceProperties[name] = await self._core.dataDistributor.register(
+            self.dynamicInstanceProperties[name] = self._core.dataDistributor.register(
                 # Assign a new Observable.
                 NopeObservable(),
                 # Use the provided Properties:
@@ -150,9 +151,9 @@ class NopeGenericModule(BaseModule):
             # options.preventSendingToRegistery = true']
 
             # Register the Observable:
-            self.dynamicInstanceEvents[name] = await self._core.eventDistributor.register(
+            self.dynamicInstanceEvents[name] = self._core.eventDistributor.register(
                 # Assign a new Observable.
-                NopeEmitter(),
+                NopeEventEmitter(),
                 # Use the provided Properties:
                 _invertMode(options)
             )

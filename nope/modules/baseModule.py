@@ -4,6 +4,7 @@
 
 from ..helpers import keysToCamelNested, getPropertyPath, isPropertyPathCorrect, isMethodPathCorrect, getMethodPath, \
     getEmitterPath, isEmitterPathCorrect, ensureDottedAccess, EXECUTOR
+
 from ..logger import getNopeLogger
 
 
@@ -482,6 +483,7 @@ class BaseModule(object):
             'author': self.author,
             'description': self.description,
             'methods': self.methods,
+            'events': self.events,
             'identifier': self.identifier,
             'properties': self.properties,
             'type': self.type,
