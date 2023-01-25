@@ -8,7 +8,7 @@ import json
 from nope.communication.bridge import Bridge
 from nope.dispatcher.connectivityManager import NopeConnectivityManager
 from nope.dispatcher.rpcManager import NopeRpcManager
-from nope.helpers import SPLITCHAR, ensureDottedAccess, generateId, isIterable, EXECUTOR, waitFor, varifyPath
+from nope.helpers import SPLITCHAR, ensureDottedAccess, generateId, isIterable, EXECUTOR, waitFor, varifyPath, formatException
 from nope.logger import defineNopeLogger
 from nope.merging import DictBasedMergeData
 from nope.modules import NopeGenericModule
@@ -493,6 +493,13 @@ class NopeInstanceManager:
         if instanceIdentifier in self._instances:
             return self._instances.get(
                 instanceIdentifier).instance.toDescription()
+
+        for data in self._mappingOfRemoteDispatchersAndInstances.values():
+            instances = data.get("instances", [])
+            for instance in instances:
+                if instance["identifier"] == instanceIdentifier:
+                    return instance
+
         return False
 
     def constructorExists(self, typeIdentifier: str) -> bool:
@@ -628,7 +635,7 @@ class NopeInstanceManager:
             if self._logger:
                 self._logger.error(
                     'During creating an Instance, the following error Occurd')
-                self._logger.error(e)
+                self._logger.error(formatException(e))
 
             raise e
 
@@ -755,7 +762,7 @@ class NopeInstanceManager:
                     if p.exception() and self._logger:
                         self._logger.error(
                             'Failed Removing Instance "' + name + '"')
-                        self._logger.error(e)
+                        self._logger.error(formatException(e))
 
                 promise: asyncio.Future = self.deleteInstance(name, True)
                 promise.add_done_callback(onDone)

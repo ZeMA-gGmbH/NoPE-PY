@@ -170,7 +170,7 @@ class PubSubSystem:
                     currentContent = self._pullData(subTopic, None)
                     if currentContent is not None:
                         emitter.emit(
-                            item.data,
+                            currentContent,
                             ensureDottedAccess({
                                 'sender': self.id,
                                 'topicOfContent': subTopic,

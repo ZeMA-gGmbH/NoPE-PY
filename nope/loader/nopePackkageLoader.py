@@ -150,7 +150,7 @@ class NopePackageLoader():
                         if self._logger:
                             self._logger.error(
                                 "Failed performing autostart for " + definition.identifier)
-                            self._logger.error(e)
+                            self._logger.error(formatException(e))
                         else:
                             print(
                                 "Failed performing autostart for " +

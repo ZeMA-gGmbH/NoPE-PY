@@ -292,7 +292,7 @@ class NopeConnectivityManager:
             except Exception as e:
                 if self._logger:
                     self._logger.error('Failled to send the status')
-                    self._logger.error(e)
+                    self._logger.error(formatException(e))
 
                 else:
                     print(formatException(e))

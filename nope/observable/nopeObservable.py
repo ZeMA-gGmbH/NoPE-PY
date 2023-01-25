@@ -44,8 +44,8 @@ class NopeObservable(NopeEventEmitter):
             return self._publish(valueToPublish, options)
         return False
 
-    def emit(self, *args, **kwargs):
-        raise NotImplementedError("Not implemeneted on an Observable.")
+    # def emit(self, *args, **kwargs):
+    #     raise NotImplementedError("Not implemeneted on an Observable.")
 
     def _informSpecificObserver(self, observer):
         if self._lastRest is not None:

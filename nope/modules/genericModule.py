@@ -11,7 +11,7 @@ from ..eventEmitter import NopeEventEmitter
 def _invertMode(options):
     _ret = options.copy()
     if isinstance(_ret.mode, list):
-        if _ret.mode.includes('subscribe'):
+        if "subscribe" in _ret.mode:
             _ret.mode = ['publish', 'subscribe']
         else:
             _ret.mode = ['subscribe']
