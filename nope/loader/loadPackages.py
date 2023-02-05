@@ -27,7 +27,7 @@ def loadConfig(pathToFile: str):
     return config
 
 
-async def loadDesiredPackages(loader, packages_to_load, logger: logging.Logger = getNopeLogger('loadDesiredPackages'), delay = 2):
+async def loadDesiredPackages(loader, packages_to_load, logger: logging.Logger = getNopeLogger('loadDesiredPackages'), delay=2):
     """ Load the Packages provided in the configuration
     """
 
@@ -41,7 +41,7 @@ async def loadDesiredPackages(loader, packages_to_load, logger: logging.Logger =
 
         try:
             loadedPackage = dynamicImport(
-                item["nameOfPackage"], item["path"]).DESCRIPTION                           
+                item["nameOfPackage"], item["path"]).DESCRIPTION
 
             loadedPackage = ensureDottedAccess(loadedPackage)
 
@@ -83,7 +83,6 @@ async def loadDesiredPackages(loader, packages_to_load, logger: logging.Logger =
         if logger:
             logger.info(f"Waiting ${delay} [s] before creating instances.")
         await sleep(delay)
-    
 
     # Generate the instances.
     await loader.generateInstances()

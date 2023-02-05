@@ -91,7 +91,7 @@ class NopeExecutor:
     def run(self):
         """ Starts the eventloop and runs it forever """
         try:
-            if self._running == False:                
+            if self._running == False:
                 self._running = True
                 self.loop.run_forever()
         except KeyboardInterrupt:
@@ -230,7 +230,7 @@ class NopeExecutor:
                     print(formatException(err))
 
         task.add_done_callback(on_done)
-        
+
         return self.ensureExecution(task)
 
     def wrapFuncIfRequired(self, func):

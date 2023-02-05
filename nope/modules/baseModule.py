@@ -218,7 +218,7 @@ class BaseModule(object):
                 options.topic.publish = getEmitterPath(
                     self.identifier, options.topic.publish)
 
-        emitter = await self._core.eventDistributor.register(emitter, options)
+        emitter = self._core.eventDistributor.register(emitter, options)
 
         # Register the new Property.
         self._registeredEvents[name] = {

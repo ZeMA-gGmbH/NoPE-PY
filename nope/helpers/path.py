@@ -188,6 +188,7 @@ def patternIsValid(str: str) -> bool:
 
     return True
 
+
 def varifyPath(path: str) -> str:
     """ Start to varify the Path.
 
@@ -197,4 +198,5 @@ def varifyPath(path: str) -> str:
     Returns:
         str: The item to return
     """
-    return SPLITCHAR.join(map(lambda item: toVariableName(item), path.split(SPLITCHAR) ))
+    return SPLITCHAR.join(
+        map(lambda item: toVariableName(item), path.split(SPLITCHAR)))

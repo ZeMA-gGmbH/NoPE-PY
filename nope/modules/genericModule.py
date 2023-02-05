@@ -8,6 +8,7 @@ from ..logger import getNopeLogger, DEBUG
 from ..observable import NopeObservable
 from ..eventEmitter import NopeEventEmitter
 
+
 def _invertMode(options):
     _ret = options.copy()
     if isinstance(_ret.mode, list):
