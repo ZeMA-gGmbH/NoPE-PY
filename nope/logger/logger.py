@@ -52,7 +52,7 @@ def getNopeLogger(name: str, level=logging.DEBUG):
         length = 15
 
         if len(nameToUse) > length:
-            nameToUse = nameToUse[:length-3] + "..."
+            nameToUse = nameToUse[:length - 3] + "..."
 
         _logger = logging.getLogger(nameToUse)
         # Define  a Logging Format

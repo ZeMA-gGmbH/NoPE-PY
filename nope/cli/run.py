@@ -15,11 +15,12 @@ from nope.dispatcher.rpcManager.selectors import ValidDefaultSelectors
 from nope.helpers import ensureDottedAccess, generateId, EXECUTOR
 
 
-def getArgs(add_mode=True, parser = None):
+def getArgs(add_mode=True, parser=None):
     """ Helper Function to extract the Arguments
     """
     if parser is None:
-        parser = argparse.ArgumentParser(description='cli-tool to run the backend')
+        parser = argparse.ArgumentParser(
+            description='cli-tool to run the backend')
     if add_mode:
         parser.add_argument('mode', type=str, default="run",
                             help='option, used to run the code')
@@ -152,7 +153,7 @@ async def generateNopeBackend(_args: dict, run=False):
                     loadDesiredPackages,
                     loader,
                     loadConfig(args.file),
-                    delay = args.delay
+                    delay=args.delay
                 )
 
             EXECUTOR.run()

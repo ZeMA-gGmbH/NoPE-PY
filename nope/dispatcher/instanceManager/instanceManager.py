@@ -14,6 +14,7 @@ from nope.merging import DictBasedMergeData
 from nope.modules import NopeGenericModule
 from nope.observable import NopeObservable
 
+
 class NopeInstanceManager:
 
     def __init__(self, options, _defaultSelector, _id=None,
@@ -73,7 +74,6 @@ class NopeInstanceManager:
         # provided dispatcher.
         self.internalInstances = NopeObservable()
         self.internalInstances.setContent([])
-
 
         self.constructorServices = NopeObservable()
         self.constructorServices.setContent([])
@@ -602,7 +602,7 @@ class NopeInstanceManager:
                 # to allow the function be called.
 
                 _instanceDetails = self._getInstanceInfo(
-                    _description.identifier)                
+                    _description.identifier)
 
                 usedDispatcher = None
 
@@ -610,7 +610,7 @@ class NopeInstanceManager:
                     raise Exception(
                         "There exists an Instance named: '" + _description.identifier + "' but it uses a different type. Requested type: '" +
                         _description.type + "', given type: '" + _instanceDetails.description.type + "'")
-                
+
                 elif _instanceDetails is not None:
                     usedDispatcher = _instanceDetails.dispatcher.id
 
