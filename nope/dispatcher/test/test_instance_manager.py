@@ -33,20 +33,31 @@ async def test_register_instance():
     async def createInstance(core, identifier):
         return HelloWorldModule(core)
 
-    # Create an instance on the Server
-    instance = HelloWorldModule(srv)
-
     await srv.ready.waitFor()
     await client.ready.waitFor()
 
-    await srv.instanceManager.registerConstructor("hello_word", createInstance)
+    await srv.instanceManager.registerConstructor("HelloWorldModule", createInstance)
 
     await sleep(0.1)
 
-    assert srv.instanceManager.getServiceName(
-        "hello_word",
-        "constructor") in client.instanceManager.constructors.data.getContent()
+    assert "HelloWorldModule" in client.instanceManager.constructors.data.getContent()
     assert len(client.instanceManager.constructors.data.getContent()) == 1
+
+    instance = await client.instanceManager.createInstance({
+        "identifier": "instance",
+        "type": "HelloWorldModule",
+        "params": []
+    })
+
+    assert "instance" in client.instanceManager.instances.amountOf
+
+    await instance.hello("pytest")
+
+    await instance.dispose()
+    await sleep(1)
+
+    assert "instance" not in client.instanceManager.instances.amountOf
+
 
 if __name__ == "__main__":
     EXECUTOR.loop.run_until_complete(test_register_instance())

@@ -9,7 +9,7 @@ VALID_LAYERS = DottedDict({
 })
 
 LAYER_DEFAULT_PARAMETERS = DottedDict({
-    'io-client': 'http://localhost:7000',
+    'io-client': 'http://127.0.0.1:7000',
     'mqtt': 'mqtt://localhost:1883'
 })
 

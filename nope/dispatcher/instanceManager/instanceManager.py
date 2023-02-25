@@ -286,60 +286,83 @@ class NopeInstanceManager:
                 # We will test it by using the "_internalInstances" set
 
                 if data.identifier not in self._initializingInstance:
-                    # Mark the Instance as available.
-                    self._initializingInstance[data.identifier] = hashed
 
-                    # Create the Instance
-                    _instance = await cb(self._core, data.identifier)
-                    _instance.identifier = data.identifier
+                    try:
 
-                    # Make shure the Data is expressed as Array.
-                    if not isIterable(data.params):
-                        data.params = [data.params]
+                        # Mark the Instance as available.
+                        self._initializingInstance[data.identifier] = hashed
 
-                    # Initialize the instance with the parameters.
-                    await _instance.init(*data.params)
+                        # Create the Instance
+                        _instance = await cb(self._core, data.identifier)
+                        _instance.identifier = data.identifier
 
-                    async def disposeInstance(_data):
-                        if self._instances.get(data.identifier).usedBy:
-                            idx = self._instances.get(
-                                data.identifier).usedBy.index(_data.dispatcherId)
-                            if idx > 1:
-                                self._instances.get(
-                                    data.identifier).usedBy.splice(idx, 1)
-                            if len(self._instances.get(
-                                    data.identifier).usedBy) == 0:
-                                self._internalInstances.pop(data.identifier)
-                                await _instance.dispose()
-                                self._instances.pop(data.identifier)
-                                self._rpcManager.unregisterService(
-                                    self.getServiceName(data.identifier, 'dispose'))
+                        # Make shure the Data is expressed as Array.
+                        if not isIterable(data.params):
+                            data.params = [data.params]
 
-                    # A Function is registered, taking care of removing
-                    # an instances, if it isnt needed any more.
-                    await self._rpcManager.registerService(
-                        disposeInstance,
-                        ensureDottedAccess({
-                            'id': self.getServiceName(data.identifier, 'dispose'),
-                            'schema': ensureDottedAccess({
-                                'description': f'Service, which will destructor for the instance "{data.identifier}". This function will be called internal only.',
-                                'type': 'function'})
+                        # Initialize the instance with the parameters.
+                        await _instance.init(*data.params)
+
+
+                        async def disposeInstance(_data):
+                            """ A Function is registered, taking care of removing
+                                an instances, if it isnt needed any more.
+
+                            Args:
+                                _data (msg): The message containing the dispatcher id.
+                            """
+
+                            _data = ensureDottedAccess(_data)
+
+                            if self._instances.get(data.identifier).usedBy:
+                                idx = self._instances.get(
+                                    data.identifier).usedBy.index(_data.dispatcherId)
+                                if idx > 1:
+                                    self._instances.get(
+                                        data.identifier).usedBy.splice(idx, 1)
+                                if len(self._instances.get(
+                                        data.identifier).usedBy) == 0:
+                                    # Unmark as internal instance
+                                    self._internalInstances.pop(data.identifier)
+                                    # Remove the Instance.
+                                    await _instance.dispose()
+                                    self._instances.pop(data.identifier)
+                                    # Remove the Function itself
+                                    self._rpcManager.unregisterService(self.getServiceName(data.identifier, 'dispose'))
+                                    # Emit the instances again
+                                    self._sendAvailableInstances()
+
+                        # A Function is registered, taking care of removing
+                        # an instances, if it isnt needed any more.
+                        await self._rpcManager.registerService(
+                            disposeInstance,
+                            ensureDottedAccess({
+                                'id': self.getServiceName(data.identifier, 'dispose'),
+                                'schema': ensureDottedAccess({
+                                    'description': f'Service, which will destructor for the instance "{data.identifier}". This function will be called internal only.',
+                                    'type': 'function'})
+                            })
+                        )
+
+                        # Store the Instance.
+                        self._instances[data.identifier] = ensureDottedAccess({
+                            'instance': _instance,
+                            'usedBy': [data.dispatcherId]
                         })
-                    )
 
-                    # Store the Instance.
-                    self._instances[data.identifier] = ensureDottedAccess({
-                        'instance': _instance,
-                        'usedBy': [data.dispatcherId]
-                    })
+                        self._internalInstances.add(data.identifier)
 
-                    self._internalInstances.add(data.identifier)
+                        # Update the available instances:
+                        self._sendAvailableInstances()
 
-                    # Update the available instances:
-                    self._sendAvailableInstances()
+                        # Make shure, we remove this instance.hash
+                        self._initializingInstance.pop(data.identifier)
+                    
+                    except BaseException as E:
+                        # Make shure, we remove this instance.hash
+                        self._initializingInstance.pop(data.identifier)
 
-                    # Make shure, we remove this instance.hash
-                    self._initializingInstance.pop(data.identifier)
+                        raise E
 
                 elif self._initializingInstance.get(data.identifier) != hashed:
                     raise Exception(
@@ -617,6 +640,25 @@ class NopeInstanceManager:
                 if self._logger:
                     self._logger.debug(
                         f'Created a Wrapper for the instance "{definedInstance.description.identifier}"')
+                    
+                originalDispose = wrapper.dispose
+                async def dispose():
+                    await self._rpcManager.performCall(
+                        # Extract our Service Name:
+                        self.getServiceName(_description.identifier, "dispose"),
+                        # We will use our Description as Parameter.
+                        [
+                            {
+                                "dispatcherId": self._id,
+                            },
+                        ],
+                        # Additionally we share the options:
+                        options
+                    )
+
+                    await originalDispose()
+                
+                setattr(wrapper, "dispose", dispose)
 
                 self._instances[_description.identifier] = ensureDottedAccess({
                     'instance': wrapper,
