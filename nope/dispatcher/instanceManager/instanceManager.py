@@ -315,22 +315,29 @@ class NopeInstanceManager:
                             _data = ensureDottedAccess(_data)
 
                             if self._instances.get(data.identifier).usedBy:
-                                idx = self._instances.get(
-                                    data.identifier).usedBy.index(_data.dispatcherId)
-                                if idx > 1:
-                                    self._instances.get(
-                                        data.identifier).usedBy.splice(idx, 1)
-                                if len(self._instances.get(
-                                        data.identifier).usedBy) == 0:
-                                    # Unmark as internal instance
-                                    self._internalInstances.pop(data.identifier)
-                                    # Remove the Instance.
-                                    await _instance.dispose()
-                                    self._instances.pop(data.identifier)
-                                    # Remove the Function itself
-                                    self._rpcManager.unregisterService(self.getServiceName(data.identifier, 'dispose'))
-                                    # Emit the instances again
-                                    self._sendAvailableInstances()
+                                try:
+
+                                    if _data.dispatcherId in self._instances.get(data.identifier).usedBy:
+                                        # Pop the dispatcher if it is present:
+                                        idx = self._instances.get(data.identifier).usedBy.index(_data.dispatcherId)
+                                        self._instances.get(data.identifier).usedBy.pop(idx)
+
+
+                                    if len(self._instances.get(data.identifier).usedBy) == 0:
+                                        # Unmark as internal instance
+                                        self._internalInstances.remove(data.identifier)
+                                        # Remove the Instance.
+                                        _instance.dispose()
+                                        # Removes the instances
+                                        self._instances.pop(data.identifier)
+                                        # Remove the Function itself
+                                        self._rpcManager.unregisterService(self.getServiceName(data.identifier, 'dispose'))
+                                        # Emit the instances again
+                                        self._sendAvailableInstances()
+                                except ValueError:
+                                    pass
+                                except BaseException as E:
+                                    print(E)
 
                         # A Function is registered, taking care of removing
                         # an instances, if it isnt needed any more.
