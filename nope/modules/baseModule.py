@@ -269,7 +269,8 @@ class BaseModule(object):
         # Test if the Property is already registerd,
         # If so => unregister it first.
         if name in self._registeredProperties:
-            await self._core.dataDistributor.unregister(self._registeredProperties[name]['observable'])
+            self._core.dataDistributor.unregister(
+                self._registeredProperties[name]['observable'])
 
     async def unregisterEvent(self, name: str):
         """ Helper Function to unregister an Eventbased Property
@@ -280,7 +281,8 @@ class BaseModule(object):
         # Test if the Property is already registerd,
         # If so => unregister it first.
         if name in self._registeredProperties:
-            await self._core.eventDistributor.unregister(self._registeredProperties[name]['emitter'])
+            self._core.eventDistributor.unregister(
+                self._registeredProperties[name]['emitter'])
 
     async def listFunctions(self):
         return list(self._registeredMethods.values())

@@ -49,7 +49,7 @@ def getNopeLogger(name: str, level=logging.DEBUG):
     if name not in _LOGGERS:
 
         nameToUse = name
-        length = 15
+        length = 30
 
         if len(nameToUse) > length:
             nameToUse = nameToUse[:length - 3] + "..."
@@ -58,7 +58,7 @@ def getNopeLogger(name: str, level=logging.DEBUG):
         # Define  a Logging Format
 
         _format = ColorizedFormatter(
-            '%(asctime)s - %(levelname)-8s - %(name)-20s - %(message)s')
+            '%(asctime)s - %(levelname)-8s - %(name)-' + str(length) + 's - %(message)s')
 
         # Create Console Output
         _handler = logging.StreamHandler(sys.stdout)
