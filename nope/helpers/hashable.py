@@ -87,9 +87,9 @@ def hashable(cls):
             pass
 
     def __hash__(self):
-        if not hasattr(self, "_hash") or self._hash is None:
-            self._hash = self.__hash__.HASH(self)
-        return self._hash
+        if not hasattr(self, "__hash") or self.__hash is None:
+            self.__hash = self.__hash__.HASH(self)
+        return self.__hash
 
     __hash__.HASH = classdict["__hash__"]
     __hash__.__doc__ = classdict["__hash__"].__doc__
@@ -108,7 +108,7 @@ def hashable(cls):
 
     def hashed(self):
         "Return 'True' if the %s has been hashed, 'False' otherwise."
-        return hasattr(self, "_hash") and self._hash is not None
+        return hasattr(self, "__hash") and self.__hash is not None
 
     try:
         hashed.__doc__ = hashed.__doc__ % classname

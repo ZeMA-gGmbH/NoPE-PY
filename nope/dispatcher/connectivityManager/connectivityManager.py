@@ -361,3 +361,6 @@ class NopeConnectivityManager:
             self._checkStatusTask.cancel()
         if not quiet:
             await self._communicator.emit('aurevoir', DottedDict({'dispatcherId': self.id}))
+
+    def __del__(self):
+        EXECUTOR.callParallel(self.dispose, target=self)

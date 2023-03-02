@@ -35,7 +35,7 @@ class HelloWorldModule(BaseModule):
             }
         })
 
-        def _callback(data, reset):
+        def _callback(data, rest):
             if (rest.sender != self.prop.id):
                 self._logger.warn("External-Update. Data= " + str(data))
 

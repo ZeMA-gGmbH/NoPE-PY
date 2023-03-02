@@ -203,7 +203,7 @@ class PubSubSystem:
     def unregister(self, emitter):
         if emitter in self._emitters:
             options = self._emitters.pop(emitter)
-            subTopic, pubTopic = _extractPubAndSubTopic(options)
+            subTopic, pubTopic = _extractPubAndSubTopic(options["options"])
 
             self._updatePartialMatching('remove', emitter, pubTopic, subTopic)
             return True
@@ -240,10 +240,10 @@ class PubSubSystem:
     def _deleteMatchingEntry(self, pubTopic, subTopic, emitter):
         if pubTopic in self._matched:
             data = self._matched.get(pubTopic)
-            if pubTopic in data.dataPull:
-                data.dataPull.get(subTopic).pop(emitter)
+            if subTopic in data.dataPull:
+                data.dataPull.get(subTopic).remove(emitter)
             if subTopic in data.dataQuery:
-                data.dataQuery.get(subTopic).delete(emitter)
+                data.dataQuery.get(subTopic).remove(emitter)
 
     def _addMatchingEntryIfRequired(self, pubTopic, subTopic, emitter):
         result = self._comparePatternAndPath(subTopic, pubTopic)
@@ -288,25 +288,26 @@ class PubSubSystem:
                         "Implementation Error. The 'pathToExtractData' must be provided")
 
     def _updatePartialMatching(
-            self, mode: str, emitter, pubTopic: str, subTopic: str):
+            self, mode: str, _emitter, _pubTopic: str, _subTopic: str):
         for item in self._emitters.values():
             pubTopic = item.pubTopic
-            if mode == 'remove' and pubTopic and subTopic:
-                self._deleteMatchingEntry(pubTopic, subTopic, emitter)
-            elif mode == 'add' and pubTopic and subTopic:
+            if mode == 'remove' and pubTopic and _subTopic:
+                self._deleteMatchingEntry(pubTopic, _subTopic, _emitter)
+            elif mode == 'add' and pubTopic and _subTopic:
                 self._addMatchingEntryIfRequired(
-                    pubTopic, subTopic, emitter)
+                    pubTopic, _subTopic, _emitter)
         if mode == 'add':
-            if pubTopic:
-                self._updateMatchingForTopic(pubTopic)
-            if subTopic and not containsWildcards(subTopic):
+            if _pubTopic:
+                self._updateMatchingForTopic(_pubTopic)
+            if _subTopic and not containsWildcards(_subTopic):
                 self._addMatchingEntryIfRequired(
-                    subTopic, subTopic, emitter)
+                    _subTopic, _subTopic, _emitter)
         elif mode == 'remove':
-            if subTopic:
-                self._deleteMatchingEntry(subTopic, subTopic, emitter)
-                self.publishers.update()
-                self.subscriptions.update()
+            if _subTopic:
+                self._deleteMatchingEntry(_subTopic, _subTopic, _emitter)
+
+        self.publishers.update()
+        self.subscriptions.update()
 
     def emit(self, eventName, data, options=None):
         return self._pushData(eventName, eventName, data,

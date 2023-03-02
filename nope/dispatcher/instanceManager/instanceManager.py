@@ -303,7 +303,6 @@ class NopeInstanceManager:
                         # Initialize the instance with the parameters.
                         await _instance.init(*data.params)
 
-
                         async def disposeInstance(_data):
                             """ A Function is registered, taking care of removing
                                 an instances, if it isnt needed any more.
@@ -315,22 +314,33 @@ class NopeInstanceManager:
                             _data = ensureDottedAccess(_data)
 
                             if self._instances.get(data.identifier).usedBy:
-                                idx = self._instances.get(
-                                    data.identifier).usedBy.index(_data.dispatcherId)
-                                if idx > 1:
-                                    self._instances.get(
-                                        data.identifier).usedBy.splice(idx, 1)
-                                if len(self._instances.get(
-                                        data.identifier).usedBy) == 0:
-                                    # Unmark as internal instance
-                                    self._internalInstances.pop(data.identifier)
-                                    # Remove the Instance.
-                                    await _instance.dispose()
-                                    self._instances.pop(data.identifier)
-                                    # Remove the Function itself
-                                    self._rpcManager.unregisterService(self.getServiceName(data.identifier, 'dispose'))
-                                    # Emit the instances again
-                                    self._sendAvailableInstances()
+                                try:
+
+                                    if _data.dispatcherId in self._instances.get(
+                                            data.identifier).usedBy:
+                                        # Pop the dispatcher if it is present:
+                                        idx = self._instances.get(
+                                            data.identifier).usedBy.index(
+                                            _data.dispatcherId)
+                                        self._instances.get(
+                                            data.identifier).usedBy.pop(idx)
+
+                                    if len(self._instances.get(
+                                            data.identifier).usedBy) == 0:
+                                        # Unmark as internal instance
+                                        self._internalInstances.remove(
+                                            data.identifier)
+                                        # Remove the Instance.
+                                        await _instance.dispose()
+                                        # Removes the instances
+                                        self._instances.pop(data.identifier)
+                                        # Remove the Function itself
+                                        await self._rpcManager.unregisterService(self.getServiceName(data.identifier, 'dispose'))
+                                        # Emit the instances again
+                                        self._sendAvailableInstances()
+
+                                except ValueError:
+                                    pass
 
                         # A Function is registered, taking care of removing
                         # an instances, if it isnt needed any more.
@@ -357,7 +367,7 @@ class NopeInstanceManager:
 
                         # Make shure, we remove this instance.hash
                         self._initializingInstance.pop(data.identifier)
-                    
+
                     except BaseException as E:
                         # Make shure, we remove this instance.hash
                         self._initializingInstance.pop(data.identifier)
@@ -495,7 +505,7 @@ class NopeInstanceManager:
 
         # If that isnt the case, we will check all dispatchers and search the
         # instance.
-        for iter_item in self._mappingOfRemoteDispatchersAndInstances.entries():
+        for iter_item in self._mappingOfRemoteDispatchersAndInstances.items():
             dispatcher = iter_item[0]
             msg = iter_item[1]
             for instance in msg.instances:
@@ -640,24 +650,14 @@ class NopeInstanceManager:
                 if self._logger:
                     self._logger.debug(
                         f'Created a Wrapper for the instance "{definedInstance.description.identifier}"')
-                    
+
                 originalDispose = wrapper.dispose
+
                 async def dispose():
-                    await self._rpcManager.performCall(
-                        # Extract our Service Name:
-                        self.getServiceName(_description.identifier, "dispose"),
-                        # We will use our Description as Parameter.
-                        [
-                            {
-                                "dispatcherId": self._id,
-                            },
-                        ],
-                        # Additionally we share the options:
-                        options
-                    )
+                    await self.deleteInstance(wrapper.indentifier)
 
                     await originalDispose()
-                
+
                 setattr(wrapper, "dispose", dispose)
 
                 self._instances[_description.identifier] = ensureDottedAccess({
@@ -715,31 +715,46 @@ class NopeInstanceManager:
         # the corresponding instance object has to be select.
 
         _instance = None
+        _identifier = None
 
         if isinstance(instance, 'string'):
             _instance = self._instances.get(instance)
+            _identifier = instance
         else:
             for data in self._instances.values():
                 if instance == data.instance:
                     _instance = data
+                    _identifier = data.instance.identifier
                     break
+        try:
+            params = ensureDottedAccess({
+                'dispatcherId': self._id,
+                'identifier': _identifier
+            })
+
+            # Call the corresponding Dispose Function for the "real" instance
+            # All other elements are just accessors.
+            await self._rpcManager.performCall(
+                self.getServiceName(_identifier, "dispose"),
+                [
+                    params
+                ]
+            )
+        except BaseException as E:
+            # Only if it is an internal
+            # Instance, we do not want to
+            # throw that error, otherwise
+            # we want that error to be
+            # present.
+            if _instance:
+                pass
+            else:
+                raise E
+
         # if the instance has been found => delete the instance.
         if _instance:
             _instance.usedBy.pop()
             if len(_instance.usedBy) == 0:
-                params = ensureDottedAccess({
-                    'dispatcherId': self._id,
-                    'identifier': _instance.instance.identifier
-                })
-
-                # Call the corresponding Dispose Function for the "real" instance
-                # All other elements are just accessors.
-                await self._rpcManager.performCall(
-                    'instance_dispose_' + _instance.instance.identifier,
-                    [
-                        params
-                    ]
-                )
 
                 # Delete the Identifier
                 self._instances.pop(_instance.instance.identifier)
@@ -826,3 +841,6 @@ class NopeInstanceManager:
     async def dispose(self):
         self.reset()
         self.instances.dispose()
+
+    def __del__(self):
+        EXECUTOR.callParallel(self.dispose, target=self)
