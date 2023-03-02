@@ -10,6 +10,7 @@ from .helpers import *
 from .loader import *
 from .logger import *
 from .merging import *
+from .modules import *
 from .observable import *
 from .plugins import install
 from .pubSub import *

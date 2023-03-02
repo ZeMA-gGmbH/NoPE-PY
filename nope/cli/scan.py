@@ -6,6 +6,9 @@ import json
 import os
 
 from nope.helpers import dynamicImport, formatException, dumps, loads
+from nope.logger import getNopeLogger
+
+LOGGER = getNopeLogger("config-scanner")
 
 
 def list_packages(path: str):
@@ -18,7 +21,7 @@ def list_packages(path: str):
         for name in files:
             if name == "__init__.py":
                 # Determine the Path to the File.
-                pathToFile = os.path.join(root, name)
+                pathToFile = os.path.abspath(os.path.join(root, name))
 
                 try:
                     # Dynamically load the File.
@@ -36,19 +39,19 @@ def list_packages(path: str):
 
                     # Add it to the packages
                     packages.append(description)
-                except ModuleNotFoundError:
-                    pass
+                except ModuleNotFoundError as E:
+                    LOGGER.error(formatException(E))
                 except ImportError as e:
                     if e.msg == "attempted relative import with no known parent package":
                         pass
                     else:
                         print("Failed to load", pathToFile)
                         print(formatException(e))
-                except AttributeError:
-                    pass
+                except AttributeError as E:
+                    LOGGER.error(formatException(E))
                 except Exception as e:
-                    print("Failed to load", pathToFile)
-                    print(formatException(e))
+                    LOGGER.error(f"Failed to load '{pathToFile}'")
+                    LOGGER.error(formatException(e))
                     pass
 
     return packages
@@ -57,6 +60,7 @@ def list_packages(path: str):
 def create_config(path_to_scan: str, dest_dir: str, name_of_file: str):
     """ Create a configuration """
 
+    LOGGER.info(f"Starting to find files in '{path_to_scan}'")
     packages = list_packages(path_to_scan)
 
     try:
@@ -86,18 +90,18 @@ def scan_cli(add_mode=True):
         parser.add_argument('mode', type=str, default="scan",
                             help='option, used to scan for modules')
 
-    parser.add_argument('--input', type=str, default="modules", dest='input',
+    parser.add_argument('--input', type=str, default="./", dest='input',
                         help='folder to scan for modules')
     parser.add_argument('--name', type=str, default="settings.json", dest='name',
                         help='name of the configuration file')
-    parser.add_argument('--dir', type=str, default="config", dest='dir',
+    parser.add_argument('--output', type=str, default="config", dest='output',
                         help='output directory for the configuration file')
 
     args = parser.parse_args()
 
     create_config(
-        os.path.join(os.getcwd(), args.input),
-        os.path.join(os.getcwd(), args.dir),
+        os.path.dirname(os.path.join(os.getcwd(), args.input)),
+        os.path.join(os.getcwd(), args.output),
         args.name
     )
 
