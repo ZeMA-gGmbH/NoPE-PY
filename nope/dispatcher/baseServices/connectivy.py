@@ -1,9 +1,10 @@
 import asyncio
+import logging
 
 from nope.helpers import avgOfArray, ensureDottedAccess, maxOfArray, minOfArray
 from nope.logger import getNopeLogger
 
-logger = getNopeLogger('baseService')
+logger = getNopeLogger('baseService', level=logging.INFO)
 
 
 async def generatePingServices(dispatcher):
@@ -39,6 +40,9 @@ async def generatePingServices(dispatcher):
             'description': 'Ping'
         })
     )
+
+    logger.info("adding 'ping' service!")
+
     return await generatePingAccessors(dispatcher)
 
 
@@ -63,7 +67,7 @@ async def generatePingAccessors(dispatcher):
 
     async def pingAll():
         dispatchers = list(
-            dispatcher.connectivityManager.dispatchers.keyMappingReverse.get(
+            dispatcher.rpcManager.services.keyMappingReverse.get(
                 serviceName
             )
         )
@@ -75,15 +79,15 @@ async def generatePingAccessors(dispatcher):
         if promises:
             pings = await asyncio.gather(*promises)
 
-        avg = avgOfArray(pings, "ping")
-        max = maxOfArray(pings, "ping")
-        min = minOfArray(pings, "ping")
+        _avg = avgOfArray(pings, "ping")
+        _max = maxOfArray(pings, "ping")
+        _min = minOfArray(pings, "ping")
 
         return ensureDottedAccess({
             "pings": pings,
-            "avg": avg,
-            "max": max,
-            "min": min,
+            "avg": _avg,
+            "max": _max,
+            "min": _min,
         })
 
     return ensureDottedAccess({

@@ -55,7 +55,7 @@ def getArgs(add_mode=True, parser=None):
     parser.add_argument('--communication-log', type=str, default="info", dest='communicationLogLevel',
                         help='Specify the Logger Level of the Communication. Defaults to "info"')
 
-    parser.add_argument('--noBaseServices', default=False, dest='noBaseServices', action='store_true',
+    parser.add_argument('--noBaseServices', default=False, dest='useBaseServices', action='store_true',
                         help='Flag to enable prevent the base Services to be loaded')
 
     args = parser.parse_args()
@@ -86,6 +86,9 @@ def getArgs(add_mode=True, parser=None):
             print("Please provide valid JSON")
             sys.exit()
 
+    args.useBaseServices = not args.useBaseServices
+    print(args.useBaseServices)
+
     ret = getDefaultParameters()
     ret.update(args.__dict__)
     return ensureDottedAccess(ret)
@@ -108,7 +111,7 @@ def getDefaultParameters():
         # "logToFile": False,
         "id": generateId(),
         "profile": False,
-        "noBaseServices": False,
+        "useBaseServices": True,
     }
 
 

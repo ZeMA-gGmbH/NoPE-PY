@@ -4,11 +4,11 @@
 
 from nope.dispatcher.baseServices import addAllBaseServices
 from nope.dispatcher.nopeDispatcher import NopeDispatcher
-from nope.helpers import ensureDottedAccess
+from nope.helpers import ensureDottedAccess, EXECUTOR
 from nope.modules import NopeGenericModule
 
 
-def _perform_init(dispatcher: NopeDispatcher, options):
+def _performInit(dispatcher: NopeDispatcher, options):
     """ Helper Function to initiaize the Dispatcher.
 
     Args:
@@ -29,7 +29,11 @@ def _perform_init(dispatcher: NopeDispatcher, options):
     )
 
     if (options.useBaseServices):
-        addAllBaseServices(dispatcher)
+        async def addServices():
+            services = await addAllBaseServices(dispatcher)
+            setattr(dispatcher, "baseServices", services)
+
+        EXECUTOR.callParallel(addServices)
 
     return dispatcher
 
@@ -40,7 +44,8 @@ class NopeDispatcherSingleton(object):
     def __new__(cls, options, id=None):
         if cls._instance is None:
             # Assign a Class
-            cls._instance = _perform_init(NopeDispatcher(options, id=id))
+            cls._instance = _performInit(
+                NopeDispatcher(options, id=id), options)
 
             # Put any initialization here.
         return cls._instance
@@ -64,4 +69,4 @@ def getDispatcher(
         return NopeDispatcherSingleton(dispatcherOptions, id)
 
     # Create the Dispatcher Instance.
-    return _perform_init(NopeDispatcher(dispatcherOptions, id=id), options)
+    return _performInit(NopeDispatcher(dispatcherOptions, id=id), options)

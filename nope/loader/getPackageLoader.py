@@ -14,7 +14,7 @@ class NopePackageLoaderSingleton(object):
     def __new__(cls, **settings):
         if cls._instance is None:
             cls._instance = NopePackageLoader(
-                getDispatcher(settings),
+                getDispatcher(settings, settings),
                 **settings
             )
         # Put any initialization here.

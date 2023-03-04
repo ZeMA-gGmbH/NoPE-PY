@@ -205,8 +205,8 @@ class NopeExecutor:
 
         return self.ensureExecution(task)
 
-    def callParallel(self, func, *args, **
-                     kwargs, done_callback = None) -> asyncio.Task | asyncio.Future:
+    def callParallel(self, func, *args, done_callback=None, **
+                     kwargs) -> asyncio.Task | asyncio.Future:
         """ Helper, which will call the function in the Background.
 
 
@@ -229,10 +229,13 @@ class NopeExecutor:
                     print(err)
                     print(formatException(err))
 
-        if done_callback:
-            task.add_done_callback(done_callback)
-        else:
-            task.add_done_callback(on_done)
+            elif done_callback:
+                done_callback(future)
+
+        # if done_callback:
+        #     task.add_done_callback(done_callback)
+        # else:
+        task.add_done_callback(on_done)
 
         return self.ensureExecution(task)
 

@@ -1,4 +1,5 @@
 from .connectivy import generatePingServices
+from ...helpers import ensureDottedAccess
 
 SERVICES_NAME = {
     # "defineMaster": generateDefineMaster,
@@ -22,12 +23,12 @@ async def addAllBaseServices(dispatcher, opts=None):
     await dispatcher.ready.waitFor()
     services = ensureDottedAccess(None)
 
-    if (opts.services):
+    if (opts and opts.services):
         for name in opts.services:
-            services.update(await SERVICES_NAME[name])
+            services.update(await SERVICES_NAME[name](dispatcher))
 
     else:
         for name in SERVICES_NAME:
-            services.update(await SERVICES_NAME[name])
+            services.update(await SERVICES_NAME[name](dispatcher))
 
     return services
