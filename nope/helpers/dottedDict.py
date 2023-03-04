@@ -19,14 +19,14 @@ class DottedDict(hdict):
 
     def __setattr__(self, key, value):
         if key in DEFAULT_METHODS:
-            raise Exception("This would overwrite the default behavior")        
+            raise Exception("This would overwrite the default behavior")
         elif key == "__hash":
             return hdict.__setattr__(self, key, value)
         hdict.__setitem__(self, key, value)
 
     def __delattr__(self, key):
         if key in DEFAULT_METHODS:
-            raise Exception("This would overwrite the default behavior")        
+            raise Exception("This would overwrite the default behavior")
         elif key == "__hash":
             return hdict.__delattr__(self, key, value)
         hdict.__delitem__(self, key)

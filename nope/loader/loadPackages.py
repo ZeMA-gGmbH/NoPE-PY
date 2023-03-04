@@ -39,6 +39,8 @@ async def loadDesiredPackages(loader, packages_to_load, logger: logging.Logger =
     for item in packages_to_load:
         # Now Try to load a Package, to test whether is is an assembly.
 
+        item = ensureDottedAccess(item)
+
         try:
             loadedPackage = dynamicImport(
                 item["nameOfPackage"], item["path"]).DESCRIPTION
