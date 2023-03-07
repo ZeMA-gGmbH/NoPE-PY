@@ -164,6 +164,13 @@ def insertNewLines(str: str, max_length: int = 100) -> str:
     return ret
 
 
+TO_REPLACE = {
+    'ä': 'ae',
+    'ü': 'ue',
+    'ö': 'oe',
+    'ß': 'ss'
+}
+
 def toVariableName(s: str) -> str:
     """ Helper to convert the Variable to a valid varialbe name.
 
@@ -177,4 +184,8 @@ def toVariableName(s: str) -> str:
     Returns:
         str: The string as valid variable name.
     """
-    return re.sub('\\W|^(?=\\d)', '_', s)
+    ret = re.sub('\\W|^(?=\\d)', '_', s)
+    for k,v in TO_REPLACE.items():
+        ret = ret.replace(k,v)
+
+    return ret
