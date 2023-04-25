@@ -5,13 +5,13 @@
 from setuptools import setup
 
 try:
-    long_description = open("README").read()
+    long_description = open("./README.md").read()
 except BaseException:
     long_description = """NOPE-Python Backend. A Generic Backend for Python"""
 
 if __name__ == "__main__":
     setup(name="nope_py",
-          version="1.7.1rc1",
+          version="1.7.1rc3",
           description="NOPE-Lib represents the No Programming Environment Library for python.",
           long_description=long_description,
           long_description_content_type="text/markdown",
