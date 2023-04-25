@@ -177,6 +177,15 @@ def comparePatternAndPath(pathPattern: str, contentPath: str, _options=None):
                         'containsWildcards': _containsWildcards
                     })
                 )
+            elif patternLengthComparedToPathLength == ">":
+                return generateResult(
+                    DottedDict({
+                        'affectedByParent': True,
+                        'patternToExtractData': pathPattern,
+                        'patternLengthComparedToPathLength': patternLengthComparedToPathLength,
+                        'containsWildcards': _containsWildcards
+                    })
+                )
             else:
                 raise Exception('Implementation Error! This should not happen')
         elif currentPath == currentPattern:
@@ -235,7 +244,7 @@ def comparePatternAndPath(pathPattern: str, contentPath: str, _options=None):
     diff = contentPath[len(partialPath):]
     return generateResult(DottedDict({
         'affectedOnSameLevel': len(diff) == 0,
-        'affectedByChild': len(diff) > 1,
+        'affectedByChild': len(diff) >= 1,
         'pathToExtractData': partialPath,
         'patternLengthComparedToPathLength': patternLengthComparedToPathLength,
         'containsWildcards': _containsWildcards

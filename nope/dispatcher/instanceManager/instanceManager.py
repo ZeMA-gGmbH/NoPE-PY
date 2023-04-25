@@ -117,10 +117,9 @@ class NopeInstanceManager:
         self.reset()
         EXECUTOR.callParallel(self._init)
 
-    def _sendAvailableInstances(self):
+    async def _sendAvailableInstances(self):
         # Update the Instances provided by this module.
-        EXECUTOR.callParallel(
-            self._communicator.emit,
+        await self._communicator.emit(
             "instancesChanged",
             {
                 "dispatcher": self._id,
@@ -161,7 +160,7 @@ class NopeInstanceManager:
             if len(changes.added):
                 # If there are dispatchers online,
                 # We will emit our available services.
-                self._sendAvailableInstances()
+                EXECUTOR.callParallel(self._sendAvailableInstances)
 
             if len(changes.removed):
                 # Remove the dispatchers.
@@ -171,6 +170,9 @@ class NopeInstanceManager:
         # We will use our status-manager to listen to changes.
         self._connectivityManager.dispatchers.onChange.subscribe(
             _onDispatchersChanged)
+        
+        # Make shure we are emitting the instances provided.
+        self._communicator.on("bonjour", lambda *args : EXECUTOR.callParallel(self._sendAvailableInstances))
 
         def _onInstancesChanged(message, *args):
             """ Callback which will be called if the commincator receives a Message
@@ -337,7 +339,7 @@ class NopeInstanceManager:
                                         # Remove the Function itself
                                         await self._rpcManager.unregisterService(self.getServiceName(data.identifier, 'dispose'))
                                         # Emit the instances again
-                                        self._sendAvailableInstances()
+                                        await self._sendAvailableInstances()
 
                                 except ValueError:
                                     pass
@@ -363,7 +365,7 @@ class NopeInstanceManager:
                         self._internalInstances.add(data.identifier)
 
                         # Update the available instances:
-                        self._sendAvailableInstances()
+                        await self._sendAvailableInstances()
 
                         # Make shure, we remove this instance.hash
                         self._initializingInstance.pop(data.identifier)
@@ -481,10 +483,14 @@ class NopeInstanceManager:
         Returns:
             bool: The Testresult
         """
+        if identifier not in self.instances.simplified:
+            return False
+
         if externalOnly:
-            return identifier in self._externalInstances
-        else:
-            return identifier in self._externalInstances or identifier in self._instances
+            manager = self.getManagerOfInstance(identifier)
+            return manager["id"] != self._id
+        
+        return True
 
     def getManagerOfInstance(self, identifier: str):
         """ Returns the hosting dispatcher for the given instance.
@@ -495,10 +501,6 @@ class NopeInstanceManager:
         Returns:
             INopeStatusInfo | False: The Status or false if not present.
         """
-        # Check if the instance exists in general
-        if not self.instanceExists(identifier, False):
-            return None
-
         # First we will check if the instance is available internally
         if identifier in self._internalInstances:
             return self._connectivityManager.info
@@ -511,6 +513,7 @@ class NopeInstanceManager:
             for instance in msg.instances:
                 if instance.identifier == identifier:
                     return self._connectivityManager.getStatus(dispatcher)
+                
         return None
 
     def getInstanceDescription(self, instanceIdentifier: str):
@@ -681,6 +684,106 @@ class NopeInstanceManager:
 
             raise e
 
+    
+    async def generateWrapper(self, description):
+        # Define the Default Description
+        # which will lead to an error.
+        description = ensureDottedAccess(description)
+
+        # Assign the provided Description
+        _description = ensureDottedAccess({
+            'dispatcherId': self._id,
+            'identifier': 'error',
+            'params': [],
+            'type': 'unkown'
+        })
+        _description.update(description)
+        _description.update({'dispatcherId': self._id})
+
+        # Check if the Description is complete
+        if (_description.type == 'unkown' or _description.identifier) == 'error':
+            raise Exception(
+                'Please Provide at least a "type" and "identifier" in the paremeters')
+
+        # Use the varified Name (removes the invalid chars.)
+        _description.identifier = varifyPath(
+            _description.identifier) if self.options.forceUsingValidVarNames else _description.identifier
+        if self._logger:
+            self._logger.debug('Requesting an Instance of type: "' + _description.type +
+                               '" with the identifier: "' + _description.identifier + '"')
+
+        try:
+            _type = _description.type
+            if _type not in self._internalWrapperGenerators:
+                _type = '*'
+
+            if not self.constructorExists(_description.type):
+                # No default type is present for a remote
+                # => assing the default type which is "*""
+                raise Exception('Generator "' + _description.type +
+                                '" isnt present in the network!')
+            if _type in self._internalWrapperGenerators:
+                if self._logger:
+                    self._logger.debug('No instance with the identifiert: "' + _description.identifier +
+                                       '" found, but an internal generator is available. Using the internal one for creating the instance and requesting the "real" instance externally')
+
+                # Now test if there is allready an instance with this name and type.
+                # If so, we check if we have the correct type etc. Additionally we
+                # try to extract its dispatcher-id and will use that as selector
+                # to allow the function be called.
+
+                _instanceDetails = self._getInstanceInfo(
+                    _description.identifier)
+
+
+                if _instanceDetails is not None and _instanceDetails.description.type != _description.type:
+                    raise Exception(
+                        "There exists an Instance named: '" + _description.identifier + "' but it uses a different type. Requested type: '" +
+                        _description.type + "', given type: '" + _instanceDetails.description.type + "'")
+
+                elif _instanceDetails is None:
+                    raise Exception(
+                        'No instance known with the idenfitier "' + _description.identifier +'" !')
+
+                definedInstance = _instanceDetails.description
+
+                # Create the Wrapper for our instance.
+                wrapper = await self._internalWrapperGenerators.get(_type)(self._core, definedInstance.description)
+                if self._logger:
+                    self._logger.debug(
+                        f'Created a Wrapper for the instance "{definedInstance.description.identifier}"')
+
+                originalDispose = wrapper.dispose
+
+                async def dispose():
+                    await self.deleteInstance(wrapper.indentifier)
+
+                    await originalDispose()
+
+                setattr(wrapper, "dispose", dispose)
+
+                self._instances[_description.identifier] = ensureDottedAccess({
+                    'instance': wrapper,
+                    'usedBy': [
+                        _description.dispatcherId
+                    ]
+                }
+                )
+
+                return wrapper
+
+            raise Exception('No internal generator Available!')
+
+        except Exception as e:
+
+            if self._logger:
+                self._logger.error(
+                    'During creating an Instance, the following error Occurd')
+                self._logger.error(formatException(e))
+
+            raise e
+    
+    
     async def registerInstance(self, instance):
         """ Option, to statically register an instance, without using an specific generator etc.
             This instance is just present in the network.
@@ -697,6 +800,11 @@ class NopeInstanceManager:
             'manual': True
         }
         )
+
+        self._internalInstances.add(instance.identifier)
+        
+        await self._sendAvailableInstances()
+
         return instance
 
     async def deleteInstance(self, instance, preventSendingUpdate=False) -> bool:
@@ -762,7 +870,7 @@ class NopeInstanceManager:
                 # Check if an update should be emitted or not.
                 if not preventSendingUpdate:
                     # Update the Instances provided by this module.
-                    self._sendAvailableInstances()
+                    await self._sendAvailableInstances()
 
                 await _instance.instance.dispose()
             return True
@@ -836,7 +944,7 @@ class NopeInstanceManager:
         self.internalInstances.setContent([])
 
         if self._communicator.connected.getContent():
-            self._sendAvailableInstances()
+            EXECUTOR.callParallel(self._sendAvailableInstances)
 
     async def dispose(self):
         self.reset()

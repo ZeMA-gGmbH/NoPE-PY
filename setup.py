@@ -10,8 +10,8 @@ except BaseException:
     long_description = """NOPE-Python Backend. A Generic Backend for Python"""
 
 if __name__ == "__main__":
-    setup(name="nope",
-          version=open("VERSION").read().strip(),
+    setup(name="nope_py",
+          version="1.7.1rc1",
           description="NOPE-Lib represents the No Programming Environment Library for python.",
           long_description=long_description,
           long_description_content_type="text/markdown",
@@ -21,9 +21,8 @@ if __name__ == "__main__":
           maintainer_email="m.karkowski@zema.de",
           install_requires=['paho-mqtt',
                             'python-socketio[asyncio_client]',
-                            'aiohttp',
                             'psutil'],
-          url="https://github.com/anti-held-333/nope-py.git",
+          url="https://github.com/ZeMA-gGmbH/NoPE-PY.git",
           packages=["nope",
                     "nope.cli",
                     "nope.communication",

@@ -6,7 +6,7 @@
 
 ### Use this Libary locally:
 
-1. Clone the repo: `git clone -b lib https://git.zema.de/tfs/ZISS/_git/nope-py`
+1. Clone the repo
 2. Install the depencies by typing `pip install .` or use `00-install.bat`
 
 ---

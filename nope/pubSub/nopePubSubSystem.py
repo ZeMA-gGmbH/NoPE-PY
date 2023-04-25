@@ -142,7 +142,7 @@ class PubSubSystem:
                  'observer': observer})
 
             # Update the Matching Rules.
-            self._updatePartialMatching('add', emitter, pubTopic, subTopic)
+            self.updateMatching()
 
             if callback:
                 # If necessary. Add the Callback.
@@ -188,15 +188,14 @@ class PubSubSystem:
         if emitter in self._emitters:
             subTopic, pubTopic = _extractPubAndSubTopic(options)
             data = self._emitters.get(emitter)
-            self._updatePartialMatching(
-                'remove', emitter, data.pubTopic, data.subTopic)
-
+            
             data.options = options
             data.subTopic = subTopic
             data.pubTopic = pubTopic
 
             self._emitters[emitter] = data
-            self._updatePartialMatching('add', emitter, pubTopic, subTopic)
+            
+            self.updateMatching()
         else:
             raise Exception('Emitter is not registered')
 
@@ -222,28 +221,18 @@ class PubSubSystem:
         pass
 
     def updateMatching(self):
+
         self._matched.clear()
-        for emitter, item in self._emitters.items():
-            # Extract the topic
-            subTopic = item.get("subTopic", False)
+
+        for item in self._emitters.values():
+            # Extract the publisher topic
             pubTopic = item.get("pubTopic", False)
 
-            if pubTopic:
+            if pubTopic is not False:
                 self._updateMatchingForTopic(pubTopic)
 
-            if subTopic:
-                self._addMatchingEntryIfRequired(subTopic, subTopic, emitter)
-                self.publishers.update()
-
-            self.subscriptions.update()
-
-    def _deleteMatchingEntry(self, pubTopic, subTopic, emitter):
-        if pubTopic in self._matched:
-            data = self._matched.get(pubTopic)
-            if subTopic in data.dataPull:
-                data.dataPull.get(subTopic).remove(emitter)
-            if subTopic in data.dataQuery:
-                data.dataQuery.get(subTopic).remove(emitter)
+        self.subscriptions.update()
+        self.publishers.update()
 
     def _addMatchingEntryIfRequired(self, pubTopic, subTopic, emitter):
         result = self._comparePatternAndPath(subTopic, pubTopic)
@@ -265,10 +254,10 @@ class PubSubSystem:
             #    - parent based change => a super change
             if result.containsWildcards:
                 if self.options.mqttPatternBasedSubscriptions:
-                    if result.patternToExtractData:
+                    if result.patternToExtractData is not False:
                         self._addToMatchingStructure(
                             'dataQuery', pubTopic, result.patternToExtractData, emitter)
-                    elif result.pathToExtractData:
+                    elif result.pathToExtractData is not False:
                         self._addToMatchingStructure(
                             'dataPull', pubTopic, result.pathToExtractData, emitter)
                     else:
@@ -280,34 +269,12 @@ class PubSubSystem:
             else:
                 if result.affectedByChild and not self.options.forwardChildData or result.affectedByParent and not self.options.forwardParentData:
                     return
-                if result.pathToExtractData:
+                if result.pathToExtractData is not False:
                     self._addToMatchingStructure(
                         'dataPull', pubTopic, result.pathToExtractData, emitter)
                 else:
                     raise Exception(
                         "Implementation Error. The 'pathToExtractData' must be provided")
-
-    def _updatePartialMatching(
-            self, mode: str, _emitter, _pubTopic: str, _subTopic: str):
-        for item in self._emitters.values():
-            pubTopic = item.pubTopic
-            if mode == 'remove' and pubTopic and _subTopic:
-                self._deleteMatchingEntry(pubTopic, _subTopic, _emitter)
-            elif mode == 'add' and pubTopic and _subTopic:
-                self._addMatchingEntryIfRequired(
-                    pubTopic, _subTopic, _emitter)
-        if mode == 'add':
-            if _pubTopic:
-                self._updateMatchingForTopic(_pubTopic)
-            if _subTopic and not containsWildcards(_subTopic):
-                self._addMatchingEntryIfRequired(
-                    _subTopic, _subTopic, _emitter)
-        elif mode == 'remove':
-            if _subTopic:
-                self._deleteMatchingEntry(_subTopic, _subTopic, _emitter)
-
-        self.publishers.update()
-        self.subscriptions.update()
 
     def emit(self, eventName, data, options=None):
         return self._pushData(eventName, eventName, data,
@@ -337,9 +304,15 @@ class PubSubSystem:
     def _updateMatchingForTopic(self, topicOfChange):
         if topicOfChange not in self._matched:
             self._matched[topicOfChange] = ensureDottedAccess(
-                {'dataPull': {}, 'dataQuery': {}})
+                {
+                    'dataPull': {}, 
+                    'dataQuery': {}
+                }
+            )
+
+        # Find all matches
         for emitter, item in self._emitters.items():
-            if item.subTopic:
+            if item.subTopic is not False:
                 self._addMatchingEntryIfRequired(
                     topicOfChange, item.subTopic, emitter)
 
@@ -366,12 +339,12 @@ class PubSubSystem:
         for path_to_pull, emitters in referenceToMatch.dataPull.items():
 
             for emitter in emitters:
-                data = self._pullData(path_to_pull, None)
-
                 # Only if we want to _notify an exclusive emitter we
                 # have to continue, if our emitter isnt matched.
                 if emitterCausingUpdate is not None and emitterCausingUpdate == emitter:
                     continue
+
+                data = self._pullData(path_to_pull, None)
 
                 emitter.emit(
                     data,
@@ -384,21 +357,29 @@ class PubSubSystem:
                 )
 
         for pattern, emitters in referenceToMatch.dataQuery.items():
+            
+            # Get a copy of the filtered items.
+            data = self._pullData(pattern, None)
 
-            for emitter in emitters:
-                data = self._pullData(pattern, None)
-                if emitter is not None and emitter != emitter:
-                    continue
-                emitter.emit(
-                    data,
-                    ensureDottedAccess({
-                        **options,
-                        'mode': 'direct',
-                        'topicOfChange': topicOfChange,
-                        'topicOfContent': topicOfContent,
-                        'topicOfSubscription': self._emitters.get(emitter).subTopic
-                    })
-                )
+            # Filter the items.
+            data = filter(lambda item: self._comparePatternAndPath(topicOfChange, item.path).affected, data)
+
+            if len(data) > 0:
+
+                for emitter in emitters:
+                    if emitter is not None and emitter != emitter:
+                        continue
+                    
+                    emitter.emit(
+                        data,
+                        ensureDottedAccess({
+                            **options,
+                            'mode': 'direct',
+                            'topicOfChange': topicOfChange,
+                            'topicOfContent': topicOfContent,
+                            'topicOfSubscription': self._emitters.get(emitter).subTopic
+                        })
+                    )
 
     def _updateOptions(self, options):
         if not options.timestamp:

@@ -293,6 +293,9 @@ class NopeRpcManager:
 
         await self._communicator.on("rpcUnregister", on_unregister)
 
+        # We are now listening on these changes!
+        await self._communicator.on("bonjour", lambda *args: EXECUTOR.callParallel(self._sendAvailableServices))
+
         def onDispatchersChanged(changes, *args):
             if len(changes.added):
                 # If there are dispatchers online,
