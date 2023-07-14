@@ -171,6 +171,7 @@ TO_REPLACE = {
     'ß': 'ss'
 }
 
+
 def toVariableName(s: str) -> str:
     """ Helper to convert the Variable to a valid varialbe name.
 
@@ -185,7 +186,7 @@ def toVariableName(s: str) -> str:
         str: The string as valid variable name.
     """
     ret = re.sub('\\W|^(?=\\d)', '_', s)
-    for k,v in TO_REPLACE.items():
-        ret = ret.replace(k,v)
+    for k, v in TO_REPLACE.items():
+        ret = ret.replace(k, v)
 
     return ret

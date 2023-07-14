@@ -131,7 +131,7 @@ class MQTTLayer:
 
         except Exception as E:
             self._logger.error(
-                "Something went wrong during handling: '" + topic + "'. That shouldn't be the case")
+                "Something went wrong during handling: '" + str(topic) + "'. That shouldn't be the case")
             self._logger.error(formatException(E))
 
     def _emit(self, topic: str, data):

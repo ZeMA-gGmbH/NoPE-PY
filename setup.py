@@ -11,7 +11,7 @@ except BaseException:
 
 if __name__ == "__main__":
     setup(name="nope_py",
-          version="1.7.1rc3",
+          version="1.7.8rc1",
           description="NOPE-Lib represents the No Programming Environment Library for python.",
           long_description=long_description,
           long_description_content_type="text/markdown",

@@ -38,7 +38,6 @@ async def loadDesiredPackages(loader, packages_to_load, logger: logging.Logger =
     # And iterate over them.
     for item in packages_to_load:
         # Now Try to load a Package, to test whether is is an assembly.
-
         item = ensureDottedAccess(item)
 
         try:
@@ -54,8 +53,7 @@ async def loadDesiredPackages(loader, packages_to_load, logger: logging.Logger =
             pkgs.append(loadedPackage)
         except Exception as e:
             if logger is not None:
-                logger.error("Failed Loading the Package " +
-                             item["nameOfPackage"])
+                logger.error("Failed Loading the Package " + item.get("nameOfPackage","'Package Name not known...' in file: +'" + item.get("path","Not provided") + "'"))
                 logger.error(formatException(e))
             else:
                 print("Failed Loading the Package " +

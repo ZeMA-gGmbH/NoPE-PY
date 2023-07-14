@@ -45,6 +45,7 @@ def getNopeLogger(name: str, level=logging.DEBUG):
     """ Helper to return a specific logger.
 
     """
+    global _LOGGERS
 
     if name not in _LOGGERS:
 

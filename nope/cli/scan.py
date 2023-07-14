@@ -8,6 +8,8 @@ import os
 from nope.helpers import dynamicImport, formatException, dumps, loads
 from nope.logger import getNopeLogger
 
+from .run import getDefaultParameters
+
 LOGGER = getNopeLogger("config-scanner")
 
 
@@ -78,8 +80,14 @@ def create_config(path_to_scan: str, dest_dir: str, name_of_file: str):
         for func in package["providedServices"]:
             func.pop("function", None)
 
+    config = {
+        "packages": packages,
+        "config": getDefaultParameters(),
+        "connections": []
+    }
+
     with open(path_to_config_file, "w") as file:
-        file.write(json.dumps(packages, indent=4))
+        file.write(json.dumps(config, indent=4))
 
 
 def scan_cli(add_mode=True):

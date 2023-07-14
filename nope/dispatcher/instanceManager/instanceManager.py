@@ -27,6 +27,7 @@ class NopeInstanceManager:
         self._rpcManager = _rpcManager
         self._core = _core
         self._communicator: Bridge = options.communicator
+        self.__disposed = False
 
         if _id is None:
             self._id = generateId()
@@ -170,9 +171,9 @@ class NopeInstanceManager:
         # We will use our status-manager to listen to changes.
         self._connectivityManager.dispatchers.onChange.subscribe(
             _onDispatchersChanged)
-        
+
         # Make shure we are emitting the instances provided.
-        self._communicator.on("bonjour", lambda *args : EXECUTOR.callParallel(self._sendAvailableInstances))
+        await self._communicator.on("bonjour", lambda *args: EXECUTOR.callParallel(self._sendAvailableInstances))
 
         def _onInstancesChanged(message, *args):
             """ Callback which will be called if the commincator receives a Message
@@ -189,14 +190,14 @@ class NopeInstanceManager:
 
             if self._logger:
                 self._logger.debug(
-                    'Remote Dispatcher "' + message.dispatcher + '" updated its available instances')
+                    'Remote Dispatcher "' + str(message.dispatcher) + '" updated its available instances')
 
         # Listen to the Changes.
         await self._communicator.on("instancesChanged", _onInstancesChanged)
 
         if self._logger:
             self._logger.debug("core.instance-manager " +
-                               self._id + " initialized")
+                               str(self._id) + " initialized")
 
         self.ready.setContent(True)
 
@@ -280,7 +281,7 @@ class NopeInstanceManager:
                 hashableData = [data.identifier, data.params, data.type]
                 try:
                     hashed = hash(hashableData)
-                except BaseException:
+                except BaseException as E:
                     hashed = json.dumps(hashableData)
 
                 # It might happen, that an instance is requested multiple times.
@@ -489,7 +490,7 @@ class NopeInstanceManager:
         if externalOnly:
             manager = self.getManagerOfInstance(identifier)
             return manager["id"] != self._id
-        
+
         return True
 
     def getManagerOfInstance(self, identifier: str):
@@ -513,7 +514,7 @@ class NopeInstanceManager:
             for instance in msg.instances:
                 if instance.identifier == identifier:
                     return self._connectivityManager.getStatus(dispatcher)
-                
+
         return None
 
     def getInstanceDescription(self, instanceIdentifier: str):
@@ -592,7 +593,7 @@ class NopeInstanceManager:
             _description.identifier) if self.options.forceUsingValidVarNames else _description.identifier
         if self._logger:
             self._logger.debug('Requesting an Instance of type: "' + _description.type +
-                               '" with the identifier: "' + _description.identifier + '"')
+                               '" with the identifier: "' + str(_description.identifier) + '"')
 
         try:
             _type = _description.type
@@ -606,7 +607,7 @@ class NopeInstanceManager:
                                 '" isnt present in the network!')
             if _type in self._internalWrapperGenerators:
                 if self._logger:
-                    self._logger.debug('No instance with the identifiert: "' + _description.identifier +
+                    self._logger.debug('No instance with the identifiert: "' + str(_description.identifier) +
                                        '" found, but an internal generator is available. Using the internal one for creating the instance and requesting the "real" instance externally')
 
                 # Now test if there is allready an instance with this name and type.
@@ -621,8 +622,8 @@ class NopeInstanceManager:
 
                 if _instanceDetails is not None and _instanceDetails.description.type != _description.type:
                     raise Exception(
-                        "There exists an Instance named: '" + _description.identifier + "' but it uses a different type. Requested type: '" +
-                        _description.type + "', given type: '" + _instanceDetails.description.type + "'")
+                        "There exists an Instance named: '" + str(_description.identifier) + "' but it uses a different type. Requested type: '" +
+                        _description.type + "', given type: '" + str(_instanceDetails.description.type) + "'")
 
                 elif _instanceDetails is not None:
                     usedDispatcher = _instanceDetails.dispatcher.id
@@ -657,7 +658,7 @@ class NopeInstanceManager:
                 originalDispose = wrapper.dispose
 
                 async def dispose():
-                    await self.deleteInstance(wrapper.indentifier)
+                    await self.deleteInstance(wrapper.identifier)
 
                     await originalDispose()
 
@@ -684,7 +685,6 @@ class NopeInstanceManager:
 
             raise e
 
-    
     async def generateWrapper(self, description):
         # Define the Default Description
         # which will lead to an error.
@@ -710,7 +710,7 @@ class NopeInstanceManager:
             _description.identifier) if self.options.forceUsingValidVarNames else _description.identifier
         if self._logger:
             self._logger.debug('Requesting an Instance of type: "' + _description.type +
-                               '" with the identifier: "' + _description.identifier + '"')
+                               '" with the identifier: "' + str(_description.identifier) + '"')
 
         try:
             _type = _description.type
@@ -724,7 +724,7 @@ class NopeInstanceManager:
                                 '" isnt present in the network!')
             if _type in self._internalWrapperGenerators:
                 if self._logger:
-                    self._logger.debug('No instance with the identifiert: "' + _description.identifier +
+                    self._logger.debug('No instance with the identifiert: "' + str(_description.identifier) +
                                        '" found, but an internal generator is available. Using the internal one for creating the instance and requesting the "real" instance externally')
 
                 # Now test if there is allready an instance with this name and type.
@@ -735,15 +735,14 @@ class NopeInstanceManager:
                 _instanceDetails = self._getInstanceInfo(
                     _description.identifier)
 
-
                 if _instanceDetails is not None and _instanceDetails.description.type != _description.type:
                     raise Exception(
-                        "There exists an Instance named: '" + _description.identifier + "' but it uses a different type. Requested type: '" +
-                        _description.type + "', given type: '" + _instanceDetails.description.type + "'")
+                        "There exists an Instance named: '" + str(_description.identifier) + "' but it uses a different type. Requested type: '" +
+                        _description.type + "', given type: '" + str(_instanceDetails.description.type) + "'")
 
                 elif _instanceDetails is None:
                     raise Exception(
-                        'No instance known with the idenfitier "' + _description.identifier +'" !')
+                        'No instance known with the idenfitier "' + str(_description.identifier) + '" !')
 
                 definedInstance = _instanceDetails.description
 
@@ -782,8 +781,7 @@ class NopeInstanceManager:
                 self._logger.error(formatException(e))
 
             raise e
-    
-    
+
     async def registerInstance(self, instance):
         """ Option, to statically register an instance, without using an specific generator etc.
             This instance is just present in the network.
@@ -802,7 +800,7 @@ class NopeInstanceManager:
         )
 
         self._internalInstances.add(instance.identifier)
-        
+
         await self._sendAvailableInstances()
 
         return instance
@@ -825,7 +823,7 @@ class NopeInstanceManager:
         _instance = None
         _identifier = None
 
-        if isinstance(instance, 'string'):
+        if isinstance(instance, str):
             _instance = self._instances.get(instance)
             _identifier = instance
         else:
@@ -872,7 +870,6 @@ class NopeInstanceManager:
                     # Update the Instances provided by this module.
                     await self._sendAvailableInstances()
 
-                await _instance.instance.dispose()
             return True
         return False
 
@@ -932,6 +929,9 @@ class NopeInstanceManager:
                 promise: asyncio.Future = self.deleteInstance(name, True)
                 promise.add_done_callback(onDone)
 
+                if self._logger:
+                    self._logger.warn('Disposing instance "' + name + '"')
+
                 promises.append(promise)
 
             EXECUTOR.callParallel(asyncio.gather, *promises)
@@ -949,6 +949,8 @@ class NopeInstanceManager:
     async def dispose(self):
         self.reset()
         self.instances.dispose()
+        self.__disposed = True
 
     def __del__(self):
-        EXECUTOR.callParallel(self.dispose, target=self)
+        if not self.__disposed:
+            EXECUTOR.callParallel(self.dispose)

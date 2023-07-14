@@ -98,3 +98,6 @@ config
 
 # Performance Values
 .prof
+
+# Python environment
+pyvenv.cfg

@@ -4,6 +4,7 @@ from ..helpers import comparePatternAndPath, copy, generateId, DottedDict, ensur
 from ..merging import DictBasedMergeData
 
 DEFAULT_OBJ = object()
+LAZY_UPDATE = True  # Way faster
 
 
 def _memoizedCompare(matchTopicsWithoutWildcards: bool):
@@ -142,7 +143,11 @@ class PubSubSystem:
                  'observer': observer})
 
             # Update the Matching Rules.
-            self.updateMatching()
+            global LAZY_UPDATE
+            if (LAZY_UPDATE):
+                self._updatePartialMatching("add", emitter, pubTopic, subTopic)
+            else:
+                self.updateMatching()
 
             if callback:
                 # If necessary. Add the Callback.
@@ -188,14 +193,27 @@ class PubSubSystem:
         if emitter in self._emitters:
             subTopic, pubTopic = _extractPubAndSubTopic(options)
             data = self._emitters.get(emitter)
-            
+
+            if (LAZY_UPDATE):
+                self._updatePartialMatching(
+                    "remove",
+                    emitter,
+                    data.pubTopic,
+                    data.subTopic
+                )
+
             data.options = options
             data.subTopic = subTopic
             data.pubTopic = pubTopic
 
             self._emitters[emitter] = data
-            
-            self.updateMatching()
+
+            if (LAZY_UPDATE):
+                # Update the Matching Rules.
+                self._updatePartialMatching("add", emitter, pubTopic, subTopic)
+            else:
+                # Update the Matching Rules.
+                self.updateMatching()
         else:
             raise Exception('Emitter is not registered')
 
@@ -204,7 +222,14 @@ class PubSubSystem:
             options = self._emitters.pop(emitter)
             subTopic, pubTopic = _extractPubAndSubTopic(options["options"])
 
-            self._updatePartialMatching('remove', emitter, pubTopic, subTopic)
+            if (LAZY_UPDATE):
+                # Update the Matching Rules.
+                self._updatePartialMatching(
+                    "remove", emitter, pubTopic, subTopic)
+            else:
+                # Update the Matching Rules.
+                self.updateMatching()
+
             return True
         return False
 
@@ -276,6 +301,140 @@ class PubSubSystem:
                     raise Exception(
                         "Implementation Error. The 'pathToExtractData' must be provided")
 
+    def __deleteMatchingEntry(self, _pubTopic: str, _subTopic: str, _emitter):
+        if _pubTopic in self._matched:
+            data = self._matched[_pubTopic]
+
+            if _subTopic in data.dataPull:
+                data.dataPull[_subTopic].remove(_emitter)
+
+            if _subTopic in data.dataQuery:
+                data.dataQuery[_subTopic].remove(_emitter)
+
+    def __addMatchingEntryIfRequired(self, pubTopic, subTopic, emitter):
+        # Now lets determine the Path
+        result = self._comparePatternAndPath(subTopic, pubTopic)
+
+        if (result.affected):
+            # We skip content related to the settings.
+            # If no wildcard and no forwardChildData or forwardParentData
+            # is allowed ==> we make shure, that we skip the topic.
+            if not result.containsWildcards and ((result.affectedByChild and not self._options.forwardChildData) or (
+                    result.affectedByParent and not self._options.forwardParentData)):
+                return
+
+            # We now have match the topic as following described:
+            # 1) subscription contains a pattern
+            #    - dircet change (same-level) => content
+            #    - parent based change => content
+            #    - child based change => content
+            # 2) subscription doesnt contains a pattern:
+            #    We more or less want the data on the path.
+            #    - direct change (topic = path) => content
+            #    - parent based change => a super change
+            if result.containsWildcards:
+                if self._options.mqttPatternBasedSubscriptions:
+                    if result.patternToExtractData:
+                        self._addToMatchingStructure(
+                            "dataQuery",
+                            pubTopic,
+                            result.patternToExtractData,
+                            emitter
+                        )
+                    elif isinstance(result.pathToExtractData, str):
+                        self._addToMatchingStructure(
+                            "dataPull",
+                            pubTopic,
+                            result.pathToExtractData,
+                            emitter
+                        )
+                    else:
+                        raise Exception(
+                            "Implementation Error. Either the patternToExtractData or the pathToExtractData must be provided")
+                else:
+                    self._addToMatchingStructure(
+                        "dataQuery",
+                        pubTopic,
+                        pubTopic,
+                        emitter
+                    )
+            else:
+                # We skip content related to the settings.
+                # If no wildcard and no forwardChildData or forwardParentData
+                # is allowed ==> we make shure, that we skip the topic.
+                if (result.affectedByChild and not self._options.forwardChildData) or (
+                        result.affectedByParent and not self._options.forwardParentData):
+                    return
+
+                if isinstance(result.pathToExtractData, str):
+                    self._addToMatchingStructure(
+                        "dataPull",
+                        pubTopic,
+                        result.pathToExtractData,
+                        emitter
+                    )
+                else:
+                    raise Exception(
+                        "Implementation Error. The 'pathToExtractData' must be provided")
+
+    def _updatePartialMatching(
+            self, mode: str, _emitter, _pubTopic: str | bool, _subTopic: str | bool):
+        consideredPublishedTopics = set()
+
+        if _subTopic is not False:
+            # Iterate through all Publishers and
+            for item in self._emitters.values():
+                # Extract the Pub-Topic
+                pubTopicOfOtherEmitter = item.pubTopic
+
+                if pubTopicOfOtherEmitter is not False and not (
+                        pubTopicOfOtherEmitter in consideredPublishedTopics):
+                    # Now, lets Update the Matching for the specific Topics.
+                    if (mode == "remove"):
+                        self.__deleteMatchingEntry(
+                            pubTopicOfOtherEmitter,
+                            _subTopic,
+                            _emitter
+                        )
+                    elif (mode == "add"):
+                        self.__addMatchingEntryIfRequired(
+                            pubTopicOfOtherEmitter,
+                            _subTopic,
+                            _emitter
+                        )
+
+                # Add this topic to the topics,
+                # that have already been checked.
+                consideredPublishedTopics.add(pubTopicOfOtherEmitter)
+
+            # Additionally, we test for the allready published events:
+            for topic in self._matched.keys():
+                # we only test already published topics:
+                if not topic in consideredPublishedTopics and not containsWildcards(
+                        topic):
+
+                    if (mode == "remove"):
+                        self.__deleteMatchingEntry(topic, _subTopic, _emitter)
+                    elif (mode == "add"):
+                        self.__addMatchingEntryIfRequired(
+                            topic, _subTopic, _emitter)
+
+                    consideredPublishedTopics.add(topic)
+
+        if (mode == "add"):
+            if (_pubTopic is not False):
+                self._updateMatchingForTopic(_pubTopic)
+
+        if (_subTopic is not False and not containsWildcards(_subTopic)):
+            self.__addMatchingEntryIfRequired(_subTopic, _subTopic, _emitter)
+
+        elif (mode == "remove"):
+            if (_subTopic is not False):
+                self.__deleteMatchingEntry(_subTopic, _subTopic, _emitter)
+
+        self.publishers.update()
+        self.subscriptions.update()
+
     def emit(self, eventName, data, options=None):
         return self._pushData(eventName, eventName, data,
                               ensureDottedAccess(options))
@@ -305,7 +464,7 @@ class PubSubSystem:
         if topicOfChange not in self._matched:
             self._matched[topicOfChange] = ensureDottedAccess(
                 {
-                    'dataPull': {}, 
+                    'dataPull': {},
                     'dataQuery': {}
                 }
             )
@@ -357,19 +516,21 @@ class PubSubSystem:
                 )
 
         for pattern, emitters in referenceToMatch.dataQuery.items():
-            
+
             # Get a copy of the filtered items.
             data = self._pullData(pattern, None)
 
             # Filter the items.
-            data = filter(lambda item: self._comparePatternAndPath(topicOfChange, item.path).affected, data)
+            data = filter(
+                lambda item: self._comparePatternAndPath(
+                    topicOfChange, item.path).affected, data)
 
             if len(data) > 0:
 
                 for emitter in emitters:
-                    if emitter is not None and emitter != emitter:
+                    if emitter is not None and emitterCausingUpdate == emitter:
                         continue
-                    
+
                     emitter.emit(
                         data,
                         ensureDottedAccess({

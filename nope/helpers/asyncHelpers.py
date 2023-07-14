@@ -39,8 +39,8 @@ class NopeExecutor:
         in a compatible manner to NoPE.
     """
 
-    def __init__(self, loop: asyncio.AbstractEventLoop = None,
-                 executor: ThreadPoolExecutor | ProcessPoolExecutor = None):
+    def __init__(self, loop: asyncio.AbstractEventLoop | None = None,
+                 executor: ThreadPoolExecutor | ProcessPoolExecutor | None = None):
         self._loop: asyncio.AbstractEventLoop = loop
         self._executor: ThreadPoolExecutor | ProcessPoolExecutor = executor
         if self._loop is None:
@@ -80,21 +80,88 @@ class NopeExecutor:
     def useMultiProcessPool(self, max_workers=None):
         self._executor = ProcessPoolExecutor(max_workers=max_workers)
 
-    def dispose(self, wait=True, cancel_futures=False):
+    def stop(self, max_iterations=1024):
+        # Determine all open tasks
+        pending = asyncio.all_tasks(loop=self.loop)
+        pending = [t for t in pending if not (t.done() or t.cancelled())]
+        iteration = 0
+
+        while pending:
+            # Create a pending task for all open tasks.
+            group = asyncio.gather(*pending)
+            self.loop.run_until_complete(group)
+
+            if iteration < max_iterations:
+                iteration += 1
+            else:
+                raise Exception("Max Recursion reached.")
+
+            pending = [
+                t for t in asyncio.all_tasks(
+                    loop=self.loop) if not (
+                    t.done() or t.cancelled())]
+
+    def dispose(self, wait=True, cancel_futures=False,
+                finish_open_tasks=False):
         """ Disposes the Executor """
+
+        if finish_open_tasks:
+            tasks = list(self._todos)
+
+            for t in [t for t in tasks if not (t.done() or t.cancelled())]:
+                # give canceled tasks the last chance to run
+                self.loop.run_until_complete(t)
+
+        self.loop.stop()
+
         if self._executor:
             self._executor.shutdown(wait=wait, cancel_futures=cancel_futures)
 
-        self.loop.stop()
         self.loop.close()
 
-    def run(self):
+    def start(self, future, run_tasks=False):
+        if not isinstance(future, (asyncio.Task, asyncio.Future)):
+            raise Exception("Please provide a Future or Task!")
+
+        self._running = True
+        self.loop.run_until_complete(future)
+
+        if run_tasks:
+            tasks = list(self._todos)
+
+            for t in [t for t in tasks if not (t.done() or t.cancelled())]:
+                # give canceled tasks the last chance to run
+                self.loop.run_until_complete(t)
+
+    def run(self, before=None, after=None):
         """ Starts the eventloop and runs it forever """
         try:
-            if self._running == False:
+            if not self._running:
                 self._running = True
                 self.loop.run_forever()
+
+            else:
+                # tasks = list(self._todos)
+
+                # for t in [t for t in tasks if not (t.done() or t.cancelled())]:
+                #     # give canceled tasks the last chance to run
+                #     self.loop.run_until_complete(t)
+                pass
+
         except KeyboardInterrupt:
+            print("KeyboardInterrupt detected")
+
+            if callable(before):
+                before()
+
+            tasks = list(self._todos)
+            for t in [t for t in tasks if not (t.done() or t.cancelled())]:
+                # give canceled tasks the last chance to run
+                self.loop.run_until_complete(t)
+
+            if callable(after):
+                after()
+
             self.dispose()
 
     def generatePromise(self, **kwargs):
@@ -160,6 +227,9 @@ class NopeExecutor:
                 await asyncio.sleep(timeout_ms / 1000.0)
                 promise = function_to_use(*args, **kwargs)
                 await promise
+            except asyncio.CancelledError:
+                if self.logger:
+                    self.logger.warn("Loop closed!")
             except Exception as error:
                 if promise:
                     if self.logger:
@@ -193,6 +263,9 @@ class NopeExecutor:
                     await asyncio.sleep(interval_ms / 1000.0)
                     promise = function_to_use(*args, **kwargs)
                     await promise
+            except asyncio.CancelledError:
+                if self.logger:
+                    self.logger.warn("Loop closed!")
             except Exception as error:
                 if self.logger:
                     self.logger.error(
@@ -257,6 +330,9 @@ class NopeExecutor:
                 pfunc = partial(func, *args, **kwargs)
                 try:
                     return await self.loop.run_in_executor(self._executor, pfunc)
+                except asyncio.CancelledError:
+                    if self.logger:
+                        self.logger.warn("Loop closed!")
                 except Exception as error:
                     if self.logger:
                         self.logger.error(
@@ -303,8 +379,8 @@ def Promise(callback):
     return future
 
 
-async def waitFor(callback, initalWaitInMs: int = None, testFirst: bool = True, maxRetries: int = float("inf"),
-                  delay: int = 50, maxTimeout: int = None, additionalDelay: int = None):
+async def waitFor(callback, initalWaitInMs: int | None = None, testFirst: bool = True, maxRetries: int = float("inf"),
+                  delay: int = 50, maxTimeout: int | None = None, additionalDelay: int | None = None):
     """ Function which will wait for the callback to return true
 
     Args:

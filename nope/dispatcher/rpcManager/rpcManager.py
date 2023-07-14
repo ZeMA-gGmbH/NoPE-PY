@@ -78,7 +78,7 @@ class NopeRpcManager:
         self._mappingOfDispatchersAndServices[msg.dispatcher] = msg
         self.services.update()
 
-    async def _handleExternalRequest(self, data, func: WrappedFunction = None):
+    async def _handleExternalRequest(self, data, func: WrappedFunction | None = None):
         try:
             if not callable(func):
                 if data.functionId not in self._registeredServices:
@@ -164,7 +164,7 @@ class NopeRpcManager:
                 if self._logger:
                     self._logger.debug(
                         'Internally executed requested Function for Task: ' + str(data['taskId']) + " - Function \"" +
-                        data['functionId'] + '\". Sending result on ' + data['resultSink'])
+                        data['functionId'] + '\". Sending result on ' + str(data['resultSink']))
 
                 # Use the communicator to publish the result.
                 await self._communicator.emit("rpcResponse", result)
@@ -207,8 +207,9 @@ class NopeRpcManager:
                 if data.error:
                     if self._logger:
                         self._logger.error(
-                            "Failed with task " + data['taskId'])
-                        self._logger.error("Reason: " + data['error']['msg'])
+                            "Failed with task " + str(data['taskId']))
+                        self._logger.error(
+                            "Reason: " + str(data['error']['msg']))
                         self._logger.exception(data['error'])
 
                     # Reject the Error:
@@ -501,7 +502,7 @@ class NopeRpcManager:
                 self._runningInternalRequestedTasks.pop(taskId)
 
             if self._logger:
-                self._logger.debug('Clearing Callbacks from ' + taskId)
+                self._logger.debug('Clearing Callbacks from ' + str(taskId))
 
         try:
             tastRequest = ensureDottedAccess({
@@ -641,10 +642,13 @@ class NopeRpcManager:
     def clearTasks(self):
         self._runningInternalRequestedTasks.clear()
 
-    def unregisterAll(self):
+    def unregisterAll(self, log=False):
         toUnregister = list(self._registeredServices.keys())
         for srv in toUnregister:
-            self.unregisterService(srv)
+            EXECUTOR.callParallel(self.unregisterService, srv)
+            # Log the removing of the service.
+            if log and self._logger:
+                self._logger.warn('removing service "' + srv + '"')
         self._registeredServices.clear()
 
     def reset(self):
@@ -655,4 +659,4 @@ class NopeRpcManager:
     async def dispose(self):
         self.clearTasks()
         self.ready.dispose()
-        self.unregisterAll()
+        self.unregisterAll(log=True)

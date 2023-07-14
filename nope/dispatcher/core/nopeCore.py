@@ -5,7 +5,7 @@
 from nope.dispatcher.connectivityManager import NopeConnectivityManager
 from nope.dispatcher.instanceManager import NopeInstanceManager
 from nope.dispatcher.rpcManager import generateSelector, NopeRpcManager
-from nope.helpers import ensureDottedAccess, generateId, EXECUTOR
+from nope.helpers import ensureDottedAccess, generateId, EXECUTOR, Promise
 from nope.logger import defineNopeLogger
 from nope.observable import NopeObservable
 from nope.pubSub import DataPubSubSystem, PubSubSystem
@@ -62,6 +62,7 @@ class NopeCore:
 
         self._options = _options
         self._id = id
+        self._disposed = EXECUTOR.generatePromise()
 
         self.communicator = _options.communicator
 
@@ -142,8 +143,18 @@ class NopeCore:
     async def dispose(self):
         self.disposing = True
         self.ready.dispose()
+
+        if self.logger:
+            self.logger.warn('Removing Dispatcher. Shutting down.')
+
         await self.eventDistributor.dispose()
         await self.dataDistributor.dispose()
         await self.connectivityManager.dispose()
         await self.rpcManager.dispose()
         await self.instanceManager.dispose()
+
+        if not self._disposed.cancelled() and not self._disposed.done():
+            self._disposed.set_result(True)
+
+    async def runEndless(self):
+        await self._disposed

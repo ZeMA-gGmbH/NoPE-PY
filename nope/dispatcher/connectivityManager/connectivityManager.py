@@ -61,6 +61,7 @@ class NopeConnectivityManager:
         self._deltaTime = 0
         self._checkStatusTask = None
         self._sendStatusTask = None
+        self.__disposed = False
 
         self._timeouts = ensureDottedAccess({})
 
@@ -347,6 +348,8 @@ class NopeConnectivityManager:
                 self._timeouts["sendAliveInterval"]
             )
 
+        self.__disposed = False
+
     @property
     def allHosts(self):
         hosts = set()
@@ -360,7 +363,12 @@ class NopeConnectivityManager:
         if self._checkStatusTask:
             self._checkStatusTask.cancel()
         if not quiet:
+            if self._logger:
+                self._logger.warn('Emitting Aurevoir. Going offline.')
             await self._communicator.emit('aurevoir', DottedDict({'dispatcherId': self.id}))
 
+        self.__disposed = True
+
     def __del__(self):
-        EXECUTOR.callParallel(self.dispose, target=self)
+        if not self.__disposed:
+            EXECUTOR.callParallel(self.dispose)

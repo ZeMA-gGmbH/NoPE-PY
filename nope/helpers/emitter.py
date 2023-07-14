@@ -1,3 +1,5 @@
+from typing import Dict, Set, Callable, Any
+
 from .dottedDict import ensureDottedAccess
 
 
@@ -8,13 +10,13 @@ class Emitter:
 
     """
 
-    def __init__(self) -> None:
+    def __init__(self):
         """ Creates the Emitter.
         """
-        self._subscribers = dict()
+        self._subscribers: Dict[str, Set[Callable]] = dict()
         self._paused = set()
 
-    def on(self, event: str = None, callback=None):
+    def on(self, event: str | None = None, callback: Callable | None = None):
         """ Adds a callback to the emitter. If fire event is emitted, the subscriber (callback) will be called.
         Args:
             event (str, optional): The event under which the callback is listening. Defaults to None.
@@ -40,12 +42,13 @@ class Emitter:
 
         return ret
 
-    def off(self, event: str = None, callback=None) -> bool:
+    def off(self, event: str | None = None,
+            callback: Callable | None = None) -> bool:
         """ Removes the callback. Then it wont be called if an event has been emitted.
 
         Args:
-            event (str, optional): The event under which the callback is subscribed. Defaults to None.
-            callback (callable, optional): The Callback to remove. Defaults to None.
+            event (str): The event under which the callback is subscribed.
+            callback (Callable): The Callback to remove.
         Returns:
             bool:   True -> removed (has been present); False -> could not remove the callback (was not
                     subscribed for that event)
@@ -73,7 +76,8 @@ class Emitter:
         except BaseException:
             pass
 
-    def emit(self, event: str = None, data=None, *args, **kwargs):
+    def emit(self, event: str | None = None,
+             data: Any = None, *args, **kwargs):
         """ Emits an event on with the given data.
 
         Args:

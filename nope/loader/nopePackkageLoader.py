@@ -16,7 +16,7 @@ from ..types import NopePackage
 class NopePackageLoader():
     def __init__(self, dispatcher: NopeDispatcher, **options):
         _options = ensureDottedAccess(options)
-        self._logger = defineNopeLogger(_options.log, 'core')
+        self._logger = defineNopeLogger(_options.log, 'package-loader')
         self.packages: typing.Dict[str, NopePackage] = {}
         self.dispatcher = dispatcher
         self._instances = {}

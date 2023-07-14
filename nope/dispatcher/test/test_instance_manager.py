@@ -23,11 +23,13 @@ async def test_register_instance():
     srv = getDispatcher({
         "communicator": communicator,
         "logger": False,
+        "id": "srv"
     })
 
     client = getDispatcher({
         "communicator": communicator,
         "logger": False,
+        "id": "client"
     })
 
     async def createInstance(core, identifier):
