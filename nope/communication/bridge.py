@@ -71,35 +71,40 @@ class Bridge:
 
     async def _on(self, event, cb):
 
-        # if required we will add a logger for the events.
-        if self._logger and event != 'StatusChanged':
-            def debug_callback(data):
-                if self._logger:
-                    self._logger.debug(f'received "{event}", data={data}')
-                    self._logger.debug(f'subscribe to "{event}"')
-
-            self._internalEmitter.on(event, debug_callback)
-
-        self._internalEmitter.on(event, cb)
-
         # We now store the callback.
         if event not in self._callbacks:
             self._callbacks[event] = [cb]
+
+             # if required we will add a logger for the events.
+             # but this will happen only for new items.
+            if self._logger and event != 'StatusChanged':
+                def debug_callback(data):
+                    if self._logger:
+                        self._logger.debug(f'received "{event}", data={data}')
+                        self._logger.debug(f'subscribe to "{event}"')
+
+                self._internalEmitter.on(event, debug_callback)
+
+            self._internalEmitter.on(event, cb)
+
+            promises = []
+
+            # Now we try to add the callback to the connected layers.
+            for data in self._layers.values():
+                if data.layer.connected.getContent():
+                    promises.append(
+                        self._subscribeToCallback(
+                            data.layer, event, data.forwardData))
+
+            # Now wait for every Layer.
+            if promises:
+                await asyncio.gather(*promises)
         else:
+            self._internalEmitter.on(event, cb)
+
             self._callbacks[event].append(cb)
 
-        promises = []
-
-        # Now we try to add the callback to the connected layers.
-        for data in self._layers.values():
-            if data.layer.connected.getContent():
-                promises.append(
-                    self._subscribeToCallback(
-                        data.layer, event, data.forwardData))
-
-        # Now wait for every Layer.
-        if promises:
-            await asyncio.gather(*promises)
+        
 
     async def _emit(self, event, toExclude, dataToSend=None, force=False):
         if self._logger and event != 'StatusChanged':
